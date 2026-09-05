@@ -1,0 +1,8 @@
+{
+  "name": "CareerOps AI",
+  "description": "AI-powered career matching, job discovery, ATS resume tailoring, and candidate pipeline automation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
