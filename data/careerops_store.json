@@ -107,6 +107,45 @@
   },
   "jobListings": [
     {
+      "id": "e955cd2af9cdd9c4",
+      "title": "Business Analyst - NEC Software Solutions (India)",
+      "company_name": "NECSWS",
+      "location": "Mumbai",
+      "salary_range_lpa": [
+        10,
+        18
+      ],
+      "salary_is_estimated": true,
+      "salary_source": "AmbitionBox & Glassdoor Market Benchmark (salary for Business Analyst - NEC Software Solutions in NECSWS for Mumbai)",
+      "experience_range_years": [
+        2,
+        4
+      ],
+      "experience_is_inferred": true,
+      "experience_inferred_reason": "Inferred from Role Title ('Mid-Level Professional' standard: 2-4 Years)",
+      "description": "For the best application experience please enable JavaScript in your browser. NEC Software Solutions (India) Logo. Business Analyst. Mumbai, Maharashtra, India.\n\nRequisition posted on NECSWS career portal. Direct application link verified active.",
+      "apply_link": "https://jobs.smartrecruiters.com/NECSWS/744000147432449-business-analyst?oga=true",
+      "ats_source": "SmartRecruiters",
+      "discovered_at": "2026-09-14T08:41:13.525Z",
+      "posted_date": "2026-09-13T08:41:13.525Z",
+      "posted_days_ago": 1,
+      "is_direct_posting": true,
+      "verification_status": "active_portal",
+      "verification_notes": "Direct enterprise ATS posting verified (protected career gateway).",
+      "verified_at": "2026-09-14T08:41:15.168Z",
+      "status": "rejected",
+      "fit": {
+        "is_viable": false,
+        "match_score": 0,
+        "detected_experience": "Not evaluated",
+        "salary_range": "Not evaluated",
+        "location": "Mumbai",
+        "skills_gap": "Location mismatch",
+        "rejection_reason": "Location 'Mumbai' not in preferred list [Gurgaon, Gurugram, Noida, Delhi, Remote, Bangalore, Bengaluru]",
+        "evaluated_at": "2026-09-14T08:41:15.455Z"
+      }
+    },
+    {
       "id": "30e93f98f920ef5d",
       "title": "True Tandem - Sr. Power Platform Developer",
       "company_name": "Truetandem",
@@ -132,164 +171,18 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:40.210Z",
+      "verified_at": "2026-09-14T08:40:30.583Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
         "match_score": 0,
         "detected_experience": "10-14 Years",
-        "salary_range": "Not evaluated",
+        "salary_range": "₹128 - ₹135 LPA",
         "location": "Remote",
         "skills_gap": "Seniority gap",
         "rejection_reason": "Role requires 10+ years, candidate profile has 3.2 years.",
         "evaluated_at": "2026-09-14T08:37:26.199Z"
       }
-    },
-    {
-      "id": "a2e72b38f660fe6e",
-      "title": "Power Bi Developer Jobs In India",
-      "company_name": "Enterprise Employer",
-      "location": "Remote",
-      "salary_range_lpa": [
-        3,
-        6
-      ],
-      "salary_is_estimated": true,
-      "salary_source": "Glassdoor & AmbitionBox Live (salary for Power Bi Developer Jobs In India in Enterprise Employer for Remote (India))",
-      "experience_range_years": [
-        5,
-        10
-      ],
-      "experience_is_inferred": false,
-      "description": "Power Bi · Power Automate · etl · Power Query · sql · Power Bi Reports ... Business Analyst Jobs In Delhi NCR · Consultant Jobs In Delhi NCR ...\n\nRequisition posted on Enterprise Employer career portal. Direct application link verified active.",
-      "apply_link": "https://www.naukri.com/job-listings-power-bi-developer-numentica-llc-remote-5-to-10-years-130225505556?src=companyPageJobsMob&sid=17776989779988542&xp=7&px=1",
-      "ats_source": "Naukri",
-      "discovered_at": "2026-09-14T08:20:23.527Z",
-      "posted_date": "2026-09-13T08:20:23.527Z",
-      "posted_days_ago": 1,
-      "is_direct_posting": true,
-      "verification_status": "verified_active",
-      "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:40.506Z",
-      "status": "rejected",
-      "fit": {
-        "is_viable": false,
-        "match_score": 0,
-        "detected_experience": "5-10 Years",
-        "salary_range": "₹3 - ₹6 LPA",
-        "location": "Remote",
-        "skills_gap": "Compensation expectation gap",
-        "rejection_reason": "Role offers up to ₹6 LPA, below expected minimum of ₹10 LPA.",
-        "evaluated_at": "2026-09-14T08:20:25.112Z"
-      },
-      "experience_inferred_reason": "Exact experience extracted from career requisition URL: 5-10 Years"
-    },
-    {
-      "id": "5c2cdf0028832cf8",
-      "title": "Power Bi Developer Jobs In Gurugram",
-      "company_name": "Enterprise Employer",
-      "location": "Gurugram",
-      "salary_range_lpa": [
-        10,
-        18
-      ],
-      "salary_is_estimated": true,
-      "salary_source": "AmbitionBox & Glassdoor Market Benchmark (salary for Power Bi Developer Jobs In Gurugram in Enterprise Employer for Gurugram)",
-      "experience_range_years": [
-        4,
-        9
-      ],
-      "experience_is_inferred": false,
-      "description": "3-8 Yrs. Power BI · Power Automate · Python · Business Intelligence · BI ... Business Analyst Jobs In Delhi NCR · Consultant Jobs In Delhi NCR ...\n\nRequisition posted on Enterprise Employer career portal. Direct application link verified active.",
-      "apply_link": "https://www.naukri.com/job-listings-power-bi-developer-persistent-gurugram-4-to-9-years-110326024410?src=companyPageJobsMob&sid=1775239328187682&xp=1&px=1",
-      "ats_source": "Naukri",
-      "discovered_at": "2026-09-14T08:20:18.565Z",
-      "posted_date": "2026-09-13T08:20:18.565Z",
-      "posted_days_ago": 1,
-      "is_direct_posting": true,
-      "verification_status": "verified_active",
-      "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:41.063Z",
-      "status": "discovered",
-      "fit": {
-        "is_viable": true,
-        "match_score": 95,
-        "detected_experience": "4-9 Years",
-        "salary_range": "₹10 - ₹18 LPA",
-        "location": "Gurugram",
-        "skills_gap": "None",
-        "summary_reasoning": "Direct target role match for Power Bi Developer Jobs In Gurugram. Strong alignment with Power Automate, Power BI, Python in Gurugram.",
-        "strengths": [
-          "Direct match with candidate target role: Power Bi Developer Jobs In Gurugram",
-          "Demonstrated competency in Power Automate",
-          "Demonstrated competency in Power BI",
-          "Demonstrated competency in Python"
-        ],
-        "weaknesses": [],
-        "evaluated_at": "2026-09-14T08:20:25.800Z"
-      },
-      "tailored": {
-        "job_title": "Power Bi Developer Jobs In Gurugram",
-        "company": "Enterprise Employer",
-        "jd_keywords": [
-          "Power Platform",
-          "Automation",
-          "Power BI",
-          "Copilot",
-          "SQL"
-        ],
-        "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
-        "skills_ordered": [
-          "MS Excel",
-          "Copilot GenAI (Agents)",
-          "Power Automate",
-          "Power BI",
-          "SharePoint Online",
-          "Power Apps",
-          "Copilot Studio",
-          "SQL",
-          "Python",
-          "Process Automation",
-          "VBA Macros",
-          "Lean Six Sigma"
-        ],
-        "experience": [
-          {
-            "company": "KPMG",
-            "bullets": [
-              "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
-              "Built end-to-end solution to facilitate migration of old Excel‑based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
-              "Built and managed multiple VBA‑macros‑based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
-              "Built a multi‑modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
-              "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
-            ]
-          },
-          {
-            "company": "GlobalLogic Technologies Private Limited",
-            "bullets": [
-              "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
-              "Piloted a project to extract relevant answers from multi‑level documents to build an AI training dataset.",
-              "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
-              "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
-              "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
-            ]
-          }
-        ],
-        "cover_letter_paragraphs": [
-          "I am writing to express my strong enthusiasm for the Power Bi Developer Jobs In Gurugram position at Enterprise Employer. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
-          "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
-          "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Enterprise Employer.",
-          "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Enterprise Employer."
-        ],
-        "generated_at": "2026-09-14T08:20:26.151Z",
-        "grounding_stats": {
-          "total_bullets": 10,
-          "grounded_count": 10,
-          "hallucinations_blocked": 0,
-          "metrics_verified": true
-        }
-      },
-      "experience_inferred_reason": "Exact experience extracted from career requisition URL: 4-9 Years"
     },
     {
       "id": "1451db036cd51e0f",
@@ -316,7 +209,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:41.325Z",
+      "verified_at": "2026-09-14T08:40:31.496Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -419,7 +312,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:41.361Z",
+      "verified_at": "2026-09-14T08:40:31.551Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -526,7 +419,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:41.632Z",
+      "verified_at": "2026-09-14T08:40:31.808Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -628,7 +521,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:41.908Z",
+      "verified_at": "2026-09-14T08:40:32.103Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -667,7 +560,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:43.268Z",
+      "verified_at": "2026-09-14T08:40:33.532Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -706,7 +599,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:44.098Z",
+      "verified_at": "2026-09-14T08:40:34.346Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -745,7 +638,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:45.892Z",
+      "verified_at": "2026-09-14T08:40:36.162Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -851,7 +744,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:46.673Z",
+      "verified_at": "2026-09-14T08:40:37.137Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -959,7 +852,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:47.396Z",
+      "verified_at": "2026-09-14T08:40:37.993Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1063,7 +956,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:47.396Z",
+      "verified_at": "2026-09-14T08:40:37.993Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -1079,210 +972,6 @@
       "salary_range_lpa": [
         44,
         71
-      ],
-      "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)"
-    },
-    {
-      "id": "bf79ba8ff8e644f6",
-      "title": "Planet Technologies",
-      "company_name": "Planettechnologies",
-      "location": "Remote",
-      "salary_is_estimated": true,
-      "experience_range_years": [
-        2,
-        4
-      ],
-      "experience_is_inferred": true,
-      "description": "Planet Technologies Remote All On-site Hybrid Remote Location All DC Metro Area DC Metro Area - Hybrid Eastern US - Remote Huntsville, AL Washington, DC Team All East Region Cloud Infrastructure Opportunities Managed Services Opportunities Modern Work - Collaboration Opportunities Modern Work - Infrastructure Opportunities Organizational Change Management Opportunities Power Platform Opportunities Project Management Organization Opportunities Sales &amp; Operations Opportunities Federal Division Cleared Opportunities Energy Services Work type All Full-Time East Region Cloud Infrastructure Opportunities Apply Senior Endpoint Consultant Remote — Full-Time Eastern US - Remote Managed Services Opportunities Apply Cloud Managed Services Consultant Remote — Full-Time Eastern US - Remote Apply Technical Account Manager Remote — Full-Time Eastern US - Remote Modern Work - Collaboration Opportunities Apply Modern Workplace Collaboration Consultant Remote — Full-Time Eastern US - Remote Modern Work - Infrastructure Opportunities Apply Office 365 Infrastructure Architect Remote — Full-Time Eastern US - Remote Organizational Change Management Opportunities Apply Microsoft 365 Organizational Change Management Consultant Remote — Full-Time Eastern US - Remote Power Platform Opportunities Apply Power Platform/Dynamics Consultant Remote — Full-Time Eastern US - Remote Project Management Organization Opportunities Apply Business Analyst Remote — Full-Time Eastern US - Remote Apply PMO Manager Remote — Full-Time Eastern US - Remote Sales &amp; Operations Opportunities Apply Sales Executive, Power Platform Remote — Full-Time Eastern US - Remote Apply Sales Executive, Public Safety Remote — Full-Time Eastern US - Remote Planet Technologies Home Page We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. Jobs powered by",
-      "apply_link": "https://jobs.lever.co/planettechnologies?workplaceType=remote",
-      "ats_source": "Lever",
-      "discovered_at": "2026-09-14T08:04:47.991Z",
-      "posted_date": "2026-09-13T08:04:47.991Z",
-      "posted_days_ago": 1,
-      "is_direct_posting": false,
-      "verification_status": "verified_active",
-      "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:47.670Z",
-      "status": "discovered",
-      "fit": {
-        "is_viable": true,
-        "match_score": 76,
-        "detected_experience": "2-4 Years (Inferred)",
-        "salary_range": "₹10 - ₹17 LPA",
-        "location": "Remote",
-        "skills_gap": "None",
-        "summary_reasoning": "Candidate aligns with key requirements ().",
-        "strengths": [],
-        "weaknesses": [],
-        "evaluated_at": "2026-09-14T08:07:26.433Z"
-      },
-      "tailored": {
-        "job_title": "Planet Technologies",
-        "company": "Planettechnologies",
-        "jd_keywords": [
-          "Power Platform",
-          "Automation",
-          "Power BI",
-          "Copilot",
-          "SQL"
-        ],
-        "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
-        "skills_ordered": [
-          "MS Excel",
-          "Copilot GenAI (Agents)",
-          "Power Automate",
-          "Power BI",
-          "SharePoint Online",
-          "Power Apps",
-          "Copilot Studio",
-          "SQL",
-          "Python",
-          "Process Automation",
-          "VBA Macros",
-          "Lean Six Sigma"
-        ],
-        "experience": [
-          {
-            "company": "KPMG",
-            "bullets": [
-              "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
-              "Built end-to-end solution to facilitate migration of old Excel‑based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
-              "Built and managed multiple VBA‑macros‑based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
-              "Built a multi‑modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
-              "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
-            ]
-          },
-          {
-            "company": "GlobalLogic Technologies Private Limited",
-            "bullets": [
-              "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
-              "Piloted a project to extract relevant answers from multi‑level documents to build an AI training dataset.",
-              "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
-              "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
-              "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
-            ]
-          }
-        ],
-        "cover_letter_paragraphs": [
-          "I am writing to express my strong enthusiasm for the Planet Technologies position at Planettechnologies. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
-          "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
-          "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Planettechnologies.",
-          "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Planettechnologies."
-        ],
-        "generated_at": "2026-09-14T08:07:44.437Z",
-        "grounding_stats": {
-          "total_bullets": 10,
-          "grounded_count": 10,
-          "hallucinations_blocked": 0,
-          "metrics_verified": true
-        }
-      },
-      "experience_inferred_reason": "Inferred from Role Title ('Mid-Level Professional' standard: 2-4 Years)",
-      "salary_range_lpa": [
-        10,
-        17
-      ],
-      "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)"
-    },
-    {
-      "id": "52f8b665155f9097",
-      "title": "JumpCloud",
-      "company_name": "Jumpcloud",
-      "location": "Delhi",
-      "salary_is_estimated": true,
-      "experience_range_years": [
-        2,
-        4
-      ],
-      "experience_is_inferred": true,
-      "description": "JumpCloud Location type All On-site Hybrid Remote Bangalore, India - Remote All Atlanta, GA - Remote Austin, TX - Remote Bangalore - India Bangalore, India - Remote Chicago, IL - Remote Delhi, India - Remote Hyderabad, India - Remote London, England - Remote Mexico City, Mexico - Remote Miami, FL - Remote Minneapolis, MN - Remote Monterrey, Mexico - Remote Mumbai, India - Remote Puebla, Mexico - Remote Pune, India - Remote São Paulo, Brazil - Remote Team All Customer Success Customer Support Engineering Engineering Data Analytics Software Engineering Finance Business Finance Marketing Marketing Product Marketing People People Sales Sales Security Security Engineering Strategic Program Management Strategic Program Management Work type All Full Time Engineering Data Analytics Apply Financial Data Analyst - India Remote — Full Time Bangalore, India - Remote Apply Staff Data Scientist, Machine Learning - India Remote — Full Time Bangalore, India - Remote Software Engineering Apply Devices Software Engineer - India Remote — Full Time Bangalore, India - Remote Apply Engineering Manager, Authorization - India Remote — Full Time Bangalore, India - Remote Apply LDAP Software Engineer - India Remote — Full Time Bangalore, India - Remote Apply Senior Quality Engineer - India Remote — Full Time Bangalore, India - Remote Apply Senior Software Engineer, Devices - India Remote — Full Time Delhi, India - Remote / Hyderabad, India - Remote / Bangalore, India - Remote / Mumbai, India - Remote / Pune, India - Remote Apply Staff Software Engineer, Device Management - India Remote — Full Time Bangalore, India - Remote Finance Business Finance Apply Manager, Commissions - India Remote — Full Time Bangalore, India - Remote Marketing Marketing Apply GTM AI Operations - India Remote — Full Time Bangalore, India - Remote JumpCloud Home Page We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, transcribing or summarizing interviews, and assessing responses. These tools assist our recruitment team but do not replace human judgment in hiring decisions, which are ultimately made by humans. Please see our Privacy Policy (https://jumpcloud.com/privacy) for more information about our personal data practices. Jobs powered by",
-      "apply_link": "https://jobs.lever.co/jumpcloud?location=Bangalore%2C%20India%20-%20Remote",
-      "ats_source": "Lever",
-      "discovered_at": "2026-09-14T08:04:46.155Z",
-      "posted_date": "2026-09-13T08:04:46.155Z",
-      "posted_days_ago": 1,
-      "is_direct_posting": false,
-      "verification_status": "verified_active",
-      "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:47.940Z",
-      "status": "discovered",
-      "fit": {
-        "is_viable": true,
-        "match_score": 76,
-        "detected_experience": "2-4 Years (Inferred)",
-        "salary_range": "₹10 - ₹17 LPA",
-        "location": "Delhi",
-        "skills_gap": "None",
-        "summary_reasoning": "Candidate aligns with key requirements ().",
-        "strengths": [],
-        "weaknesses": [],
-        "evaluated_at": "2026-09-14T08:08:04.963Z"
-      },
-      "tailored": {
-        "job_title": "JumpCloud",
-        "company": "Jumpcloud",
-        "jd_keywords": [
-          "Power Platform",
-          "Automation",
-          "Power BI",
-          "Copilot",
-          "SQL"
-        ],
-        "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
-        "skills_ordered": [
-          "MS Excel",
-          "Copilot GenAI (Agents)",
-          "Power Automate",
-          "Power BI",
-          "SharePoint Online",
-          "Power Apps",
-          "Copilot Studio",
-          "SQL",
-          "Python",
-          "Process Automation",
-          "VBA Macros",
-          "Lean Six Sigma"
-        ],
-        "experience": [
-          {
-            "company": "KPMG",
-            "bullets": [
-              "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
-              "Built end-to-end solution to facilitate migration of old Excel‑based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
-              "Built and managed multiple VBA‑macros‑based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
-              "Built a multi‑modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
-              "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
-            ]
-          },
-          {
-            "company": "GlobalLogic Technologies Private Limited",
-            "bullets": [
-              "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
-              "Piloted a project to extract relevant answers from multi‑level documents to build an AI training dataset.",
-              "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
-              "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
-              "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
-            ]
-          }
-        ],
-        "cover_letter_paragraphs": [
-          "I am writing to express my strong enthusiasm for the JumpCloud position at Jumpcloud. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
-          "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
-          "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Jumpcloud.",
-          "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Jumpcloud."
-        ],
-        "generated_at": "2026-09-14T08:08:16.395Z",
-        "grounding_stats": {
-          "total_bullets": 10,
-          "grounded_count": 10,
-          "hallucinations_blocked": 0,
-          "metrics_verified": true
-        }
-      },
-      "experience_inferred_reason": "Inferred from Role Title ('Mid-Level Professional' standard: 2-4 Years)",
-      "salary_range_lpa": [
-        10,
-        17
       ],
       "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)"
     },
@@ -1306,7 +995,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:48.203Z",
+      "verified_at": "2026-09-14T08:40:38.849Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1349,7 +1038,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:48.612Z",
+      "verified_at": "2026-09-14T08:40:39.086Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1451,7 +1140,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:48.865Z",
+      "verified_at": "2026-09-14T08:40:39.316Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1494,7 +1183,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:50.344Z",
+      "verified_at": "2026-09-14T08:40:40.838Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1537,7 +1226,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:51.134Z",
+      "verified_at": "2026-09-14T08:40:41.781Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1580,7 +1269,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:51.134Z",
+      "verified_at": "2026-09-14T08:40:41.781Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1626,7 +1315,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:51.402Z",
+      "verified_at": "2026-09-14T08:40:42.017Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1672,7 +1361,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:51.664Z",
+      "verified_at": "2026-09-14T08:40:42.284Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -1716,7 +1405,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:51.945Z",
+      "verified_at": "2026-09-14T08:40:42.604Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1756,7 +1445,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:52.202Z",
+      "verified_at": "2026-09-14T08:40:42.867Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1809,7 +1498,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:52.441Z",
+      "verified_at": "2026-09-14T08:40:43.104Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1851,7 +1540,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:53.530Z",
+      "verified_at": "2026-09-14T08:40:43.376Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1902,7 +1591,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:53.777Z",
+      "verified_at": "2026-09-14T08:40:43.627Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1946,7 +1635,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:54.016Z",
+      "verified_at": "2026-09-14T08:40:43.993Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -1987,7 +1676,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:54.322Z",
+      "verified_at": "2026-09-14T08:40:44.274Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -2032,7 +1721,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:55.850Z",
+      "verified_at": "2026-09-14T08:40:46.279Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -2077,7 +1766,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:56.130Z",
+      "verified_at": "2026-09-14T08:40:46.545Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -2120,7 +1809,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:56.446Z",
+      "verified_at": "2026-09-14T08:40:46.789Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -2170,7 +1859,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:56.682Z",
+      "verified_at": "2026-09-14T08:40:47.033Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -2211,7 +1900,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:56.944Z",
+      "verified_at": "2026-09-14T08:40:47.296Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -2318,7 +2007,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:57.236Z",
+      "verified_at": "2026-09-14T08:40:47.566Z",
       "status": "viable",
       "fit": {
         "is_viable": true,
@@ -2420,7 +2109,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:58.351Z",
+      "verified_at": "2026-09-14T08:40:48.531Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -2461,7 +2150,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:58.780Z",
+      "verified_at": "2026-09-14T08:40:48.927Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -2502,7 +2191,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:37:58.780Z",
+      "verified_at": "2026-09-14T08:40:48.927Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -2545,7 +2234,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:38:00.289Z",
+      "verified_at": "2026-09-14T08:40:50.558Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -2590,7 +2279,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:38:00.289Z",
+      "verified_at": "2026-09-14T08:40:50.558Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -2625,7 +2314,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:38:01.403Z",
+      "verified_at": "2026-09-14T08:40:51.687Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -2668,7 +2357,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:38:01.403Z",
+      "verified_at": "2026-09-14T08:40:51.687Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -2777,7 +2466,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:38:02.895Z",
+      "verified_at": "2026-09-14T08:40:52.850Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -2828,7 +2517,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-14T08:38:02.895Z",
+      "verified_at": "2026-09-14T08:40:52.850Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -2933,19 +2622,16 @@
     "8a61cd64ca3a2a93",
     "8ee0bf9c792290b3",
     "304505672428c070",
-    "bf79ba8ff8e644f6",
-    "52f8b665155f9097",
     "b0bd0a21e8a7e3e6",
     "9c75946b010609ac",
-    "5c2cdf0028832cf8",
     "1451db036cd51e0f",
     "810ab4223ca8ee8c",
     "347c7b14d7484894"
   ],
   "seenJobs": {
-    "9dfe6112a2137e75": "2026-09-14T08:35:34.697Z",
-    "https://soti.careers/jobs/bi-solutions-analyst-gurugram": "2026-09-14T08:35:34.697Z",
-    "soti_business intelligence & solutions analyst": "2026-09-14T08:35:34.697Z",
+    "9dfe6112a2137e75": "2026-09-14T08:40:17.948Z",
+    "https://soti.careers/jobs/bi-solutions-analyst-gurugram": "2026-09-14T08:40:17.948Z",
+    "soti_business intelligence & solutions analyst": "2026-09-14T08:40:17.948Z",
     "gtn-prod-ba-01": "2026-09-05T05:39:51.735Z",
     "gartner_senior product business analyst": "2026-09-05T05:39:51.735Z",
     "https://gartner.wd5.myworkdayjobs.com/en-us/gartner_careers/job/gurugram/senior-product-business-analyst_jr10928": "2026-09-05T05:39:51.735Z",
@@ -3090,9 +2776,12 @@
     "a2e72b38f660fe6e": "2026-09-14T08:20:23.527Z",
     "https://www.naukri.com/job-listings-power-bi-developer-numentica-llc-remote-5-to-10-years-130225505556?src=companyPageJobsMob&sid=17776989779988542&xp=7&px=1": "2026-09-14T08:20:23.527Z",
     "enterprise employer_power bi developer jobs in india": "2026-09-14T08:20:23.527Z",
-    "30e93f98f920ef5d": "2026-09-14T08:37:25.921Z",
-    "https://jobs.lever.co/truetandem/ffc7256e-ac54-4e76-85aa-a27dc8f34d01": "2026-09-14T08:37:25.921Z",
-    "truetandem_true tandem - sr. power platform developer": "2026-09-14T08:37:25.921Z"
+    "30e93f98f920ef5d": "2026-09-14T08:37:22.849Z",
+    "https://jobs.lever.co/truetandem/ffc7256e-ac54-4e76-85aa-a27dc8f34d01": "2026-09-14T08:37:22.849Z",
+    "truetandem_true tandem - sr. power platform developer": "2026-09-14T08:37:22.849Z",
+    "e955cd2af9cdd9c4": "2026-09-14T08:41:15.168Z",
+    "https://jobs.smartrecruiters.com/NECSWS/744000147432449-business-analyst?oga=true": "2026-09-14T08:41:15.168Z",
+    "necsws_business analyst - nec software solutions (india)": "2026-09-14T08:41:15.168Z"
   },
   "appSettings": {
     "min_match_score": 75,
@@ -3113,12 +2802,24 @@
   "workflowState": {
     "enabled": true,
     "interval_hours": 4,
-    "last_run": "2026-09-14T08:38:18.536Z",
-    "next_run": "2026-09-14T12:38:18.536Z",
+    "last_run": "2026-09-14T08:41:15.455Z",
+    "next_run": "2026-09-14T12:41:15.455Z",
     "is_running": false,
-    "total_runs": 6,
+    "total_runs": 7,
     "auto_notify_telegram": true,
     "runs": [
+      {
+        "id": "run-1789375230583",
+        "started_at": "2026-09-14T08:40:30.583Z",
+        "completed_at": "2026-09-14T08:41:15.455Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 1,
+        "evaluated_count": 1,
+        "high_fit_count": 31,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Automated cycle: Scanned existing links (0 expired identified), discovered 1 fresh jobs. Evaluated 1 listings, 31 high-fit matches, 0 Telegram alerts dispatched."
+      },
       {
         "id": "run-1789375060209",
         "started_at": "2026-09-14T08:37:40.209Z",

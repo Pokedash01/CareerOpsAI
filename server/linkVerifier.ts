@@ -13,14 +13,19 @@ const GENERIC_SEARCH_PATTERNS: RegExp[] = [
   /linkedin\.com\/jobs\/search/i,
   /linkedin\.com\/jobs\/collections/i,
   /indeed\.com\/(?:jobs\?|q-)/i,
-  /naukri\.com\/(?:[a-z0-9-]+-jobs|jobs-in-)/i,
-  /naukri\.com\/.*-(?:jobs|openings|vacancies)$/i,
+  /naukri\.com\/(?:[a-z0-9-]+-jobs|jobs-in-|[a-z0-9-]+-jobs-in-)/i,
+  /naukri\.com\/.*-(?:jobs|openings|vacancies)/i,
+  /[?&]expjd=true/i,
   /google\.com\/search.*(?:ibp=htl;jobs|q=jobs)/i,
   /glassdoor\.com\/(?:Job|Jobs)\/.*-jobs-/i,
   /[?&](?:keywords|keyword|search|searchTerm|query)=/i,
   /\/jobs\/page-\d+/i,
   /\/jobs\?page=/i,
   /\/search\?/i,
+  /jobs\.lever\.co\/[^/]+\/?(?:\?[^/]+)?$/i, // Lever company listing without individual job ID
+  /boards\.greenhouse\.io\/[^/]+\/?(?:\?[^/]+)?$/i, // Greenhouse company listing without /jobs/<id>
+  /jobs\.ashbyhq\.com\/[^/]+\/?(?:\?[^/]+)?$/i, // Ashby company listing without individual job ID
+  /[?&](?:workplaceType|location|department|team)=/i, // Aggregator search filter queries
 ];
 
 // Patterns for valid direct job posting URLs
@@ -34,9 +39,6 @@ const DIRECT_POSTING_PATTERNS: RegExp[] = [
   /smrtr\.io\/[0-9a-zA-Z_-]+/i,
   /taleo\.net\/careersection\/.*jobdetail\.ftl/i,
   /linkedin\.com\/jobs\/view\/\d+/i, // Direct job posting view ONLY
-  /naukri\.com\/job-listings-[a-z0-9_-]+/i, // Direct Naukri posting ONLY
-  /foundit\.in\/job-postings\/[a-z0-9_-]+/i, // Direct Foundit posting ONLY
-  /monster\.com\/job-openings\/[a-z0-9_-]+/i, // Direct Monster posting ONLY
   /careers\.[^/]+\/jobs\/[a-z0-9_-]+/i,
   /careers\.[^/]+\/posting\/[a-z0-9_-]+/i,
 ];
@@ -238,18 +240,51 @@ export async function verifyJobPosting(url: string, company?: string, title?: st
 
     let response: Response;
     try {
-      // First try HEAD for speed and minimal bandwidth
+      // First check with redirect: 'manual' to catch redirects to search aggregators (e.g. Naukri 301 -> expJD=true)
+      const manualRes = await fetch(url, {
+        method: 'GET',
+        headers: { ...headers, Range: 'bytes=0-1024' },
+        signal: controller.signal,
+        redirect: 'manual',
+      });
+
+      if ([301, 302, 303, 307, 308].includes(manualRes.status)) {
+        const loc = manualRes.headers.get('location') || '';
+        let resolvedLoc = loc;
+        try {
+          resolvedLoc = new URL(loc, url).toString();
+        } catch {}
+
+        if (
+          resolvedLoc.includes('expJD=true') ||
+          resolvedLoc.includes('expjd=true') ||
+          resolvedLoc.includes('-jobs-in-') ||
+          resolvedLoc.includes('/jobs-in-') ||
+          isGenericSearchLink(resolvedLoc)
+        ) {
+          return {
+            isValid: false,
+            status: 'expired_or_invalid',
+            isDirect: false,
+            httpStatus: manualRes.status,
+            notes: `Expired posting: Career portal redirected to search query results page (${resolvedLoc.substring(0, 70)}).`,
+            checkedAt,
+          };
+        }
+      }
+
+      // If manual check succeeded or was not a redirect, follow redirect to verify the final page
       response = await fetch(url, {
-        method: 'HEAD',
-        headers,
+        method: 'GET',
+        headers: { ...headers, Range: 'bytes=0-4096' },
         signal: controller.signal,
         redirect: 'follow',
       });
     } catch {
-      // Some career portals block HEAD with 405; retry with GET with small range
+      // Fallback try with HEAD
       response = await fetch(url, {
-        method: 'GET',
-        headers: { ...headers, Range: 'bytes=0-3072' },
+        method: 'HEAD',
+        headers,
         signal: controller.signal,
         redirect: 'follow',
       });
@@ -258,6 +293,25 @@ export async function verifyJobPosting(url: string, company?: string, title?: st
     }
 
     const httpStatus = response.status;
+    const finalUrl = response.url || url;
+
+    // Check if the final destination after following redirects is a search aggregator or expired JD
+    if (
+      finalUrl.includes('expJD=true') ||
+      finalUrl.includes('expjd=true') ||
+      finalUrl.includes('-jobs-in-') ||
+      finalUrl.includes('/jobs-in-') ||
+      isGenericSearchLink(finalUrl)
+    ) {
+      return {
+        isValid: false,
+        status: 'expired_or_invalid',
+        isDirect: false,
+        httpStatus,
+        notes: `Expired posting: Destination is a generic search query page (${finalUrl.substring(0, 70)}).`,
+        checkedAt,
+      };
+    }
 
     // 404 or 410 explicitly means the requisition was removed or doesn't exist
     if (httpStatus === 404 || httpStatus === 410) {

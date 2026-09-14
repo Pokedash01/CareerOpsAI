@@ -54,6 +54,18 @@ export function isStrictJobUrl(url: string): boolean {
     const parsed = new URL(url.trim());
     const host = parsed.hostname.toLowerCase();
     const pathname = parsed.pathname.toLowerCase();
+    const search = parsed.search.toLowerCase();
+
+    // 0. Instantly reject any search query param or expired JD flags
+    if (
+      search.includes('expjd=true') ||
+      search.includes('keywords=') ||
+      search.includes('search=') ||
+      search.includes('query=') ||
+      search.includes('searchterm=')
+    ) {
+      return false;
+    }
 
     // 1. Instantly reject job aggregators, spam portals, search engines, and shine.com
     const forbidden = [
@@ -82,9 +94,8 @@ export function isStrictJobUrl(url: string): boolean {
       }
     }
 
-    // 2. LinkedIn: Direct job view postings ONLY
+    // 2. LinkedIn: Direct job view postings ONLY (/jobs/view/<id>)
     if (host.includes('linkedin.com')) {
-      // Must be /jobs/view/<id>
       if (!pathname.includes('/jobs/view/')) {
         return false;
       }
@@ -94,13 +105,17 @@ export function isStrictJobUrl(url: string): boolean {
       return true;
     }
 
-    // 3. Naukri: Direct job listings ONLY
+    // 3. Naukri: Reject expired redirect search pages and require /job-listings- with no search query
     if (host.includes('naukri.com')) {
-      // Must be a direct job listing /job-listings-
       if (!pathname.includes('/job-listings-')) {
         return false;
       }
-      if (pathname.includes('-jobs') || pathname.includes('/jobs-in-') || pathname.includes('/search')) {
+      if (
+        pathname.includes('-jobs') ||
+        pathname.includes('/jobs-in-') ||
+        pathname.includes('/search') ||
+        search.includes('expjd=true')
+      ) {
         return false;
       }
       return true;
@@ -111,36 +126,63 @@ export function isStrictJobUrl(url: string): boolean {
       if (pathname.includes('/srp') || pathname.includes('/search')) {
         return false;
       }
-      if (pathname.includes('/job-postings/') || pathname.includes('/job-openings/')) {
-        return true;
-      }
-      return false;
+      return pathname.includes('/job-postings/') || pathname.includes('/job-openings/');
     }
 
-    // 5. ATS Domains (Workday, Greenhouse, Lever, SmartRecruiters, Ashby, Taleo)
-    const isAts = ALLOWED_ATS_DOMAINS.some((domain) => host === domain || host.endsWith('.' + domain));
-    if (isAts) {
-      // Reject root, search, or category index pages on ATS
+    // 5. Lever: MUST be /company/<job-id-or-uuid>
+    if (host === 'jobs.lever.co' || host.endsWith('.lever.co')) {
+      const parts = pathname.split('/').filter(Boolean);
+      if (parts.length < 2) return false;
       if (
-        pathname === '/' ||
-        pathname === '' ||
-        pathname.includes('/search') ||
-        pathname.includes('/page-') ||
-        pathname.includes('/jobs-in-') ||
-        pathname.includes('/category/')
+        search.includes('location=') ||
+        search.includes('workplacetype=') ||
+        search.includes('team=') ||
+        search.includes('department=')
       ) {
         return false;
       }
       return true;
     }
 
-    // 6. Direct company career subdomains (e.g. careers.microsoft.com, jobs.pwc.com)
+    // 6. Greenhouse: MUST contain /jobs/<id> or /embed/job_app
+    if (host.includes('greenhouse.io')) {
+      if (pathname.includes('/jobs/') || pathname.includes('/job_app')) {
+        const parts = pathname.split('/').filter(Boolean);
+        return parts.length >= 2;
+      }
+      return false;
+    }
+
+    // 7. Ashby: MUST be /company/<uuid>
+    if (host.includes('ashbyhq.com')) {
+      const parts = pathname.split('/').filter(Boolean);
+      return parts.length >= 2;
+    }
+
+    // 8. SmartRecruiters: MUST be /company/<id> or smrtr.io/<id>
+    if (host.includes('smartrecruiters.com') || host.includes('smrtr.io')) {
+      const parts = pathname.split('/').filter(Boolean);
+      return parts.length >= 2;
+    }
+
+    // 9. Workday: MUST contain /job/
+    if (host.includes('myworkdayjobs.com')) {
+      return pathname.includes('/job/');
+    }
+
+    // 10. Taleo: MUST contain jobdetail.ftl
+    if (host.includes('taleo.net')) {
+      return pathname.includes('jobdetail.ftl');
+    }
+
+    // 11. Company direct career subdomains (e.g. careers.microsoft.com, jobs.pwc.com)
     if (host.startsWith('careers.') || host.startsWith('jobs.')) {
       if (
         (pathname.includes('/job/') || pathname.includes('/jobs/') || pathname.includes('/posting/')) &&
         !pathname.includes('/search')
       ) {
-        return true;
+        const parts = pathname.split('/').filter(Boolean);
+        return parts.length >= 2;
       }
     }
 
@@ -154,16 +196,30 @@ export function isStrictJobUrl(url: string): boolean {
 export const isStrictAtsUrl = isStrictJobUrl;
 
 /**
- * Identifies and discards bogus aggregator titles like "Page 5 - 6178 Macros Jobs" or "135 Jobs"
+ * Identifies and discards bogus aggregator titles, category pages, search results, or landing pages
+ * e.g. "Power Bi Developer Jobs In Gurugram", "Page 5 - 6178 Macros Jobs", "Planet Technologies"
  */
-export function isInvalidBogusTitle(title: string): boolean {
+export function isInvalidBogusTitle(title: string, company?: string): boolean {
   if (!title) return true;
   const t = title.toLowerCase().trim();
-  if (/^page\s+\d+/i.test(t)) return true;
-  if (/\b\d+\s+jobs\b/i.test(t)) return true;
+  const c = (company || '').toLowerCase().trim();
+
+  // 1. Search aggregator and keyword-dump titles (e.g. "Power Bi Developer Jobs In Gurugram")
+  if (/\bjobs\s+(?:in|for|near|across|at)\b/i.test(t)) return true;
+  if (/\b(?:openings|vacancies|job\s+vacancies)\s+(?:in|for|across|at)\b/i.test(t)) return true;
+  if (/\bjobs\s*[-–|:]/i.test(t)) return true;
+  if (/\b(?:jobs|openings|vacancies)$/i.test(t)) return true;
+  if (/\b\d+[\+,\s]*jobs\b/i.test(t)) return true;
   if (/^jobs\s+in\b/i.test(t)) return true;
+  if (/^page\s+\d+/i.test(t)) return true;
   if (/search\s+results/i.test(t)) return true;
-  if (/shine\.com|foundit|naukri|indeed|adzuna/i.test(t)) return true;
+  if (/\b(?:all\s+jobs|latest\s+jobs|job\s+search)\b/i.test(t)) return true;
+  if (/shine\.com|foundit|naukri|indeed|adzuna|glassdoor|ambitionbox/i.test(t)) return true;
+
+  // 2. Titles that are just the company name or generic landing page
+  if (c && (t === c || t === c.replace(/[^a-z0-9]/g, ''))) return true;
+  if (/^(?:careers|jobs|home|join\s+our\s+team|welcome|overview)$/i.test(t)) return true;
+
   return false;
 }
 
@@ -183,7 +239,7 @@ export function evaluatePostedWithin3Days(
 
   // 1. Naukri URL ID: DDMMYY in last 12 digits (e.g. 180526015188 -> 18/05/2026)
   if (url && url.includes('naukri.com')) {
-    const nkMatch = url.match(/job-listings-.*?(\d{6})\d{6}$/);
+    const nkMatch = url.match(/job-listings-.*?(\d{6})\d{6}(?:[?#&]|$)/);
     if (nkMatch) {
       const raw = nkMatch[1];
       const day = parseInt(raw.slice(0, 2), 10);
@@ -539,6 +595,18 @@ async function fetchFullJd(
 
     clearTimeout(timeout);
 
+    const finalUrl = res.url || url;
+    if (
+      finalUrl.includes('expJD=true') ||
+      finalUrl.includes('expjd=true') ||
+      finalUrl.includes('-jobs-in-') ||
+      finalUrl.includes('/jobs-in-') ||
+      isGenericSearchLink(finalUrl) ||
+      !isStrictJobUrl(finalUrl)
+    ) {
+      return { text: '', isDead: true };
+    }
+
     if (res.status === 404 || res.status === 410) {
       return { text: '', isDead: true };
     }
@@ -774,7 +842,7 @@ export async function discoverJobsForProfile(
   const roleClause = rotatedRoles.map((r) => `"${r}"`).join(' OR ');
   const skillClause = rotatedSkills.map((s) => `"${s}"`).join(' OR ');
   const negatives =
-    '-site:shine.com -site:linkedin.com/jobs/search -site:naukri.com/jobs-in -site:naukri.com/*-jobs -site:foundit.in/srp -site:indeed.com -site:glassdoor.com -site:ambitionbox.com -Intern -Director -VP -Head';
+    '-site:shine.com -site:naukri.com -site:foundit.in -site:indeed.com -site:glassdoor.com -site:ambitionbox.com -site:linkedin.com/jobs/search -site:linkedin.com/jobs/collections -site:hirist.tech -site:timesjobs.com -site:freshersworld.com -Intern -Director -VP -Head';
 
   let searchQueries: string[] = [];
 
@@ -782,36 +850,36 @@ export async function discoverJobsForProfile(
     const q = queryTerm.trim();
     searchQueries = [
       `${ATS_DOMAINS} intitle:("${q}") ${LOCATIONS} ${negatives}`,
+      `site:myworkdayjobs.com/en-US job "${q}" ${LOCATIONS} ${negatives}`,
       `site:linkedin.com/jobs/view "${q}" ${LOCATIONS} ${negatives}`,
-      `site:naukri.com/job-listings "${q}" ${LOCATIONS} ${negatives}`,
-      `site:foundit.in/job-postings "${q}" ${LOCATIONS} ${negatives}`,
+      `(site:jobs.lever.co OR site:boards.greenhouse.io) "${q}" ${LOCATIONS} ${negatives}`,
     ];
   } else {
-    // 8 distinct multi-portal query clusters targeting ATS, LinkedIn, Naukri, and Enterprise Portals (7-day recency)
+    // 8 distinct multi-portal query clusters targeting ATS, LinkedIn, and Enterprise Portals (7-day recency)
     searchQueries = [
       // Cluster 1: Lever & Greenhouse - Business Analyst, Solutions Analyst, Data Analyst
-      `(site:jobs.lever.co OR site:boards.greenhouse.io) ("Business Analyst" OR "Data Analyst" OR "Solutions Analyst") (India OR Gurgaon OR Noida OR Bangalore OR Remote)`,
+      `(site:jobs.lever.co OR site:boards.greenhouse.io) ("Business Analyst" OR "Data Analyst" OR "Solutions Analyst") (India OR Gurgaon OR Noida OR Bangalore OR Remote) ${negatives}`,
 
       // Cluster 2: Lever & Greenhouse - Power Platform, Power BI, Automation
-      `(site:jobs.lever.co OR site:boards.greenhouse.io) ("Power Platform" OR "Power BI" OR "Power Automate" OR "Automation Consultant" OR "Copilot") (India OR Gurgaon OR Noida OR Bangalore OR Remote)`,
+      `(site:jobs.lever.co OR site:boards.greenhouse.io) ("Power Platform" OR "Power BI" OR "Power Automate" OR "Automation Consultant" OR "Copilot") (India OR Gurgaon OR Noida OR Bangalore OR Remote) ${negatives}`,
 
       // Cluster 3: Workday - Business Analyst & Systems/Solutions Analyst
-      `site:myworkdayjobs.com/en-US ("Business Analyst" OR "Solutions Analyst" OR "Product Analyst") (India OR Gurgaon OR Noida OR Bangalore OR Remote)`,
+      `site:myworkdayjobs.com/en-US ("Business Analyst" OR "Solutions Analyst" OR "Product Analyst") (India OR Gurgaon OR Noida OR Bangalore OR Remote) ${negatives}`,
 
       // Cluster 4: Workday - Power Platform, Power Automate, Power Apps, Power BI
-      `site:myworkdayjobs.com/en-US ("Power Platform" OR "Power Automate" OR "Power Apps" OR "Power BI" OR "Intelligent Automation") India`,
+      `site:myworkdayjobs.com/en-US ("Power Platform" OR "Power Automate" OR "Power Apps" OR "Power BI" OR "Intelligent Automation") India ${negatives}`,
 
       // Cluster 5: SmartRecruiters & Ashby - Analytics & Automation
-      `(site:jobs.smartrecruiters.com OR site:jobs.ashbyhq.com) ("Business Analyst" OR "Data Analyst" OR "Power BI" OR "Automation") (India OR Remote)`,
+      `(site:jobs.smartrecruiters.com OR site:jobs.ashbyhq.com) ("Business Analyst" OR "Data Analyst" OR "Power BI" OR "Automation") (India OR Remote) ${negatives}`,
 
       // Cluster 6: LinkedIn Direct Postings (/jobs/view/)
-      `(site:in.linkedin.com/jobs/view OR site:linkedin.com/jobs/view) ("Business Analyst" OR "Power Platform" OR "Power Automate" OR "Solutions Analyst") (India OR Gurgaon OR Noida OR Bangalore OR Remote)`,
+      `(site:in.linkedin.com/jobs/view OR site:linkedin.com/jobs/view) ("Business Analyst" OR "Power Platform" OR "Power Automate" OR "Solutions Analyst") (India OR Gurgaon OR Noida OR Bangalore OR Remote) ${negatives}`,
 
-      // Cluster 7: Naukri Direct Job Listings (/job-listings-)
-      `site:naukri.com/job-listings ("Business Analyst" OR "Power Platform" OR "Power Automate" OR "Power BI") (Gurgaon OR Noida OR Delhi OR Bangalore OR India)`,
+      // Cluster 7: Workday Direct Postings in NCR / Bangalore (Active enterprise jobs)
+      `site:myworkdayjobs.com/en-US job ("Power Platform" OR "Power Automate" OR "Power BI" OR "Business Analyst") (Gurgaon OR Gurugram OR Noida OR Delhi OR Bangalore OR Remote) ${negatives}`,
 
       // Cluster 8: Top Enterprise Career Portals (Microsoft, Amazon, Deloitte, PwC, Genpact)
-      `(site:careers.microsoft.com OR site:amazon.jobs OR site:jobs.pwc.com OR site:careers.deloitte.com OR site:genpact.taleo.net) ("Business Analyst" OR "Power Platform" OR "Automation Consultant") India`,
+      `(site:careers.microsoft.com OR site:amazon.jobs OR site:jobs.pwc.com OR site:careers.deloitte.com OR site:genpact.taleo.net) ("Business Analyst" OR "Power Platform" OR "Automation Consultant") India ${negatives}`,
     ];
   }
 
@@ -855,6 +923,14 @@ export async function discoverJobsForProfile(
       continue;
     }
 
+    const rawSource = item.source || '';
+    const cleanedCompany = cleanCompanyName(rawSource, rawLink);
+    const cleanedTitle = cleanJobTitle(rawTitle);
+
+    if (isInvalidBogusTitle(cleanedTitle, cleanedCompany)) {
+      continue;
+    }
+
     // Recency check on search result
     const initialDateCheck = evaluatePostedWithin3Days(rawLink, item.date, item.snippet);
     if (!initialDateCheck.isWithin3Days) {
@@ -863,9 +939,6 @@ export async function discoverJobsForProfile(
     }
 
     const normUrl = normalizeJobUrl(rawLink);
-    const rawSource = item.source || '';
-    const cleanedCompany = cleanCompanyName(rawSource, rawLink);
-    const cleanedTitle = cleanJobTitle(rawTitle);
     const safeId = computeSafeJobId(normUrl, cleanedCompany, cleanedTitle);
     const sig = `${cleanedCompany.toLowerCase()}_${cleanedTitle.toLowerCase()}`;
 
@@ -936,16 +1009,14 @@ export async function discoverJobsForProfile(
           let verificationStatus = 'verified_active' as const;
           let verificationNotes = 'Direct requisition verified active and fresh.';
 
-          // If JD text could not be extracted (e.g. JS-heavy SPA), verify with linkVerifier
-          if (!jdText || jdText.length < 150) {
-            const verification = await verifyJobPosting(cand.rawLink, cand.cleanedCompany, cand.cleanedTitle);
-            if (verification.status === 'expired_or_invalid' || verification.isValid === false) {
-              console.log(`[JobSearch] Dropping expired/invalid link (${verification.notes}): ${cand.rawLink}`);
-              return null;
-            }
-            verificationStatus = verification.status as any;
-            verificationNotes = verification.notes;
+          // Verify with linkVerifier for redirect detection, search query filtering, and live status
+          const verification = await verifyJobPosting(cand.rawLink, cand.cleanedCompany, cand.cleanedTitle);
+          if (verification.status === 'expired_or_invalid' || verification.isValid === false) {
+            console.log(`[JobSearch] Dropping expired/invalid/search link (${verification.notes}): ${cand.rawLink}`);
+            return null;
           }
+          verificationStatus = verification.status as any;
+          verificationNotes = verification.notes;
 
           const snippet = cand.item.snippet || '';
           const description =

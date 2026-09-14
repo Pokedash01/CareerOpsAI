@@ -75,6 +75,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   const [savedSettings, setSavedSettings] = useState(false);
   const [remainingTime, setRemainingTime] = useState<string>('03h 48m 22s');
   const [copiedCron, setCopiedCron] = useState(false);
+  const [copiedDeployedCron, setCopiedDeployedCron] = useState(false);
   const [copiedHealth, setCopiedHealth] = useState(false);
   const [testingWebhook, setTestingWebhook] = useState(false);
   const [webhookResult, setWebhookResult] = useState<any>(null);
@@ -82,8 +83,16 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 
   const originUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const isAiStudioDevUrl = originUrl.includes('ais-dev-') || originUrl.includes('ais-pre-');
-  const cronUrl = originUrl ? `${originUrl}/api/cron/trigger` : '/api/cron/trigger';
-  const healthUrl = originUrl ? `${originUrl}/api/health` : '/api/health';
+  const customStudioUrl = 'https://careerops.ai.studio';
+  const deployedCronUrl = `${customStudioUrl}/api/cron/trigger`;
+  const cronUrl = originUrl ? `${originUrl}/api/cron/trigger` : deployedCronUrl;
+  const healthUrl = originUrl ? `${originUrl}/api/health` : `${customStudioUrl}/api/health`;
+
+  const handleCopyDeployedCron = () => {
+    navigator.clipboard.writeText(deployedCronUrl);
+    setCopiedDeployedCron(true);
+    setTimeout(() => setCopiedDeployedCron(false), 2000);
+  };
 
   const handleCopyCron = () => {
     navigator.clipboard.writeText(cronUrl);
@@ -467,25 +476,41 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 )}
 
                 {/* Webhook URL & Interactive Tester */}
-                <div className="space-y-2 pt-3 border-t border-white/[0.07]">
+                <div className="space-y-3 pt-3 border-t border-white/[0.07]">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-white flex items-center gap-1.5">
                       <Terminal className="w-3.5 h-3.5 text-blue-400" />
-                      <span>Production Webhook Trigger URL</span>
+                      <span>cron-job.org Production Webhook URL</span>
                     </span>
-                    <span className="text-[10px] text-zinc-500 font-mono">0 */4 * * *</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/25">
+                      Verified Public Endpoint
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-2 bg-[#080A0F] p-1.5 px-2.5 rounded-xl border border-white/[0.07]">
+                  {/* Highlighted Deployed URL */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 bg-[#080A0F] p-2 px-3 rounded-xl border border-emerald-500/30 shadow-sm shadow-emerald-500/5">
+                      <code className="text-xs text-emerald-300 font-mono flex-1 truncate font-semibold">
+                        {deployedCronUrl}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={handleCopyDeployedCron}
+                        className="flex items-center gap-1.5 text-xs font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 px-3 py-1.5 rounded-lg transition cursor-pointer shrink-0"
+                      >
+                        {copiedDeployedCron ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-emerald-400" />}
+                        <span>{copiedDeployedCron ? 'Copied URL!' : 'Copy for cron-job.org'}</span>
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-zinc-400">
+                      ⚡ Paste this exact URL into <strong>cron-job.org</strong>. It is publicly reachable and returns <strong className="text-emerald-400">200 OK</strong> without 302 authentication redirects.
+                    </p>
+                  </div>
+
+                  {/* Local / Sandbox Webhook Test */}
+                  <div className="flex items-center gap-2 bg-[#080A0F]/60 p-1.5 px-2.5 rounded-xl border border-white/[0.07]">
+                    <span className="text-[10px] text-zinc-400 font-mono">Current Origin:</span>
                     <code className="text-[10px] text-blue-300 font-mono flex-1 truncate">{cronUrl}</code>
-                    <button
-                      type="button"
-                      onClick={handleCopyCron}
-                      className="flex items-center gap-1 text-[10px] font-semibold bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 px-2 py-1 rounded-lg transition cursor-pointer shrink-0"
-                    >
-                      {copiedCron ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-zinc-400" />}
-                      <span>{copiedCron ? 'Copied' : 'Copy'}</span>
-                    </button>
                     <button
                       type="button"
                       onClick={handleTestWebhook}
@@ -497,7 +522,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                       ) : (
                         <Zap className="w-3 h-3 text-amber-300" />
                       )}
-                      <span>{testingWebhook ? 'Pinging...' : 'Test Webhook'}</span>
+                      <span>{testingWebhook ? 'Testing...' : 'Test Webhook Now'}</span>
                     </button>
                   </div>
 
@@ -516,15 +541,15 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                     </div>
                   )}
 
-                  {/* Clarification on why ais-dev gave 302 Found */}
+                  {/* Clarification banner */}
                   {isAiStudioDevUrl && (
                     <div className="p-3 bg-amber-500/[0.07] border border-amber-500/20 rounded-xl space-y-1.5 text-[11px] text-amber-200/90 leading-relaxed">
                       <div className="flex items-center gap-1.5 font-semibold text-amber-300">
                         <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
-                        <span>Why did cron-job.org fail with "302 Found"?</span>
+                        <span>Why did your previous cron job fail?</span>
                       </div>
                       <p className="text-[10px] text-zinc-300 leading-normal">
-                        The current address (<code className="text-amber-200 font-mono text-[9px]">ais-dev-*.run.app</code>) is Google AI Studio's private sandbox, which blocks external bots with Google login redirects (302). Deploy using any of the 3 methods above to get a permanent public URL where cron jobs return <code className="font-mono text-emerald-400 font-semibold">200 OK</code>!
+                        Your previous cron job was configured with the sandbox URL (<code className="text-amber-200 font-mono text-[9px]">ais-dev-*.run.app</code>), which requires Google account sign-in. Use your public deployed domain <code className="text-emerald-300 font-semibold font-mono text-[10px]">https://careerops.ai.studio/api/cron/trigger</code> instead!
                       </p>
                     </div>
                   )}

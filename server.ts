@@ -104,7 +104,7 @@ function loadStoreFromDisk() {
       const data = JSON.parse(raw);
       if (data.currentProfile) currentProfile = data.currentProfile;
       if (Array.isArray(data.jobListings)) {
-        // Strictly purge any expired jobs, SOTI, State Street, aggregators (shine, foundit), and bogus titles
+        // Strictly purge any expired jobs, SOTI, State Street, aggregators, search links, and bogus titles
         jobListings = data.jobListings.filter(
           (j: JobListing) =>
             j.status !== 'expired' &&
@@ -112,9 +112,10 @@ function loadStoreFromDisk() {
             !j.company_name.toLowerCase().includes('state street') &&
             !j.company_name.toLowerCase().includes('soti') &&
             !j.apply_link.toLowerCase().includes('soti.careers') &&
+            !j.apply_link.toLowerCase().includes('expjd=true') &&
             j.id !== '9dfe6112a2137e75' &&
             isStrictAtsUrl(j.apply_link) &&
-            !isInvalidBogusTitle(j.title)
+            !isInvalidBogusTitle(j.title, j.company_name)
         );
 
         // Auto-heal & enrich job listings on load:
