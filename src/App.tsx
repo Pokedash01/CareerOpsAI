@@ -10,6 +10,7 @@ import { UserProfile, JobListing, PipelineStats, AppSettings, WorkflowState } fr
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { INITIAL_PROFILE, INITIAL_JOBS, INITIAL_SETTINGS, INITIAL_WORKFLOW, INITIAL_STATS } from './seedData.js';
+import { dispatchJobNotification } from './lib/telegramClient.js';
 
 async function safeFetchJson<T>(url: string, init?: RequestInit): Promise<T | null> {
   try {
@@ -395,16 +396,18 @@ export function App() {
   // 5. Notify Telegram
   const handleNotifyTelegram = async (job: JobListing) => {
     try {
-      const res = await safeFetchJson<any>('/api/telegram/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: job.id }),
+      const result = await dispatchJobNotification({
+        job,
+        candidateName: profile.full_name,
+        settings,
       });
 
-      if (res?.success) {
-        showToast(res.delivered ? `Telegram notification dispatched for ${job.title}!` : `Simulated Telegram alert generated for ${job.title}!`);
+      if (result.delivered) {
+        showToast(`Telegram alert dispatched for ${job.title}!`);
+      } else if (result.simulated) {
+        showToast(`Simulated Telegram alert generated for ${job.title}!`);
       } else {
-        showToast(`Telegram alert queued for ${job.title}!`);
+        showToast(result.error || `Failed to dispatch alert to Telegram`, 'error');
       }
     } catch (err: any) {
       showToast(err.message || 'Error notifying via Telegram', 'error');
@@ -763,22 +766,6 @@ export function App() {
         candidateName={profile.full_name}
       />
 
-      {isBackendConnected === false && (
-        <div className="bg-blue-950/40 border-b border-blue-500/20 px-4 py-2 text-xs text-blue-300">
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400" />
-              <span>
-                <strong>Client Active:</strong> Profile, ATS job feed ({jobs.length} roles), document tailoring, and ATS resume export active.
-              </span>
-            </div>
-            <span className="text-[11px] text-zinc-400 hidden md:inline">
-              Vercel Serverless & Cloud Run endpoints ready for automated 4-hour background scraping.
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Main Content Area */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <AnimatePresence mode="wait">
@@ -892,11 +879,14 @@ export function App() {
                 isWorkflowRunning={isWorkflowRunning}
                 onUpdateSettings={handleUpdateSettings}
                 onTestNotify={async (jobId, customChatId) => {
-                  const res = await fetch('/api/telegram/notify', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: jobId, custom_chat_id: customChatId }),
-                  }).then((r) => r.json());
+                  const targetJob = jobs.find((j) => j.id === jobId);
+                  if (!targetJob) return { delivered: false, error: 'Job not found' };
+                  const res = await dispatchJobNotification({
+                    job: targetJob,
+                    candidateName: profile.full_name,
+                    settings,
+                    customChatId,
+                  });
                   await refreshState();
                   return res;
                 }}

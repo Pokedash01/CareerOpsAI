@@ -37,9 +37,9 @@ seenJobs['soti_business intelligence & solutions analyst'] = new Date().toISOStr
 
 const appSettings: AppSettings & { serpapi_key?: string } = {
   min_match_score: 75,
-  telegram_configured: Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
+  telegram_configured: true,
   telegram_chat_id: process.env.TELEGRAM_CHAT_ID || '1368681854',
-  telegram_bot_token: process.env.TELEGRAM_BOT_TOKEN || '',
+  telegram_bot_token: process.env.TELEGRAM_BOT_TOKEN || '8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas',
   telegram_bot_name: 'CareerOps Bot',
   telegram_custom_header: '🎯 New High-Fit Role Matched!',
   telegram_include_salary: true,
@@ -925,14 +925,14 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
   }
 
   // --- Telegram Dispatch Helper ---
-  async function sendTelegramAlertForJob(target: JobListing, custom_chat_id?: string) {
+  async function sendTelegramAlertForJob(target: JobListing, custom_chat_id?: string, custom_bot_token?: string) {
     // Strictly prevent dispatching alerts for expired or invalid job links
     if (target.status === 'expired' || target.verification_status === 'expired_or_invalid' || target.company_name.toLowerCase().includes('state street')) {
       return { delivered: false, simulated: false, error: 'Requisition link is expired or closed on career portal.' };
     }
 
-    const chatId = custom_chat_id || appSettings.telegram_chat_id || process.env.TELEGRAM_CHAT_ID || '1368681854';
-    const botToken = appSettings.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = (custom_chat_id || appSettings.telegram_chat_id || process.env.TELEGRAM_CHAT_ID || '1368681854').trim();
+    const botToken = (custom_bot_token || appSettings.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN || '8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas').trim();
     const candFirst = escapeTelegramHtml(currentProfile.full_name.split(' ')[0] || 'Candidate');
 
     const fitScore = target.fit?.match_score || 85;
@@ -1378,15 +1378,18 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
 
   // --- Telegram Dispatch & Webhook ---
   app.post('/api/telegram/notify', async (req, res) => {
-    const { id, custom_chat_id } = req.body;
-    const target = jobListings.find((j) => j.id === id);
+    const { id, custom_chat_id, custom_bot_token, job } = req.body;
+    let target = jobListings.find((j) => j.id === id);
+    if (!target && job) {
+      target = job;
+    }
     if (!target) return res.status(404).json({ error: 'Job listing not found.' });
 
-    const sendResult = await sendTelegramAlertForJob(target, custom_chat_id);
+    const sendResult = await sendTelegramAlertForJob(target, custom_chat_id, custom_bot_token);
     res.json({
-      success: true,
+      success: sendResult.delivered || sendResult.simulated,
       ...sendResult,
-      chat_id: custom_chat_id || process.env.TELEGRAM_CHAT_ID || appSettings.telegram_chat_id,
+      chat_id: custom_chat_id || appSettings.telegram_chat_id || '1368681854',
     });
   });
 
