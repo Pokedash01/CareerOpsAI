@@ -141,7 +141,7 @@ Qualifications:
     verification_status: "verified_active",
     verification_notes: "Direct Workday requisition verified active and accepting applications.",
     verified_at: new Date().toISOString(),
-    status: "viable",
+    status: "discovered",
     fit: {
       is_viable: true,
       match_score: 92,
@@ -185,7 +185,7 @@ Requirements:
     verification_status: "verified_active",
     verification_notes: "Direct Workday requisition verified active and accepting applications.",
     verified_at: new Date().toISOString(),
-    status: "viable",
+    status: "discovered",
     fit: {
       is_viable: true,
       match_score: 94,
@@ -229,7 +229,7 @@ Qualifications:
     verification_status: "verified_active",
     verification_notes: "Direct Taleo career section requisition actively accepting applications.",
     verified_at: new Date().toISOString(),
-    status: "viable",
+    status: "discovered",
     fit: {
       is_viable: true,
       match_score: 91,
@@ -246,78 +246,42 @@ Qualifications:
     }
   },
   {
-    id: "9dfe6112a2137e75",
-    title: "Business Intelligence & Solutions Analyst",
-    company_name: "SOTI",
-    location: "Gurugram",
-    salary_range_lpa: [13, 18],
+    id: "rockwell-pp-dev-01",
+    title: "Power Platform Developer",
+    company_name: "Rockwell Automation",
+    location: "Noida",
+    salary_range_lpa: [14, 20],
     experience_range_years: [3, 5],
-    description: `SOTI is looking for a Business Intelligence & Solutions Analyst to optimize enterprise intelligence reporting.
+    description: `Rockwell Automation is hiring a Power Platform Developer to architect and automate enterprise digital workflows.
 Responsibilities:
-- Synthesize multidimensional business datasets into real-time Power BI and SQL dashboards.
-- Design automated alert systems and data governance mechanisms across enterprise systems.
-- Partner with leadership to conduct market share and operational audit analyses.
+- Build enterprise Power Automate cloud flows and canvas Power Apps for internal global teams.
+- Deploy automated business intelligence dashboards in Power BI integrated with SQL and SharePoint.
+- Build governance, security, and exception alerting for digital automation solutions.
 Requirements:
-- 3+ years experience with Power BI, advanced SQL, data modeling, and process optimization.
-- Experience with Lean Six Sigma or structured quality frameworks is highly desirable.`,
-    apply_link: "https://soti.careers/jobs/bi-solutions-analyst-gurugram",
-    ats_source: "Ashby",
+- 3+ years experience with Microsoft Power Platform (Power Automate, Power Apps, Power BI).
+- Strong proficiency in workflow automation and enterprise integrations.`,
+    apply_link: "https://rockwellautomation.wd1.myworkdayjobs.com/en-US/External_Rockwell_Automation/job/Power-Platform-Developer_R26-5358",
+    ats_source: "Workday",
     discovered_at: new Date(Date.now() - 3600000 * 14).toISOString(),
     posted_date: new Date(Date.now() - 3600000 * 14).toISOString(),
     posted_days_ago: 1,
     is_direct_posting: true,
     verification_status: "verified_active",
-    verification_notes: "Direct Ashby career posting verified active and accepting applicants.",
+    verification_notes: "Direct Workday requisition verified active and accepting applicants.",
     verified_at: new Date().toISOString(),
-    status: "viable",
+    status: "discovered",
     fit: {
       is_viable: true,
-      match_score: 88,
+      match_score: 93,
       detected_experience: "3-5 years",
-      salary_range: "₹13 - ₹18 LPA",
-      location: "Gurugram",
-      skills_gap: "Advanced SQL modeling",
-      summary_reasoning: "High fit. Candidate has conducted market share analyses across 6 sectors and holds Lean Six Sigma yellow belt, with extensive Power BI and alert automation experience.",
-      strengths: [
-        "Lean Six Sigma Yellow Belt certification with recognized KUDOS awards",
-        "Audit Market Share (AMS) experience across 6 sectors",
-        "Location in Gurugram perfectly aligned"
-      ]
-    }
-  },
-  {
-    id: "b99ca9d4efcb7121",
-    title: "Automation Engineer - Global Operations",
-    company_name: "State Street",
-    location: "Bengaluru",
-    salary_range_lpa: [14, 20],
-    experience_range_years: [3, 6],
-    description: `State Street Global Operations is seeking an Automation Engineer to lead process automation initiatives across asset management workflows.
-Requirements:
-- Experience developing enterprise automation workflows using Power Automate, VBA macros, and Python.
-- Proven experience managing large-scale repositories (30,000+ assets) and automated governance.
-- Microsoft Certified or Azure AI certifications are strongly preferred.`,
-    apply_link: "https://statestreet.wd1.myworkdayjobs.com/Global/job/Bengaluru/Automation-Engineer",
-    ats_source: "Workday",
-    discovered_at: new Date(Date.now() - 3600000 * 20).toISOString(),
-    posted_date: new Date(Date.now() - 3600000 * 20).toISOString(),
-    posted_days_ago: 1,
-    is_direct_posting: true,
-    verification_status: "expired_or_invalid",
-    verification_notes: "Link Expired: State Street requisition closed on Workday portal (HTTP 404 not found).",
-    verified_at: new Date().toISOString(),
-    status: "expired",
-    fit: {
-      is_viable: true,
-      match_score: 87,
-      detected_experience: "3-6 years",
       salary_range: "₹14 - ₹20 LPA",
-      location: "Bengaluru",
+      location: "Noida",
       skills_gap: "None",
-      summary_reasoning: "Solid match. Direct experience managing 30,000+ asset repositories with VBA and Power Automate, plus multiple Microsoft Azure AI certifications.",
+      summary_reasoning: "Exceptional match. Candidate has 3.2 years of hands-on Power Platform, Power Automate, and Power BI enterprise development at KPMG.",
       strengths: [
-        "Managed 30,000+ asset refresh repository using VBA & automation",
-        "Holds Azure AI Fundamentals (AI-901) and AI Transformation Leader certifications"
+        "Direct KPMG experience with 20,000+ reach-out automation solutions",
+        "Deep Power Apps, Power Automate, and Power BI production skills",
+        "Location in Noida/NCR aligned with preferences"
       ]
     }
   },

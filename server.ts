@@ -1,22 +1,41 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { UserProfile, JobListing, AppSettings, WorkflowState, WorkflowRunLog } from './src/types.js';
 import { INITIAL_PROFILE, INITIAL_JOBS } from './server/seedData.js';
 import { evaluateJobFit } from './server/matcher.js';
 import { generateTailoredDocuments } from './server/tailor.js';
-import { discoverJobsForProfile, extractExperienceYears, extractSalaryLpa } from './server/jobSearch.js';
+import { discoverJobsForProfile, extractExperienceYears, extractSalaryLpa, normalizeJobUrl, computeSafeJobId, isStrictAtsUrl, isInvalidBogusTitle } from './server/jobSearch.js';
 import { verifyJobPosting, isGenericSearchLink } from './server/linkVerifier.js';
 import { resolveExperienceYears, estimateSalaryLpa, generateSalarySearchMetadata } from './server/salaryEstimator.js';
 import { parseAndEnrichCandidateResume } from './server/resumeScraper.js';
 import { getGeminiClient, cleanJsonResponse } from './server/gemini.js';
 import crypto from 'crypto';
 
-let currentProfile: UserProfile = { ...INITIAL_PROFILE };
-let jobListings: JobListing[] = [...INITIAL_JOBS];
-const notifiedJobIds = new Set<string>();
+const DATA_DIR = path.join(process.cwd(), 'data');
+const STORE_FILE = path.join(DATA_DIR, 'careerops_store.json');
 
-const appSettings: AppSettings = {
+let currentProfile: UserProfile = { ...INITIAL_PROFILE };
+// Filter out any expired jobs initially and blacklisted entries (State Street, SOTI)
+let jobListings: JobListing[] = INITIAL_JOBS.filter(
+  (j) =>
+    j.status !== 'expired' &&
+    j.verification_status !== 'expired_or_invalid' &&
+    !j.company_name.toLowerCase().includes('state street') &&
+    !j.company_name.toLowerCase().includes('soti') &&
+    !j.apply_link.toLowerCase().includes('soti.careers') &&
+    j.id !== '9dfe6112a2137e75'
+);
+const notifiedJobIds = new Set<string>();
+const seenJobs: Record<string, string> = {};
+
+// Permanently blacklist fake/dead SOTI seed in memory
+seenJobs['9dfe6112a2137e75'] = new Date().toISOString();
+seenJobs['https://soti.careers/jobs/bi-solutions-analyst-gurugram'] = new Date().toISOString();
+seenJobs['soti_business intelligence & solutions analyst'] = new Date().toISOString();
+
+const appSettings: AppSettings & { serpapi_key?: string } = {
   min_match_score: 75,
   telegram_configured: Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
   telegram_chat_id: process.env.TELEGRAM_CHAT_ID || '1368681854',
@@ -30,6 +49,7 @@ const appSettings: AppSettings = {
   workflow_enabled: true,
   workflow_interval_hours: 4,
   auto_notify_telegram: true,
+  serpapi_key: process.env.SERPAPI_KEY || 'GNLQpQWpHAMcEL9MguEkrxq1',
 };
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
@@ -58,11 +78,180 @@ const workflowState: WorkflowState = {
   ],
 };
 
+function saveStoreToDisk() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    const data = {
+      currentProfile,
+      jobListings,
+      notifiedJobIds: Array.from(notifiedJobIds),
+      seenJobs,
+      appSettings,
+      workflowState,
+    };
+    fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[Store] Failed to save store to disk:', err);
+  }
+}
+
+function loadStoreFromDisk() {
+  try {
+    if (fs.existsSync(STORE_FILE)) {
+      const raw = fs.readFileSync(STORE_FILE, 'utf-8');
+      const data = JSON.parse(raw);
+      if (data.currentProfile) currentProfile = data.currentProfile;
+      if (Array.isArray(data.jobListings)) {
+        // Strictly purge any expired jobs, SOTI, State Street, aggregators (shine, foundit), and bogus titles
+        jobListings = data.jobListings.filter(
+          (j: JobListing) =>
+            j.status !== 'expired' &&
+            j.verification_status !== 'expired_or_invalid' &&
+            !j.company_name.toLowerCase().includes('state street') &&
+            !j.company_name.toLowerCase().includes('soti') &&
+            !j.apply_link.toLowerCase().includes('soti.careers') &&
+            j.id !== '9dfe6112a2137e75' &&
+            isStrictAtsUrl(j.apply_link) &&
+            !isInvalidBogusTitle(j.title)
+        );
+
+        // Auto-heal & enrich job listings on load:
+        // 1. Re-extract exact required experience using JD text, URL slug, and role titles
+        // 2. Guarantee salary figures are always present with realistic market benchmarks when omitted in JDs
+        for (const j of jobListings) {
+          const expRes = resolveExperienceYears(j.description, j.title, j.apply_link);
+          if (!expRes.isInferred || !j.experience_range_years || j.experience_is_inferred) {
+            j.experience_range_years = expRes.range;
+            j.experience_is_inferred = expRes.isInferred;
+            j.experience_inferred_reason = expRes.reason;
+          }
+
+          // Ensure salary figures are present and realistic (never "Estimated" without figures)
+          if (!j.salary_range_lpa || j.salary_range_lpa[0] > 150) {
+            const jdSalary = extractSalaryLpa(j.description);
+            if (jdSalary && jdSalary[0] <= 150) {
+              j.salary_range_lpa = jdSalary;
+              j.salary_is_estimated = false;
+              j.salary_source = 'Stated in Job Description';
+            } else {
+              const bench = estimateSalaryLpa(
+                j.title,
+                j.company_name,
+                j.location,
+                j.experience_range_years || [2, 4]
+              );
+              j.salary_range_lpa = [bench.minLpa, bench.maxLpa];
+              j.salary_is_estimated = true;
+              j.salary_source = bench.source;
+            }
+          }
+
+          // Keep fit summary in sync with actual facts
+          if (j.fit) {
+            if (!j.fit.detected_experience || j.fit.detected_experience === '2-5 Years' || j.fit.detected_experience === 'Not evaluated') {
+              if (j.experience_range_years) {
+                j.fit.detected_experience = j.experience_is_inferred
+                  ? `${j.experience_range_years[0]}-${j.experience_range_years[1]} Years (Inferred)`
+                  : `${j.experience_range_years[0]}-${j.experience_range_years[1]} Years`;
+              }
+            }
+            if (!j.fit.salary_range || j.fit.salary_range === 'Not evaluated' || j.fit.salary_range.includes('undefined')) {
+              if (j.salary_range_lpa) {
+                j.fit.salary_range = `₹${j.salary_range_lpa[0]} - ₹${j.salary_range_lpa[1]} LPA`;
+              }
+            }
+          }
+        }
+      }
+      if (Array.isArray(data.notifiedJobIds)) {
+        for (const id of data.notifiedJobIds) notifiedJobIds.add(id);
+      }
+      if (data.seenJobs && typeof data.seenJobs === 'object') {
+        Object.assign(seenJobs, data.seenJobs);
+      }
+      // Ensure all current job listings and SOTI are registered in seenJobs
+      seenJobs['9dfe6112a2137e75'] = new Date().toISOString();
+      seenJobs['https://soti.careers/jobs/bi-solutions-analyst-gurugram'] = new Date().toISOString();
+      seenJobs['soti_business intelligence & solutions analyst'] = new Date().toISOString();
+
+      for (const j of jobListings) {
+        seenJobs[j.id] = j.discovered_at || new Date().toISOString();
+        if (j.apply_link) {
+          seenJobs[normalizeJobUrl(j.apply_link)] = j.discovered_at || new Date().toISOString();
+        }
+        seenJobs[`${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`] = j.discovered_at || new Date().toISOString();
+      }
+
+      if (data.appSettings) {
+        Object.assign(appSettings, data.appSettings);
+      }
+      if (data.workflowState) {
+        Object.assign(workflowState, data.workflowState);
+        workflowState.is_running = false; // release any stale lock
+      }
+      console.log(`[Store] Restored ${jobListings.length} jobs, ${Object.keys(seenJobs).length} seen entries, and workflow state from disk.`);
+      return;
+    }
+  } catch (err) {
+    console.error('[Store] Failed to load store from disk:', err);
+  }
+
+  saveStoreToDisk();
+}
+
+loadStoreFromDisk();
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  const DEFAULT_PUBLIC_URL =
+    process.env.APP_URL ||
+    'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app';
+
+  app.set('trust proxy', true);
+
+  let lastKnownBaseUrl = DEFAULT_PUBLIC_URL;
+
   app.use(express.json({ limit: '10mb' }));
+
+  // Track the public base URL dynamically from incoming requests
+  // and trigger autonomous 4-hour catch-up if window has elapsed (handles Cloud Run idling / cold starts)
+  app.use((req, res, next) => {
+    const host = (req.headers['x-forwarded-host'] as string) || req.headers.host || '';
+    if (
+      host &&
+      !host.includes('localhost') &&
+      !host.includes('127.0.0.1') &&
+      !host.startsWith('10.') &&
+      !host.startsWith('172.') &&
+      !host.startsWith('192.168.')
+    ) {
+      const proto = host.includes('.run.app')
+        ? 'https'
+        : (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
+      lastKnownBaseUrl = `${proto}://${host}`;
+    }
+
+    // Cloud Run Self-Healing: Check if 4 hours elapsed while container was sleeping or offline
+    if (workflowState.enabled && !workflowState.is_running) {
+      const now = Date.now();
+      const lastRunTime = workflowState.last_run ? new Date(workflowState.last_run).getTime() : 0;
+      const nextRunTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
+      const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1000;
+
+      if ((nextRunTime > 0 && now >= nextRunTime) || (lastRunTime > 0 && now - lastRunTime >= intervalMs)) {
+        console.log(`[Cloud Run Autonomous Scheduler] 4-hour window reached (${new Date().toISOString()}). Triggering background cycle...`);
+        executeWorkflowCycle('scheduled_4h').catch((err) => {
+          console.error('[Cloud Run Autonomous Scheduler] Catch-up execution error:', err);
+        });
+      }
+    }
+
+    next();
+  });
 
   // --- Health Check ---
   app.get('/api/health', (req, res) => {
@@ -172,17 +361,36 @@ async function startServer() {
   app.post('/api/jobs/search', async (req, res) => {
     const { query } = req.body;
     try {
-      const newJobs = await discoverJobsForProfile(currentProfile, query);
-      // Deduplicate against existing jobs
+      const newJobs = await discoverJobsForProfile(
+        currentProfile,
+        query,
+        jobListings,
+        seenJobs,
+        appSettings.serpapi_key || process.env.SERPAPI_KEY
+      );
+      // Deduplicate and record in seenJobs
       const existingIds = new Set(jobListings.map((j) => j.id));
+      const existingSignatures = new Set(
+        jobListings.map((j) => `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`)
+      );
       const added: JobListing[] = [];
       for (const nj of newJobs) {
-        if (!existingIds.has(nj.id)) {
+        const sig = `${nj.company_name.toLowerCase()}_${nj.title.toLowerCase()}`;
+        const normLink = normalizeJobUrl(nj.apply_link);
+
+        // Record in seenJobs so it is never searched or returned again
+        seenJobs[nj.id] = new Date().toISOString();
+        if (normLink) seenJobs[normLink] = new Date().toISOString();
+        seenJobs[sig] = new Date().toISOString();
+
+        if (!existingIds.has(nj.id) && !existingSignatures.has(sig)) {
           jobListings.unshift(nj);
           existingIds.add(nj.id);
+          existingSignatures.add(sig);
           added.push(nj);
         }
       }
+      saveStoreToDisk();
       res.json({ success: true, added_count: added.length, jobs: jobListings });
     } catch (err: any) {
       console.error('[Jobs Search] Error:', err);
@@ -199,9 +407,9 @@ async function startServer() {
     const id = crypto.createHash('sha256').update(title + company_name + Date.now()).digest('hex').substring(0, 16);
 
     // Guaranteed Experience Resolution
-    const expResolution = resolveExperienceYears(description, title);
+    const expResolution = resolveExperienceYears(description, title, apply_link);
     const finalExpRange: [number, number] =
-      experience_range_years || extractExperienceYears(description) || expResolution.range;
+      experience_range_years || (expResolution ? expResolution.range : [2, 4]);
 
     // Guaranteed Salary Resolution & Regional AmbitionBox / Glassdoor Search Query
     let finalSalaryRange = salary_range_lpa || extractSalaryLpa(description);
@@ -257,7 +465,7 @@ async function startServer() {
       verification_status: verification.status,
       verification_notes: verification.notes,
       verified_at: verification.checkedAt,
-      status: 'new',
+      status: 'discovered',
     };
 
     jobListings.unshift(newJob);
@@ -287,21 +495,278 @@ async function startServer() {
     target.verified_at = verification.checkedAt;
     target.is_direct_posting = verification.isDirect;
 
-    res.json({ success: true, verification, job: target });
+    let autoRemoved = false;
+    if (verification.status === 'expired_or_invalid' || target.company_name.toLowerCase().includes('state street')) {
+      target.status = 'expired';
+      // Automatically purge expired job from pipeline so the user never sees stale links
+      jobListings = jobListings.filter((j) => j.id !== id);
+      autoRemoved = true;
+    }
+
+    saveStoreToDisk();
+    res.json({
+      success: true,
+      verification,
+      autoRemoved,
+      job: autoRemoved ? null : target,
+      jobs: jobListings,
+    });
   });
 
-  // Batch verify all job links endpoint
+  // Batch verify all job links endpoint - automatically removes expired jobs
   app.post('/api/jobs/verify-all', async (req, res) => {
     const results = [];
-    for (const job of jobListings) {
+    const initialCount = jobListings.length;
+    for (const job of [...jobListings]) {
       const verification = await verifyJobPosting(job.apply_link, job.company_name, job.title);
       job.verification_status = verification.status;
       job.verification_notes = verification.notes;
       job.verified_at = verification.checkedAt;
       job.is_direct_posting = verification.isDirect;
+      if (verification.status === 'expired_or_invalid' || job.company_name.toLowerCase().includes('state street')) {
+        job.status = 'expired';
+      }
       results.push({ id: job.id, status: verification.status });
     }
-    res.json({ success: true, verified_count: results.length, jobs: jobListings });
+
+    // Automatically remove all expired jobs found from pipeline
+    jobListings = jobListings.filter(
+      (j) =>
+        j.status !== 'expired' &&
+        j.verification_status !== 'expired_or_invalid' &&
+        !j.company_name.toLowerCase().includes('state street')
+    );
+    const removedExpired = initialCount - jobListings.length;
+    saveStoreToDisk();
+
+    res.json({
+      success: true,
+      verified_count: results.length,
+      removed_expired_count: removedExpired,
+      remaining_count: jobListings.length,
+      jobs: jobListings,
+    });
+  });
+
+  // Remove Expired Jobs endpoint
+  app.post('/api/jobs/remove-expired', (req, res) => {
+    const initialCount = jobListings.length;
+    jobListings = jobListings.filter(
+      (j) =>
+        j.status !== 'expired' &&
+        j.verification_status !== 'expired_or_invalid' &&
+        !j.company_name.toLowerCase().includes('state street')
+    );
+    const removedCount = initialCount - jobListings.length;
+    saveStoreToDisk();
+    console.log(`[Remove Expired] Purged ${removedCount} expired/invalid jobs. ${jobListings.length} remain.`);
+    res.json({ success: true, removedCount, remainingCount: jobListings.length, jobs: jobListings });
+  });
+
+  // Delete specific job endpoint
+  app.delete('/api/jobs/:id', (req, res) => {
+    const { id } = req.params;
+    const initialCount = jobListings.length;
+    jobListings = jobListings.filter((j) => j.id !== id);
+    saveStoreToDisk();
+    res.json({ success: true, deleted: initialCount > jobListings.length, jobs: jobListings });
+  });
+
+  // --- Download Cover Letter Endpoint (Direct mobile file download) ---
+  app.get('/api/download-cover-letter', async (req, res) => {
+    const id = req.query.id as string;
+    const format = ((req.query.format as string) || 'txt').toLowerCase();
+    const target = jobListings.find((j) => j.id === id);
+
+    if (!target) {
+      return res.status(404).send('Job listing not found');
+    }
+
+    if (!target.tailored) {
+      try {
+        target.tailored = await generateTailoredDocuments(
+          currentProfile,
+          target.title,
+          target.company_name,
+          target.description
+        );
+      } catch (err) {
+        console.error('[Download] Error generating tailored cover letter:', err);
+      }
+    }
+
+    const tailored = target.tailored;
+    const candName = currentProfile.full_name;
+    const candEmail = currentProfile.contact.email;
+    const candPhone = currentProfile.contact.phone;
+    const candLocation = currentProfile.contact.location;
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const paragraphs = tailored?.cover_letter_paragraphs || [
+      `I am writing to express my strong enthusiasm for the ${target.title} position at ${target.company_name}. With my background in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.`,
+      `In my previous roles, I have spearheaded enterprise workflow automations, created multi-sector telemetry dashboards in Power BI, and automated legacy processes with verified high-impact time savings.`,
+      `Thank you for considering my application. I look forward to discussing how my experience and skill set directly support the operational objectives of ${target.company_name}.`,
+    ];
+
+    const safeCompany = target.company_name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeTitle = target.title.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+    if (format === 'doc') {
+      const docHtml = `
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><title>Cover Letter - ${target.title}</title>
+<style>
+body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #111827; }
+h1 { font-size: 18pt; margin-bottom: 4pt; color: #0A2540; }
+.contact { font-size: 10pt; color: #4B5563; margin-bottom: 20pt; border-bottom: 1.5pt solid #0A2540; padding-bottom: 6pt; }
+p { margin-bottom: 12pt; text-align: justify; }
+.sig { margin-top: 24pt; }
+</style>
+</head>
+<body>
+<h1>${candName}</h1>
+<div class="contact">${candEmail} | ${candPhone} | ${candLocation}</div>
+<p>${today}</p>
+<p><b>Hiring Team</b><br/>${target.company_name}<br/><b>Target Role:</b> ${target.title}</p>
+<p>Dear Hiring Team at ${target.company_name},</p>
+${paragraphs.map((p) => `<p>${p}</p>`).join('\n')}
+<div class="sig">
+<p>Sincerely,</p>
+<p><b>${candName}</b></p>
+</div>
+</body>
+</html>`;
+      res.setHeader('Content-Disposition', `attachment; filename="Cover_Letter_${safeCompany}_${safeTitle}.doc"`);
+      res.setHeader('Content-Type', 'application/msword; charset=utf-8');
+      return res.send(docHtml);
+    }
+
+    const textContent = `${candName.toUpperCase()}
+${candEmail} | ${candPhone} | ${candLocation}
+--------------------------------------------------------------------------------
+Date: ${today}
+To: Hiring Team at ${target.company_name}
+Re: Application for ${target.title}
+
+Dear Hiring Team at ${target.company_name},
+
+${paragraphs.join('\n\n')}
+
+Sincerely,
+${candName}
+`;
+
+    res.setHeader('Content-Disposition', `attachment; filename="Cover_Letter_${safeCompany}_${safeTitle}.txt"`);
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.send(textContent);
+  });
+
+  // --- Download Resume Endpoint (Direct mobile file download) ---
+  app.get('/api/download-resume', async (req, res) => {
+    const id = req.query.id as string;
+    const format = ((req.query.format as string) || 'txt').toLowerCase();
+    const target = jobListings.find((j) => j.id === id);
+
+    if (!target) {
+      return res.status(404).send('Job listing not found');
+    }
+
+    if (!target.tailored) {
+      try {
+        target.tailored = await generateTailoredDocuments(
+          currentProfile,
+          target.title,
+          target.company_name,
+          target.description
+        );
+      } catch (err) {
+        console.error('[Download] Error generating tailored resume:', err);
+      }
+    }
+
+    const tailored = target.tailored;
+    const candName = currentProfile.full_name;
+    const candEmail = currentProfile.contact.email;
+    const candPhone = currentProfile.contact.phone;
+    const candLocation = currentProfile.contact.location;
+    const summary = tailored?.summary || `${candName} - Experience: ${currentProfile.total_years_experience} Years. Core Skills: ${currentProfile.skills.slice(0, 6).join(', ')}.`;
+    const skills = (tailored?.skills_ordered || currentProfile.skills).join(', ');
+    const experiences = tailored?.experience || currentProfile.experience;
+
+    const safeCompany = target.company_name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeCand = candName.replace(/\s+/g, '_');
+
+    if (format === 'doc') {
+      const docHtml = `
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><title>Resume - ${candName}</title>
+<style>
+body { font-family: Calibri, Arial, sans-serif; font-size: 10pt; line-height: 1.4; color: #111827; }
+h1 { font-size: 18pt; margin-bottom: 2pt; color: #0A2540; text-align: center; }
+.contact { font-size: 9pt; color: #4B5563; margin-bottom: 12pt; text-align: center; border-bottom: 1.5pt solid #0A2540; padding-bottom: 4pt; }
+h2 { font-size: 11pt; color: #0A2540; border-bottom: 1pt solid #D1D5DB; margin-top: 10pt; margin-bottom: 4pt; text-transform: uppercase; }
+ul { margin-top: 2pt; margin-bottom: 6pt; padding-left: 18pt; }
+li { margin-bottom: 3pt; }
+</style>
+</head>
+<body>
+<h1>${candName}</h1>
+<div class="contact">${candEmail} | ${candPhone} | ${candLocation}</div>
+<h2>Summary</h2>
+<p>${summary}</p>
+<h2>Technical Skills</h2>
+<p>${skills}</p>
+<h2>Professional Experience</h2>
+${experiences
+  .map(
+    (e) => `
+<div>
+<p><b>${e.company}</b></p>
+<ul>
+${(e.bullets || []).map((b) => `<li>${b}</li>`).join('\n')}
+</ul>
+</div>
+`
+  )
+  .join('\n')}
+</body>
+</html>`;
+      res.setHeader('Content-Disposition', `attachment; filename="Resume_${safeCand}_${safeCompany}.doc"`);
+      res.setHeader('Content-Type', 'application/msword; charset=utf-8');
+      return res.send(docHtml);
+    }
+
+    const textContent = `${candName.toUpperCase()}
+${candEmail} | ${candPhone} | ${candLocation}
+--------------------------------------------------------------------------------
+
+SUMMARY
+${summary}
+
+SKILLS
+${skills}
+
+WORK EXPERIENCE
+${experiences
+  .map(
+    (e) => `
+${e.company}
+${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
+`
+  )
+  .join('\n')}
+`;
+
+    res.setHeader('Content-Disposition', `attachment; filename="Resume_${safeCand}_${safeCompany}.txt"`);
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.send(textContent);
+  });
+
+  // Direct ATS Document View & Apply Portal (Redirects directly to Document Studio)
+  app.get('/api/ats-view', async (req, res) => {
+    const id = (req.query.id as string) || '';
+    const requestedType = (req.query.type as string) || 'resume';
+    return res.redirect(`/?tab=tailor&jobId=${encodeURIComponent(id)}&type=${encodeURIComponent(requestedType)}`);
   });
 
   app.post('/api/jobs/status', (req, res) => {
@@ -450,16 +915,25 @@ async function startServer() {
     }
   });
 
+  // Helper to escape characters reserved in Telegram HTML parse mode (&, <, >)
+  function escapeTelegramHtml(text: string | number | undefined | null): string {
+    if (text === undefined || text === null) return '';
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
   // --- Telegram Dispatch Helper ---
   async function sendTelegramAlertForJob(target: JobListing, custom_chat_id?: string) {
     // Strictly prevent dispatching alerts for expired or invalid job links
-    if (target.status === 'expired' || target.verification_status === 'expired_or_invalid') {
+    if (target.status === 'expired' || target.verification_status === 'expired_or_invalid' || target.company_name.toLowerCase().includes('state street')) {
       return { delivered: false, simulated: false, error: 'Requisition link is expired or closed on career portal.' };
     }
 
     const chatId = custom_chat_id || appSettings.telegram_chat_id || process.env.TELEGRAM_CHAT_ID || '1368681854';
     const botToken = appSettings.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN;
-    const candFirst = currentProfile.full_name.split(' ')[0] || 'Candidate';
+    const candFirst = escapeTelegramHtml(currentProfile.full_name.split(' ')[0] || 'Candidate');
 
     const fitScore = target.fit?.match_score || 85;
     const expReq = target.fit?.detected_experience || (target.experience_range_years ? `${target.experience_range_years[0]}-${target.experience_range_years[1]} Years` : 'Not specified');
@@ -468,33 +942,68 @@ async function startServer() {
 
     const header = appSettings.telegram_custom_header || `🎯 <b>New High-Fit Role Matched for ${candFirst}! (CareerOps AI)</b>`;
 
+    // Ensure tailored ATS documents are drafted prior to alert dispatch
+    if (!target.tailored) {
+      try {
+        target.tailored = await generateTailoredDocuments(
+          currentProfile,
+          target.title,
+          target.company_name,
+          target.description
+        );
+      } catch (e) {
+        console.error('[Telegram Alert] Pre-tailoring document generation fallback:', e);
+      }
+    }
+
+    let baseUrl = lastKnownBaseUrl || process.env.APP_URL || 'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app';
+    if (baseUrl.includes('.run.app') && baseUrl.startsWith('http://')) {
+      baseUrl = baseUrl.replace('http://', 'https://');
+    }
+    const resumeLink = `${baseUrl}/?tab=tailor&jobId=${encodeURIComponent(target.id)}&type=resume`;
+    const coverLetterLink = `${baseUrl}/?tab=tailor&jobId=${encodeURIComponent(target.id)}&type=cover_letter`;
+
+    // Strictly escape dynamic variables for Telegram HTML entities
+    const roleEsc = escapeTelegramHtml(target.title);
+    const compEsc = escapeTelegramHtml(target.company_name);
+    const locEsc = escapeTelegramHtml(target.location);
+    const expEsc = escapeTelegramHtml(expReq);
+    const salEsc = escapeTelegramHtml(salRange);
+    const gapsEsc = escapeTelegramHtml(gaps);
+
     let htmlMessage = `${header}\n\n` +
-      `📌 <b>Role:</b> ${target.title}\n` +
-      `🏢 <b>Company:</b> ${target.company_name}\n` +
-      `📍 <b>Location:</b> ${target.location}\n` +
-      `⏳ <b>Experience Required:</b> ${expReq}\n`;
+      `📌 <b>Role:</b> ${roleEsc}\n` +
+      `🏢 <b>Company:</b> ${compEsc}\n` +
+      `📍 <b>Location:</b> ${locEsc}\n` +
+      `⏳ <b>Experience Required:</b> ${expEsc}\n`;
 
     if (appSettings.telegram_include_salary !== false) {
-      htmlMessage += `💰 <b>Salary Range:</b> ${salRange}\n`;
+      htmlMessage += `💰 <b>Salary Range:</b> ${salEsc}\n`;
     }
 
     htmlMessage += `📊 <b>Fit Score:</b> ${fitScore}%\n`;
 
     if (appSettings.telegram_include_skill_gap !== false) {
-      htmlMessage += `⚠️ <b>Skill Gap:</b> ${gaps}\n`;
+      htmlMessage += `⚠️ <b>Skill Gap:</b> ${gapsEsc}\n`;
     }
 
-    htmlMessage += `\n`;
+    htmlMessage += `\n` +
+      `📄 <a href="${resumeLink}"><b>Tailored ATS Resume</b></a>\n` +
+      `✉️ <a href="${coverLetterLink}"><b>Tailored Cover Letter</b></a>\n`;
 
     if (appSettings.telegram_include_apply_link !== false) {
-      htmlMessage += `🔗 <a href="${target.apply_link}"><b>Apply Directly on Portal</b></a>\n`;
+      htmlMessage += `🚀 <a href="${target.apply_link}"><b>Apply Link</b></a>\n`;
     }
 
-    htmlMessage += `📄 <b>ATS Resume & Cover Letter ready for export</b>\n\n` +
-      `<i>Automated workflow dispatch via CareerOps-AI.</i>`;
+    htmlMessage += `\n<i>Automated workflow dispatch via CareerOps-AI.</i>`;
 
     notifiedJobIds.add(target.id);
-    target.status = 'notified';
+    seenJobs[target.id] = new Date().toISOString();
+    if (target.apply_link) {
+      seenJobs[normalizeJobUrl(target.apply_link)] = new Date().toISOString();
+    }
+    seenJobs[`${target.company_name.toLowerCase()}_${target.title.toLowerCase()}`] = new Date().toISOString();
+    saveStoreToDisk();
 
     if (botToken) {
       try {
@@ -506,16 +1015,35 @@ async function startServer() {
             text: htmlMessage,
             parse_mode: 'HTML',
             disable_web_page_preview: true,
+            link_preview_options: { is_disabled: true },
           }),
         });
         const tgData = await tgRes.json();
-        return { delivered: true, simulated: false, message_html: htmlMessage, telegram_response: tgData };
+        if (!tgRes.ok || !tgData.ok) {
+          console.error('[Telegram] Dispatch rejected by Telegram API:', tgData);
+          return {
+            delivered: false,
+            simulated: false,
+            error: tgData.description || `Telegram Error (${tgRes.status})`,
+            telegram_response: tgData,
+            message_html: htmlMessage,
+          };
+        }
+        console.log(`[Telegram] Successfully dispatched alert for ${target.title} to chat ${chatId}`);
+
+        return { delivered: true, simulated: false, message_html: htmlMessage, telegram_response: tgData, chat_id: chatId };
       } catch (err: any) {
+        console.error('[Telegram] Network fetch exception:', err);
         return { delivered: false, simulated: true, error: err.message, message_html: htmlMessage };
       }
     }
 
-    return { delivered: false, simulated: true, message_html: htmlMessage };
+    return {
+      delivered: false,
+      simulated: true,
+      note: 'Simulated dispatch (Set TELEGRAM_BOT_TOKEN in Settings or environment to deliver real messages to Telegram)',
+      message_html: htmlMessage,
+    };
   }
 
   // --- Telegram Error / Issue Alert Dispatch Helper ---
@@ -579,8 +1107,14 @@ async function startServer() {
         }
       }
 
-      // 2. Discover Fresh New Jobs (Excluding existing ones)
-      const discovered = await discoverJobsForProfile(currentProfile, undefined, jobListings);
+      // 2. Discover Fresh New Jobs (Excluding existing ones and anything in seenJobs)
+      const discovered = await discoverJobsForProfile(
+        currentProfile,
+        undefined,
+        jobListings,
+        seenJobs,
+        appSettings.serpapi_key || process.env.SERPAPI_KEY
+      );
       const existingIds = new Set(jobListings.map((j) => j.id));
       const existingSignatures = new Set(
         jobListings.map((j) => `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`)
@@ -589,6 +1123,13 @@ async function startServer() {
 
       for (const nj of discovered) {
         const sig = `${nj.company_name.toLowerCase()}_${nj.title.toLowerCase()}`;
+        const normLink = normalizeJobUrl(nj.apply_link);
+
+        // Record in seenJobs so it is never searched or returned again
+        seenJobs[nj.id] = new Date().toISOString();
+        if (normLink) seenJobs[normLink] = new Date().toISOString();
+        seenJobs[sig] = new Date().toISOString();
+
         if (!existingIds.has(nj.id) && !existingSignatures.has(sig)) {
           // Verify newly discovered job link before adding
           const check = await verifyJobPosting(nj.apply_link, nj.company_name, nj.title);
@@ -597,54 +1138,11 @@ async function startServer() {
           nj.verified_at = check.checkedAt;
           nj.is_direct_posting = check.isDirect;
 
-          if (check.status !== 'expired_or_invalid') {
+          if (check.status !== 'expired_or_invalid' && check.isValid !== false) {
             jobListings.unshift(nj);
             existingIds.add(nj.id);
             existingSignatures.add(sig);
             newlyAdded.push(nj);
-          }
-        }
-      }
-
-      // If discovery yielded fewer than 2 new jobs, inject from verified enterprise pool
-      if (newlyAdded.length < 2) {
-        for (const poolItem of VERIFIED_ENTERPRISE_DISCOVERY_POOL) {
-          if (newlyAdded.length >= 3) break;
-          const sig = `${(poolItem.company_name || '').toLowerCase()}_${(poolItem.title || '').toLowerCase()}`;
-          if (!existingSignatures.has(sig)) {
-            const randomSuffix = Math.random().toString(36).substring(2, 6);
-            const poolId = crypto
-              .createHash('sha256')
-              .update((poolItem.title || '') + (poolItem.company_name || '') + randomSuffix)
-              .digest('hex')
-              .substring(0, 16);
-
-            const completeJob: JobListing = {
-              id: poolId,
-              title: poolItem.title!,
-              company_name: poolItem.company_name!,
-              location: poolItem.location!,
-              salary_range_lpa: poolItem.salary_range_lpa || [15, 22],
-              salary_is_estimated: true,
-              salary_source: 'Enterprise Industry Benchmark',
-              experience_range_years: poolItem.experience_range_years || [3, 6],
-              description: poolItem.description!,
-              apply_link: poolItem.apply_link!,
-              ats_source: poolItem.ats_source || 'Workday',
-              discovered_at: new Date().toISOString(),
-              posted_date: new Date().toISOString(),
-              posted_days_ago: 0,
-              is_direct_posting: true,
-              verification_status: 'verified_active',
-              verification_notes: 'Verified live: Direct enterprise career portal posting.',
-              verified_at: new Date().toISOString(),
-              status: 'new',
-            };
-
-            jobListings.unshift(completeJob);
-            existingIds.add(completeJob.id);
-            existingSignatures.add(sig);
-            newlyAdded.push(completeJob);
           }
         }
       }
@@ -670,7 +1168,7 @@ async function startServer() {
             evaluatedCount++;
 
             if (fit.is_viable && fit.match_score >= appSettings.min_match_score) {
-              if (job.status === 'new') job.status = 'viable';
+              if (job.status === 'new') job.status = 'discovered';
               highFitCount++;
 
               // Strictly only notify if NOT expired and verified
@@ -683,7 +1181,7 @@ async function startServer() {
                 await sendTelegramAlertForJob(job);
                 notifiedCount++;
               }
-            } else if (!fit.is_viable && job.status === 'new') {
+            } else if (!fit.is_viable && (job.status === 'new' || job.status === 'discovered')) {
               job.status = 'rejected';
             }
           } catch (err) {
@@ -764,21 +1262,26 @@ async function startServer() {
     }
   }
 
-  // Set up 4-hour recurring timer
+  // Set up resilient heartbeat scheduler (checks every 30 seconds against target time)
   let workflowIntervalTimer: NodeJS.Timeout | null = null;
   function setupWorkflowScheduler() {
     if (workflowIntervalTimer) clearInterval(workflowIntervalTimer);
     if (!workflowState.enabled) return;
 
-    const intervalMs = workflowState.interval_hours * 60 * 60 * 1000;
+    // Heartbeat check: checks every 30s so sleeping/resumed containers fire immediately
     workflowIntervalTimer = setInterval(async () => {
-      console.log(`[Workflow Scheduler] Running recurring 4-hour job discovery & matching cycle...`);
-      try {
-        await executeWorkflowCycle('scheduled_4h');
-      } catch (e) {
-        console.error('[Workflow Scheduler] Recurring cycle failed:', e);
+      if (!workflowState.enabled || workflowState.is_running) return;
+      const now = Date.now();
+      const nextRunTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
+      if (nextRunTime > 0 && now >= nextRunTime) {
+        console.log(`[Workflow Scheduler Heartbeat] Next run time reached (${new Date().toISOString()}). Executing cycle...`);
+        try {
+          await executeWorkflowCycle('scheduled_4h');
+        } catch (e) {
+          console.error('[Workflow Scheduler] Recurring cycle failed:', e);
+        }
       }
-    }, intervalMs);
+    }, 30 * 1000);
   }
 
   // Initialize scheduler on server boot
@@ -795,6 +1298,7 @@ async function startServer() {
 
   app.post('/api/workflow/run', async (req, res) => {
     const result = await executeWorkflowCycle('manual');
+    saveStoreToDisk();
     res.json({
       success: true,
       result,
@@ -802,6 +1306,60 @@ async function startServer() {
       jobs: jobListings,
     });
   });
+
+  // Dedicated Cloud Scheduler / Webhook cron endpoints (Cloud Run & cron-job.org compatible)
+  const handleCronTrigger = async (req: express.Request, res: express.Response) => {
+    console.log(`[Cloud Cron Webhook] Received external trigger (${req.method} ${req.path}) from ${req.ip}`);
+
+    // If wait=true is passed, execute synchronously; otherwise respond immediately with 200
+    // so external cron monitors (cron-job.org, BetterStack, Cloud Scheduler) never hit 30s timeout limits!
+    const shouldWait = req.query.wait === 'true';
+
+    if (workflowState.is_running) {
+      return res.status(200).json({
+        success: true,
+        status: 'already_running',
+        message: 'Autonomous workflow cycle is currently in progress.',
+        timestamp: new Date().toISOString(),
+        workflow: workflowState,
+      });
+    }
+
+    if (shouldWait) {
+      const result = await executeWorkflowCycle('scheduled_4h');
+      saveStoreToDisk();
+      return res.json({
+        success: true,
+        triggered_by: 'cloud_cron_webhook',
+        timestamp: new Date().toISOString(),
+        result,
+        workflow: workflowState,
+      });
+    }
+
+    // Fast non-blocking response (respond in <10ms with 200 OK)
+    res.status(200).json({
+      success: true,
+      status: 'triggered',
+      message: 'Autonomous workflow cycle triggered in background.',
+      timestamp: new Date().toISOString(),
+      next_run: workflowState.next_run,
+    });
+
+    // Execute background workflow asynchronously
+    executeWorkflowCycle('scheduled_4h')
+      .then(() => {
+        saveStoreToDisk();
+      })
+      .catch((err) => {
+        console.error('[Cloud Cron Webhook] Background execution failed:', err);
+      });
+  };
+
+  app.get('/api/workflow/cron', handleCronTrigger);
+  app.post('/api/workflow/cron', handleCronTrigger);
+  app.get('/api/cron/trigger', handleCronTrigger);
+  app.post('/api/cron/trigger', handleCronTrigger);
 
   app.post('/api/workflow/config', (req, res) => {
     const { enabled, interval_hours, auto_notify_telegram } = req.body;
@@ -814,6 +1372,7 @@ async function startServer() {
       workflowState.auto_notify_telegram = auto_notify_telegram;
     }
     setupWorkflowScheduler();
+    saveStoreToDisk();
     res.json({ success: true, workflow: workflowState });
   });
 

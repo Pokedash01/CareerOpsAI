@@ -2,13 +2,25 @@ import { LinkVerificationStatus } from '../src/types.js';
 
 // Regex and patterns for generic job search pages (STRICTLY BANNED)
 const GENERIC_SEARCH_PATTERNS: RegExp[] = [
+  /shine\.com/i,
+  /foundit\.in\/srp/i,
+  /foundit\.in\/search/i,
+  /monsterindia/i,
+  /adzuna/i,
+  /bebee/i,
+  /timesjobs/i,
+  /freshersworld/i,
   /linkedin\.com\/jobs\/search/i,
   /linkedin\.com\/jobs\/collections/i,
   /indeed\.com\/(?:jobs\?|q-)/i,
   /naukri\.com\/(?:[a-z0-9-]+-jobs|jobs-in-)/i,
+  /naukri\.com\/.*-(?:jobs|openings|vacancies)$/i,
   /google\.com\/search.*(?:ibp=htl;jobs|q=jobs)/i,
   /glassdoor\.com\/(?:Job|Jobs)\/.*-jobs-/i,
   /[?&](?:keywords|keyword|search|searchTerm|query)=/i,
+  /\/jobs\/page-\d+/i,
+  /\/jobs\?page=/i,
+  /\/search\?/i,
 ];
 
 // Patterns for valid direct job posting URLs
@@ -18,9 +30,13 @@ const DIRECT_POSTING_PATTERNS: RegExp[] = [
   /job-boards\.greenhouse\.io\/[^/]+\/jobs\/\d+/i,
   /jobs\.ashbyhq\.com\/[^/]+\/[a-f0-9-]+/i,
   /jobs\.lever\.co\/[^/]+\/[a-f0-9-]+/i,
-  /jobs\.smartrecruiters\.com\/[^/]+\/\d+/i,
+  /jobs\.smartrecruiters\.com\/[^/]+\/[0-9a-zA-Z_-]+/i,
+  /smrtr\.io\/[0-9a-zA-Z_-]+/i,
   /taleo\.net\/careersection\/.*jobdetail\.ftl/i,
   /linkedin\.com\/jobs\/view\/\d+/i, // Direct job posting view ONLY
+  /naukri\.com\/job-listings-[a-z0-9_-]+/i, // Direct Naukri posting ONLY
+  /foundit\.in\/job-postings\/[a-z0-9_-]+/i, // Direct Foundit posting ONLY
+  /monster\.com\/job-openings\/[a-z0-9_-]+/i, // Direct Monster posting ONLY
   /careers\.[^/]+\/jobs\/[a-z0-9_-]+/i,
   /careers\.[^/]+\/posting\/[a-z0-9_-]+/i,
 ];
@@ -307,22 +323,60 @@ export async function verifyJobPosting(url: string, company?: string, title?: st
       checkedAt,
     };
   } catch (err: any) {
-    // Network probe timed out or blocked by CORS/firewall
-    if (isDirect) {
+    const errCode = err.cause?.code || err.code || '';
+    const errMsg = (err.message || '').toLowerCase();
+
+    // DNS failure, host not found, connection refused, or invalid host MUST fail immediately
+    if (
+      errCode === 'ENOTFOUND' ||
+      errCode === 'EAI_AGAIN' ||
+      errCode === 'ECONNREFUSED' ||
+      errCode === 'ENETUNREACH' ||
+      errMsg.includes('enotfound') ||
+      errMsg.includes('getaddrinfo') ||
+      errMsg.includes('econnrefused')
+    ) {
+      return {
+        isValid: false,
+        status: 'expired_or_invalid',
+        isDirect: false,
+        notes: `Broken link: Domain not found or server refused connection (${errCode || 'ENOTFOUND'}).`,
+        checkedAt,
+      };
+    }
+
+    // Only for known enterprise ATS domains that may be blocking bot User-Agents with timeout
+    const parsed = (() => {
+      try {
+        return new URL(url);
+      } catch {
+        return null;
+      }
+    })();
+
+    const isEnterpriseAts =
+      parsed &&
+      (parsed.hostname.endsWith('myworkdayjobs.com') ||
+        parsed.hostname.endsWith('greenhouse.io') ||
+        parsed.hostname.endsWith('lever.co') ||
+        parsed.hostname.endsWith('ashbyhq.com') ||
+        parsed.hostname.endsWith('smartrecruiters.com'));
+
+    if (isEnterpriseAts && isDirect && !errMsg.includes('enotfound')) {
       return {
         isValid: true,
         status: 'active_portal',
         isDirect: true,
-        notes: 'Direct ATS requisition structure verified.',
+        notes: 'Direct enterprise ATS requisition structure verified.',
         checkedAt,
       };
     }
 
     return {
       isValid: false,
-      status: 'unverified',
+      status: 'expired_or_invalid',
       isDirect: false,
-      notes: `Verification unreachable: ${err.message || 'Timeout'}`,
+      notes: `Link unreachable: ${err.message || 'Connection failed'}`,
       checkedAt,
     };
   }

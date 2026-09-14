@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { motion } from 'motion/react';
 import {
   User,
   Mail,
@@ -304,17 +305,22 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="space-y-6"
+    >
       {/* Top Banner & Quick Actions */}
-      <div className="bg-[#0F1115] rounded-2xl border border-[#1F2937] p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="font-semibold text-white text-xl tracking-tight flex items-center gap-2">
+          <h2 className="font-display font-bold text-white text-lg sm:text-xl tracking-tight flex items-center gap-2">
             <span>Candidate Knowledge Graph</span>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-600/10 text-blue-400 border border-blue-500/20">
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
               Source of Truth
             </span>
           </h2>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-zinc-400 mt-1">
             Deterministic filters and document tailoring strictly use these facts. Upload a PDF/Word resume to parse and deeply scrape all portfolio links.
           </p>
         </div>
@@ -323,7 +329,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <button
             type="button"
             onClick={() => setShowParseModal(true)}
-            className="h-9 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 rounded-xl transition cursor-pointer shadow-sm shadow-blue-600/20 whitespace-nowrap"
+            className="h-9 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-semibold px-3.5 rounded-xl transition cursor-pointer shadow-md shadow-blue-600/20 border border-blue-400/20 whitespace-nowrap"
           >
             <FileUp className="w-4 h-4" />
             <span>Upload Resume (PDF/Word)</span>
@@ -332,16 +338,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <button
             type="button"
             onClick={onResetProfile}
-            className="h-9 inline-flex items-center justify-center gap-2 bg-[#1A1D23] hover:bg-[#252a33] text-gray-300 hover:text-white text-xs font-semibold px-3.5 rounded-xl transition cursor-pointer border border-[#2D3139] whitespace-nowrap"
+            className="h-9 inline-flex items-center justify-center gap-2 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white text-xs font-semibold px-3.5 rounded-xl transition cursor-pointer border border-white/[0.08] whitespace-nowrap"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-gray-400" />
+            <RotateCcw className="w-3.5 h-3.5 text-zinc-400" />
             <span>Reset to Kartik's Profile</span>
           </button>
 
           <button
             type="button"
             onClick={handleSave}
-            className="h-9 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 rounded-xl transition shadow-sm shadow-emerald-600/20 cursor-pointer whitespace-nowrap"
+            className="h-9 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 rounded-xl transition shadow-md shadow-emerald-600/20 cursor-pointer whitespace-nowrap border border-emerald-400/20"
           >
             {saveSuccess ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
             <span>{saveSuccess ? 'Saved!' : 'Save Profile'}</span>
@@ -351,8 +357,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
       {/* Scraped Web Evidence & Hyperlink Intelligence Section */}
       {(formData.scraped_sources?.length || formData.portfolio_projects?.length || formData.parsed_from_document) ? (
-        <div className="bg-[#0F1115] rounded-2xl border border-[#1F2937] p-5 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1F2937] pb-3">
+        <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/[0.06] pb-3.5">
             <div className="flex items-center gap-2.5">
               <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
                 <Globe className="w-4 h-4" />
@@ -364,17 +370,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     Live Web Grounded
                   </span>
                 </h3>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-neutral-400">
                   External links extracted from the resume and actively scraped to verify candidate engineering claims.
                 </p>
               </div>
             </div>
 
             {formData.parsed_from_document && (
-              <div className="flex items-center gap-2 text-xs text-gray-400 bg-[#14171E] px-3 py-1.5 rounded-xl border border-[#2D3139]">
+              <div className="flex items-center gap-2 text-xs text-neutral-400 bg-white/[0.03] px-3 py-1.5 rounded-xl border border-white/[0.08]">
                 <FileCheck className="w-3.5 h-3.5 text-blue-400" />
                 <span>
-                  Source: <span className="text-gray-200 font-mono">{formData.parsed_from_document.file_name}</span>
+                  Source: <span className="text-neutral-200 font-mono">{formData.parsed_from_document.file_name}</span>
                 </span>
                 <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-600/20 text-blue-300 font-semibold uppercase">
                   {formData.parsed_from_document.file_type}
@@ -386,7 +392,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           {/* Scraped Sources Grid */}
           {formData.scraped_sources && formData.scraped_sources.length > 0 && (
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2.5 flex items-center gap-1.5">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2.5 flex items-center gap-1.5">
                 <LinkIcon className="w-3 h-3 text-blue-400" />
                 <span>Extracted Hyperlinks ({formData.scraped_sources.length})</span>
               </h4>
@@ -394,9 +400,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 {formData.scraped_sources.map((src, i) => (
                   <div
                     key={i}
-                    className="p-3 rounded-xl bg-[#14171E] border border-[#232936] hover:border-[#374151] transition flex flex-col justify-between gap-2"
+                    className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-colors flex flex-col justify-between gap-2.5"
                   >
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase ${
                           src.type === 'github'
@@ -426,9 +432,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     </div>
 
                     {src.highlights && src.highlights.length > 0 && (
-                      <div className="text-[11px] text-gray-300 bg-[#0F1115] p-2 rounded-lg border border-[#1F2937] space-y-1">
+                      <div className="text-[11px] text-neutral-300 bg-white/[0.02] p-2.5 rounded-lg border border-white/[0.04] space-y-1">
                         {src.highlights.slice(0, 2).map((h, hIdx) => (
-                          <p key={hIdx} className="line-clamp-2 text-gray-300">
+                          <p key={hIdx} className="line-clamp-2 text-neutral-300">
                             • {h}
                           </p>
                         ))}
@@ -442,8 +448,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
           {/* Verified Projects from Scraped Portfolios / GitHub */}
           {formData.portfolio_projects && formData.portfolio_projects.length > 0 && (
-            <div className="pt-2 border-t border-[#1F2937]/70">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2.5 flex items-center gap-1.5">
+            <div className="pt-2.5 border-t border-white/[0.06]">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2.5 flex items-center gap-1.5">
                 <Code2 className="w-3 h-3 text-emerald-400" />
                 <span>Verified Projects Grounded in Web Scrape ({formData.portfolio_projects.length})</span>
               </h4>
@@ -451,10 +457,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 {formData.portfolio_projects.map((proj, pIdx) => (
                   <div
                     key={pIdx}
-                    className="p-3 rounded-xl bg-[#14171E] border border-[#232936] space-y-2"
+                    className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-2"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <h5 className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <h5 className="text-xs font-semibold text-white flex items-center gap-1.5">
                         <FolderGit2 className="w-3.5 h-3.5 text-blue-400" />
                         <span>{proj.name}</span>
                       </h5>
@@ -470,13 +476,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                         </a>
                       )}
                     </div>
-                    <p className="text-xs text-gray-300 line-clamp-2">{proj.description}</p>
+                    <p className="text-xs text-neutral-300 line-clamp-2">{proj.description}</p>
                     {proj.technologies && proj.technologies.length > 0 && (
                       <div className="flex flex-wrap gap-1 pt-1">
                         {proj.technologies.map((tech, tIdx) => (
                           <span
                             key={tIdx}
-                            className="text-[10px] px-1.5 py-0.5 rounded bg-[#1A1D23] text-gray-300 border border-[#2D3139]"
+                            className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-neutral-300 border border-white/[0.08]"
                           >
                             {tech}
                           </span>
@@ -495,25 +501,25 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Col: Contact & Target Parameters */}
         <div className="space-y-6">
-          <div className="bg-[#0F1115] rounded-2xl border border-[#1F2937] p-5 shadow-sm space-y-4">
-            <h3 className="font-semibold text-white text-sm uppercase tracking-wider flex items-center gap-2">
+          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
+            <h3 className="font-semibold text-white text-xs uppercase tracking-wider flex items-center gap-2">
               <User className="w-4 h-4 text-blue-400" />
               <span>Contact & Identity</span>
             </h3>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-gray-400 font-medium mb-1">Full Name</label>
+                <label className="block text-neutral-400 font-medium mb-1">Full Name</label>
                 <input
                   type="text"
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 text-sm font-semibold focus:outline-none focus:border-blue-500/50"
                 />
               </div>
 
               <div>
-                <label className="block text-gray-400 font-medium mb-1">Email</label>
+                <label className="block text-neutral-400 font-medium mb-1">Email</label>
                 <input
                   type="email"
                   value={formData.contact.email}
@@ -523,12 +529,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       contact: { ...formData.contact, email: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 focus:outline-none focus:border-blue-500/50"
                 />
               </div>
 
               <div>
-                <label className="block text-gray-400 font-medium mb-1">Phone</label>
+                <label className="block text-neutral-400 font-medium mb-1">Phone</label>
                 <input
                   type="text"
                   value={formData.contact.phone}
@@ -538,12 +544,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       contact: { ...formData.contact, phone: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 focus:outline-none focus:border-blue-500/50"
                 />
               </div>
 
               <div>
-                <label className="block text-gray-400 font-medium mb-1">Base Location</label>
+                <label className="block text-neutral-400 font-medium mb-1">Base Location</label>
                 <input
                   type="text"
                   value={formData.contact.location}
@@ -553,12 +559,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       contact: { ...formData.contact, location: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 focus:outline-none focus:border-blue-500/50"
                 />
               </div>
 
               <div>
-                <label className="block text-gray-400 font-medium mb-1">Links / Portfolios</label>
+                <label className="block text-neutral-400 font-medium mb-1">Links / Portfolios</label>
                 <input
                   type="text"
                   value={formData.contact.links}
@@ -568,23 +574,23 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       contact: { ...formData.contact, links: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 focus:outline-none focus:border-blue-500/50"
                 />
               </div>
             </div>
           </div>
 
           {/* Hard Matching Constraints */}
-          <div className="bg-[#0F1115] rounded-2xl border border-[#1F2937] p-5 shadow-sm space-y-4">
-            <h3 className="font-semibold text-white text-sm uppercase tracking-wider flex items-center gap-2">
+          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
+            <h3 className="font-semibold text-white text-xs uppercase tracking-wider flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-emerald-400" />
               <span>Matching Constraints</span>
             </h3>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-3.5 text-xs">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-gray-400 font-medium mb-1">Total Exp (Years)</label>
+                  <label className="block text-neutral-400 font-medium mb-1">Total Exp (Years)</label>
                   <input
                     type="number"
                     step="0.1"
@@ -592,15 +598,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     onChange={(e) =>
                       setFormData({ ...formData, total_years_experience: parseFloat(e.target.value) || 0 })
                     }
-                    className="w-full px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 font-semibold focus:outline-none focus:border-blue-500/50"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-400 font-medium mb-1">Seniority Tier</label>
+                  <label className="block text-neutral-400 font-medium mb-1">Seniority Tier</label>
                   <select
                     value={formData.seniority_tier}
                     onChange={(e) => setFormData({ ...formData, seniority_tier: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-[#12161F] border border-white/[0.08] rounded-xl text-neutral-200 font-semibold focus:outline-none focus:border-blue-500/50 cursor-pointer"
                   >
                     <option value="Entry">Entry (0-2 yrs)</option>
                     <option value="Mid">Mid (2-5 yrs)</option>
@@ -612,7 +618,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
               {/* Salary LPA Expectation */}
               <div>
-                <label className="block text-gray-400 font-medium mb-1">Expected Salary (LPA)</label>
+                <label className="block text-neutral-400 font-medium mb-1">Expected Salary (LPA)</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -627,9 +633,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                         },
                       })
                     }
-                    className="w-1/2 px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-1/2 px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 focus:outline-none focus:border-blue-500/50"
                   />
-                  <span className="text-gray-600 font-bold">-</span>
+                  <span className="text-neutral-500 font-bold">-</span>
                   <input
                     type="number"
                     placeholder="Max"
@@ -643,14 +649,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                         },
                       })
                     }
-                    className="w-1/2 px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-1/2 px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 focus:outline-none focus:border-blue-500/50"
                   />
                 </div>
               </div>
 
               {/* Preferred Locations */}
               <div>
-                <label className="block text-gray-400 font-medium mb-1">Target Locations</label>
+                <label className="block text-neutral-400 font-medium mb-1">Target Locations</label>
                 <div className="flex items-center gap-1.5 mb-2">
                   <input
                     type="text"
@@ -658,12 +664,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     value={newLocation}
                     onChange={(e) => setNewLocation(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddLocation())}
-                    className="flex-1 px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 focus:outline-none focus:border-blue-500/50"
                   />
                   <button
                     type="button"
                     onClick={handleAddLocation}
-                    className="p-1.5 bg-[#1A1D23] hover:bg-[#252a33] rounded-lg text-gray-300 border border-[#2D3139] cursor-pointer"
+                    className="p-2 bg-white/[0.04] hover:bg-white/[0.08] rounded-xl text-neutral-300 border border-white/[0.08] transition cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -672,7 +678,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   {formData.preferred_locations?.map((loc, idx) => (
                     <span
                       key={idx}
-                      className="inline-flex items-center gap-1 bg-blue-600/10 text-blue-400 text-xs px-2.5 py-0.5 rounded-md border border-blue-500/20"
+                      className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-400 text-xs px-2.5 py-0.5 rounded-lg border border-blue-500/20"
                     >
                       <span>{loc}</span>
                       <button
@@ -689,7 +695,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
               {/* Target Roles */}
               <div>
-                <label className="block text-gray-400 font-medium mb-1">Target Roles</label>
+                <label className="block text-neutral-400 font-medium mb-1">Target Roles</label>
 
                 {/* Role Preset Dropdown & Quick Presets */}
                 <div className="space-y-2 mb-2.5">
@@ -701,9 +707,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       }
                     }}
                     defaultValue=""
-                    className="w-full px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs font-medium text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                    className="w-full px-3 py-1.5 bg-[#12161F] border border-white/[0.08] rounded-xl text-xs font-medium text-neutral-300 focus:outline-none focus:border-blue-500/50 cursor-pointer"
                   >
-                    <option value="" disabled className="text-gray-500">
+                    <option value="" disabled className="text-neutral-500">
                       + Select Role Preset to Add...
                     </option>
                     <option value="Business Analyst">Business Analyst</option>
@@ -719,16 +725,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   </select>
 
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] text-gray-500 font-medium">Quick Presets:</span>
+                    <span className="text-[11px] text-neutral-500 font-medium">Quick Presets:</span>
                     {['Business Analyst', 'Product Analyst', 'Data Analyst'].map((preset) => (
                       <button
                         key={preset}
                         type="button"
                         onClick={() => handleAddPresetRole(preset)}
-                        className={`text-[11px] px-2 py-0.5 rounded-md font-medium transition border cursor-pointer ${
+                        className={`text-[11px] px-2 py-0.5 rounded-lg font-medium transition border cursor-pointer ${
                           formData.target_roles?.includes(preset)
                             ? 'bg-blue-600/20 text-blue-300 border-blue-500/30'
-                            : 'bg-[#14171E] text-gray-400 border-[#2D3139] hover:text-gray-200 hover:border-gray-500'
+                            : 'bg-white/[0.02] text-neutral-400 border-white/[0.06] hover:text-neutral-200 hover:border-white/[0.12]'
                         }`}
                       >
                         + {preset}
@@ -744,12 +750,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddRole())}
-                    className="flex-1 px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 text-xs focus:outline-none focus:border-blue-500/50"
                   />
                   <button
                     type="button"
                     onClick={handleAddRole}
-                    className="p-1.5 bg-[#1A1D23] hover:bg-[#252a33] rounded-lg text-gray-300 border border-[#2D3139] cursor-pointer"
+                    className="p-2 bg-white/[0.04] hover:bg-white/[0.08] rounded-xl text-neutral-300 border border-white/[0.08] transition cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -758,13 +764,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   {formData.target_roles?.map((role, idx) => (
                     <span
                       key={idx}
-                      className="inline-flex items-center gap-1 bg-[#1A1D23] border border-[#2D3139] text-gray-300 text-xs px-2.5 py-0.5 rounded-full font-medium"
+                      className="inline-flex items-center gap-1 bg-white/[0.03] border border-white/[0.08] text-neutral-300 text-xs px-2.5 py-0.5 rounded-full font-medium"
                     >
                       <span>{role}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveRole(role)}
-                        className="text-gray-500 hover:text-gray-300 cursor-pointer"
+                        className="text-neutral-500 hover:text-neutral-300 cursor-pointer"
                       >
                         &times;
                       </button>
@@ -779,8 +785,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         {/* Right 2 Cols: Experience, Skills & Certifications */}
         <div className="lg:col-span-2 space-y-6">
           {/* Skills Management */}
-          <div className="bg-[#0F1115] rounded-2xl border border-[#1F2937] p-5 shadow-sm space-y-3">
-            <h3 className="font-semibold text-white text-sm uppercase tracking-wider flex items-center justify-between">
+          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl space-y-3.5">
+            <h3 className="font-semibold text-white text-xs uppercase tracking-wider flex items-center justify-between">
               <span>Technical & Domain Skills ({formData.skills.length})</span>
             </h3>
 
@@ -791,12 +797,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
-                className="flex-1 px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="flex-1 px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50"
               />
               <button
                 type="button"
                 onClick={handleAddSkill}
-                className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl cursor-pointer shadow-xs transition"
               >
                 Add Skill
               </button>
@@ -806,13 +812,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               {formData.skills.map((skill, idx) => (
                 <span
                   key={idx}
-                  className="inline-flex items-center gap-1.5 bg-[#1A1D23] hover:bg-[#252a33] text-gray-300 text-xs px-2.5 py-1 rounded-md font-medium border border-[#2D3139] transition"
+                  className="inline-flex items-center gap-1.5 bg-white/[0.03] hover:bg-white/[0.06] text-neutral-300 text-xs px-2.5 py-1 rounded-lg font-medium border border-white/[0.08] transition"
                 >
                   <span>{skill}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveSkill(skill)}
-                    className="text-gray-500 hover:text-gray-300 cursor-pointer"
+                    className="text-neutral-500 hover:text-neutral-300 cursor-pointer"
                   >
                     &times;
                   </button>
@@ -822,18 +828,18 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
 
           {/* Experience List with Full Editing Capability */}
-          <div className="bg-[#0F1115] rounded-2xl border border-[#1F2937] p-5 shadow-sm space-y-4">
+          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-blue-400" />
-                <h3 className="font-semibold text-white text-sm uppercase tracking-wider">
+                <h3 className="font-semibold text-white text-xs uppercase tracking-wider">
                   Work Experience History ({formData.experience?.length || 0})
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddingExp(!isAddingExp)}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg transition cursor-pointer shadow-sm shadow-blue-600/20"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-3 py-1.5 rounded-xl transition cursor-pointer shadow-md shadow-blue-600/20 border border-blue-400/20"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>{isAddingExp ? 'Cancel' : 'Add Experience'}</span>
@@ -842,15 +848,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
             {/* Add New Experience Form */}
             {isAddingExp && (
-              <div className="p-4 rounded-xl border border-blue-500/30 bg-[#14171E] space-y-3">
-                <div className="flex items-center justify-between border-b border-[#1F2937] pb-2">
+              <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/[0.03] space-y-3">
+                <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
                   <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
                     Add New Work Experience
                   </span>
                   <button
                     type="button"
                     onClick={() => setIsAddingExp(false)}
-                    className="text-gray-400 hover:text-white text-xs cursor-pointer"
+                    className="text-neutral-400 hover:text-white text-xs cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -858,61 +864,61 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-medium text-gray-400 mb-1">Role Title *</label>
+                    <label className="block text-[11px] font-medium text-neutral-400 mb-1">Role Title *</label>
                     <input
                       type="text"
                       placeholder="e.g. Business Analyst"
                       value={newExpData.role}
                       onChange={(e) => setNewExpData({ ...newExpData, role: e.target.value })}
-                      className="w-full px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-gray-400 mb-1">Company *</label>
+                    <label className="block text-[11px] font-medium text-neutral-400 mb-1">Company *</label>
                     <input
                       type="text"
                       placeholder="e.g. KPMG"
                       value={newExpData.company}
                       onChange={(e) => setNewExpData({ ...newExpData, company: e.target.value })}
-                      className="w-full px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-gray-400 mb-1">Location</label>
+                    <label className="block text-[11px] font-medium text-neutral-400 mb-1">Location</label>
                     <input
                       type="text"
                       placeholder="e.g. Gurugram, India"
                       value={newExpData.location}
                       onChange={(e) => setNewExpData({ ...newExpData, location: e.target.value })}
-                      className="w-full px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-gray-400 mb-1">Dates</label>
+                    <label className="block text-[11px] font-medium text-neutral-400 mb-1">Dates</label>
                     <input
                       type="text"
                       placeholder="e.g. 2022 - Present"
                       value={newExpData.dates}
                       onChange={(e) => setNewExpData({ ...newExpData, dates: e.target.value })}
-                      className="w-full px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-gray-400 mb-1">Executive Summary</label>
+                  <label className="block text-[11px] font-medium text-neutral-400 mb-1">Executive Summary</label>
                   <textarea
                     rows={2}
                     placeholder="Brief overview of key responsibilities and impact..."
                     value={newExpData.summary}
                     onChange={(e) => setNewExpData({ ...newExpData, summary: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                    className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50 resize-none"
                   />
                 </div>
 
                 {/* Bullets Management */}
                 <div className="space-y-2">
-                  <label className="block text-[11px] font-medium text-gray-400">Accomplishment Bullets</label>
+                  <label className="block text-[11px] font-medium text-neutral-400">Accomplishment Bullets</label>
                   <div className="flex items-center gap-1.5">
                     <input
                       type="text"
@@ -920,12 +926,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       value={newBulletText}
                       onChange={(e) => setNewBulletText(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddBulletToNew())}
-                      className="flex-1 px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="flex-1 px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50"
                     />
                     <button
                       type="button"
                       onClick={handleAddBulletToNew}
-                      className="px-3 py-1.5 bg-[#1A1D23] hover:bg-[#252a33] text-gray-200 border border-[#2D3139] rounded-lg text-xs font-semibold cursor-pointer"
+                      className="px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-neutral-200 border border-white/[0.08] rounded-xl text-xs font-semibold cursor-pointer transition"
                     >
                       Add Bullet
                     </button>
@@ -936,13 +942,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       {newExpData.bullets.map((b, bIdx) => (
                         <div
                           key={bIdx}
-                          className="flex items-start justify-between gap-2 p-2 rounded-lg bg-[#0F1115] border border-[#1F2937] text-xs text-gray-300"
+                          className="flex items-start justify-between gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/[0.06] text-xs text-neutral-300"
                         >
                           <span className="leading-relaxed flex-1">• {b}</span>
                           <button
                             type="button"
                             onClick={() => handleRemoveBulletFromNew(bIdx)}
-                            className="text-gray-500 hover:text-rose-400 cursor-pointer shrink-0 pt-0.5"
+                            className="text-neutral-500 hover:text-rose-400 cursor-pointer shrink-0 pt-0.5"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -952,11 +958,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   )}
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#1F2937]">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.06]">
                   <button
                     type="button"
                     onClick={() => setIsAddingExp(false)}
-                    className="px-3 py-1.5 bg-[#1A1D23] hover:bg-[#252a33] text-gray-400 hover:text-gray-200 text-xs font-semibold rounded-lg border border-[#2D3139] cursor-pointer"
+                    className="px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-neutral-200 text-xs font-semibold rounded-xl border border-white/[0.08] cursor-pointer transition"
                   >
                     Cancel
                   </button>
@@ -964,7 +970,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     type="button"
                     onClick={handleSaveNewExp}
                     disabled={!newExpData.role.trim() || !newExpData.company.trim()}
-                    className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition shadow-sm cursor-pointer disabled:opacity-50"
+                    className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition shadow-xs cursor-pointer disabled:opacity-50"
                   >
                     Save Experience
                   </button>
@@ -973,27 +979,27 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             )}
 
             {/* Experience Items */}
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {formData.experience?.map((exp, idx) => (
                 <div
                   key={idx}
-                  className={`p-4 rounded-xl border transition space-y-3 ${
+                  className={`p-4 sm:p-5 rounded-xl border transition-colors space-y-3 ${
                     editingExpIdx === idx
-                      ? 'border-blue-500/50 bg-[#161B24]'
-                      : 'border-[#1F2937] bg-[#14171E] hover:border-[#2D3139]'
+                      ? 'border-blue-500/50 bg-blue-500/[0.03]'
+                      : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]'
                   }`}
                 >
                   {editingExpIdx === idx && editExpData ? (
                     /* Inline Editing Mode */
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between border-b border-[#1F2937] pb-2">
+                      <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
                         <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
                           Edit Experience
                         </span>
                         <button
                           type="button"
                           onClick={handleCancelEditExp}
-                          className="text-gray-400 hover:text-white text-xs cursor-pointer"
+                          className="text-neutral-400 hover:text-white text-xs cursor-pointer"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -1001,56 +1007,56 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-[11px] font-medium text-gray-400 mb-1">Role Title</label>
+                          <label className="block text-[11px] font-medium text-neutral-400 mb-1">Role Title</label>
                           <input
                             type="text"
                             value={editExpData.role}
                             onChange={(e) => setEditExpData({ ...editExpData, role: e.target.value })}
-                            className="w-full px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50"
                           />
                         </div>
                         <div>
-                          <label className="block text-[11px] font-medium text-gray-400 mb-1">Company</label>
+                          <label className="block text-[11px] font-medium text-neutral-400 mb-1">Company</label>
                           <input
                             type="text"
                             value={editExpData.company}
                             onChange={(e) => setEditExpData({ ...editExpData, company: e.target.value })}
-                            className="w-full px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50"
                           />
                         </div>
                         <div>
-                          <label className="block text-[11px] font-medium text-gray-400 mb-1">Location</label>
+                          <label className="block text-[11px] font-medium text-neutral-400 mb-1">Location</label>
                           <input
                             type="text"
                             value={editExpData.location || ''}
                             onChange={(e) => setEditExpData({ ...editExpData, location: e.target.value })}
-                            className="w-full px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50"
                           />
                         </div>
                         <div>
-                          <label className="block text-[11px] font-medium text-gray-400 mb-1">Dates</label>
+                          <label className="block text-[11px] font-medium text-neutral-400 mb-1">Dates</label>
                           <input
                             type="text"
                             value={editExpData.dates}
                             onChange={(e) => setEditExpData({ ...editExpData, dates: e.target.value })}
-                            className="w-full px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-medium text-gray-400 mb-1">Summary</label>
+                        <label className="block text-[11px] font-medium text-neutral-400 mb-1">Summary</label>
                         <textarea
                           rows={2}
                           value={editExpData.summary}
                           onChange={(e) => setEditExpData({ ...editExpData, summary: e.target.value })}
-                          className="w-full px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                          className="w-full px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50 resize-none"
                         />
                       </div>
 
                       {/* Bullets Management */}
                       <div className="space-y-2">
-                        <label className="block text-[11px] font-medium text-gray-400">Accomplishment Bullets</label>
+                        <label className="block text-[11px] font-medium text-neutral-400">Accomplishment Bullets</label>
                         <div className="flex items-center gap-1.5">
                           <input
                             type="text"
@@ -1058,12 +1064,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                             value={editBulletText}
                             onChange={(e) => setEditBulletText(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddBulletToEdit())}
-                            className="flex-1 px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="flex-1 px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50"
                           />
                           <button
                             type="button"
                             onClick={handleAddBulletToEdit}
-                            className="px-3 py-1.5 bg-[#1A1D23] hover:bg-[#252a33] text-gray-200 border border-[#2D3139] rounded-lg text-xs font-semibold cursor-pointer"
+                            className="px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-neutral-200 border border-white/[0.08] rounded-xl text-xs font-semibold cursor-pointer transition"
                           >
                             Add
                           </button>
@@ -1073,13 +1079,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                           {(editExpData.bullets || []).map((bullet, bIdx) => (
                             <div
                               key={bIdx}
-                              className="flex items-start justify-between gap-2 p-2 rounded-lg bg-[#0F1115] border border-[#1F2937] text-xs text-gray-300"
+                              className="flex items-start justify-between gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/[0.06] text-xs text-neutral-300"
                             >
                               <span className="leading-relaxed flex-1">• {bullet}</span>
                               <button
                                 type="button"
                                 onClick={() => handleRemoveBulletFromEdit(bIdx)}
-                                className="text-gray-500 hover:text-rose-400 cursor-pointer shrink-0 pt-0.5"
+                                className="text-neutral-500 hover:text-rose-400 cursor-pointer shrink-0 pt-0.5"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -1088,18 +1094,18 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#1F2937]">
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.06]">
                         <button
                           type="button"
                           onClick={handleCancelEditExp}
-                          className="px-3 py-1.5 bg-[#1A1D23] hover:bg-[#252a33] text-gray-400 hover:text-gray-200 text-xs font-semibold rounded-lg border border-[#2D3139] cursor-pointer"
+                          className="px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-neutral-200 text-xs font-semibold rounded-xl border border-white/[0.08] cursor-pointer transition"
                         >
                           Cancel
                         </button>
                         <button
                           type="button"
                           onClick={handleSaveEditExp}
-                          className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition shadow-sm cursor-pointer"
+                          className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition shadow-xs cursor-pointer"
                         >
                           Save Changes
                         </button>
@@ -1111,18 +1117,18 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
                         <div>
                           <span className="font-semibold text-white text-sm">{exp.role}</span>
-                          <span className="text-gray-400 text-sm font-medium"> &mdash; {exp.company}</span>
-                          {exp.location && <span className="text-xs text-gray-500"> ({exp.location})</span>}
+                          <span className="text-neutral-400 text-sm font-medium"> &mdash; {exp.company}</span>
+                          {exp.location && <span className="text-xs text-neutral-500"> ({exp.location})</span>}
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-gray-400">{exp.dates}</span>
-                          <div className="flex items-center gap-1 pl-2 border-l border-[#2D3139]">
+                          <span className="text-xs font-semibold text-neutral-400">{exp.dates}</span>
+                          <div className="flex items-center gap-1 pl-2 border-l border-white/[0.08]">
                             <button
                               type="button"
                               onClick={() => handleStartEditExp(idx)}
                               title="Edit this role"
-                              className="p-1 rounded-md text-gray-400 hover:text-blue-400 hover:bg-[#1A1D23] transition cursor-pointer"
+                              className="p-1.5 rounded-lg text-neutral-400 hover:text-blue-400 hover:bg-white/[0.04] transition cursor-pointer"
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
@@ -1130,7 +1136,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                               type="button"
                               onClick={() => handleDeleteExp(idx)}
                               title="Delete this role"
-                              className="p-1 rounded-md text-gray-400 hover:text-rose-400 hover:bg-[#1A1D23] transition cursor-pointer"
+                              className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-400 hover:bg-white/[0.04] transition cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -1138,13 +1144,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                         </div>
                       </div>
 
-                      {exp.summary && <p className="text-xs text-gray-400 italic">{exp.summary}</p>}
+                      {exp.summary && <p className="text-xs text-neutral-400 italic">{exp.summary}</p>}
 
                       <div className="space-y-1.5 pt-1">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
                           Verified Accomplishments ({exp.bullets?.length || 0} bullets):
                         </span>
-                        <ul className="text-xs text-gray-300 list-disc pl-4 space-y-1">
+                        <ul className="text-xs text-neutral-300 list-disc pl-4 space-y-1">
                           {exp.bullets?.map((bullet, bIdx) => (
                             <li key={bIdx} className="leading-relaxed">
                               {bullet}
@@ -1160,8 +1166,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
 
           {/* Certifications */}
-          <div className="bg-[#0F1115] rounded-2xl border border-[#1F2937] p-5 shadow-sm space-y-3">
-            <h3 className="font-semibold text-white text-sm uppercase tracking-wider flex items-center justify-between">
+          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl space-y-3.5">
+            <h3 className="font-semibold text-white text-xs uppercase tracking-wider flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Award className="w-4 h-4 text-amber-400" />
                 <span>Certifications</span>
@@ -1175,12 +1181,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 value={newCert}
                 onChange={(e) => setNewCert(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCert())}
-                className="flex-1 px-3 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="flex-1 px-3 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-neutral-200 focus:outline-none focus:border-blue-500/50"
               />
               <button
                 type="button"
                 onClick={handleAddCert}
-                className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl cursor-pointer shadow-xs transition"
               >
                 Add
               </button>
@@ -1190,13 +1196,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               {formData.certifications?.map((cert, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-2 rounded-lg bg-[#14171E] border border-[#1F2937] text-xs text-gray-300 font-medium"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-neutral-300 font-medium"
                 >
                   <span>{cert}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveCert(cert)}
-                    className="text-gray-500 hover:text-rose-400 cursor-pointer"
+                    className="text-neutral-500 hover:text-rose-400 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -1209,8 +1215,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
       {/* AI Resume Parser Modal */}
       {showParseModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-[#0F1115] rounded-2xl border border-[#1F2937] p-6 max-w-2xl w-full shadow-2xl space-y-5">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="glass-panel rounded-2xl p-6 max-w-2xl w-full shadow-2xl space-y-5 border border-white/[0.1]">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-[#1F2937] pb-4">
               <div className="flex items-center gap-2.5">
@@ -1449,6 +1455,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };

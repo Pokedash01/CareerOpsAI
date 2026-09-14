@@ -8,6 +8,7 @@ import { AutomationView } from './components/AutomationView.js';
 import { AddJobModal } from './components/AddJobModal.js';
 import { UserProfile, JobListing, PipelineStats, AppSettings, WorkflowState } from './types.js';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'jobs' | 'tailor' | 'profile' | 'automation'>('dashboard');
@@ -50,7 +51,19 @@ export function App() {
         if (profRes && profRes.full_name) setProfile(profRes);
         if (Array.isArray(jobsRes)) {
           setJobs(jobsRes);
-          if (jobsRes.length > 0) setSelectedJobId(jobsRes[0].id);
+          // Check query parameters for direct navigation
+          const urlParams = new URLSearchParams(window.location.search);
+          const tabParam = urlParams.get('tab');
+          const jobIdParam = urlParams.get('jobId');
+
+          if (tabParam === 'tailor' || tabParam === 'studio' || tabParam === 'document_studio') {
+            setActiveTab('tailor');
+          }
+          if (jobIdParam && jobsRes.some((j: JobListing) => j.id === jobIdParam)) {
+            setSelectedJobId(jobIdParam);
+          } else if (jobsRes.length > 0) {
+            setSelectedJobId(jobsRes[0].id);
+          }
         }
         if (stateRes) {
           if (stateRes.stats) setStats(stateRes.stats);
@@ -226,8 +239,6 @@ export function App() {
       }).then((r) => r.json());
 
       if (res?.success) {
-        setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: 'notified' } : j)));
-        await refreshState();
         showToast(res.delivered ? `Telegram notification dispatched for ${job.title}!` : `Simulated Telegram alert generated for ${job.title}!`);
       }
     } catch (err: any) {
@@ -251,6 +262,34 @@ export function App() {
       }
     } catch (err: any) {
       showToast(err.message || 'Error updating status', 'error');
+    }
+  };
+
+  // Delete Job
+  const handleDeleteJob = async (jobId: string) => {
+    try {
+      const res = await fetch(`/api/jobs/${jobId}`, { method: 'DELETE' }).then((r) => r.json());
+      if (res?.jobs) {
+        setJobs(res.jobs);
+        await refreshState();
+        showToast('Job removed from pipeline.');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error deleting job', 'error');
+    }
+  };
+
+  // Remove All Expired Jobs
+  const handleRemoveExpiredJobs = async () => {
+    try {
+      const res = await fetch('/api/jobs/remove-expired', { method: 'POST' }).then((r) => r.json());
+      if (res?.jobs) {
+        setJobs(res.jobs);
+        await refreshState();
+        showToast(`Cleaned ${res.removedCount || 0} expired job(s) from pipeline.`);
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error removing expired jobs', 'error');
     }
   };
 
@@ -426,7 +465,21 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0B0E] text-[#E5E7EB] flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-[#080B11] text-[#E2E8F0] flex flex-col font-sans selection:bg-blue-600 selection:text-white relative overflow-hidden bg-grid-ambient">
+      {/* Organic Ambient Glow Spheres (Haikei / Blob generator principle) */}
+      <div
+        className="ambient-glow-sphere -top-32 right-1/4 w-[550px] h-[350px] bg-gradient-to-br from-blue-600/12 via-indigo-600/8 to-transparent pointer-events-none"
+        aria-hidden="true"
+      />
+      <div
+        className="ambient-glow-sphere top-96 -left-32 w-[500px] h-[500px] bg-gradient-to-tr from-cyan-600/10 via-emerald-600/5 to-transparent pointer-events-none"
+        aria-hidden="true"
+      />
+      <div
+        className="ambient-glow-sphere bottom-20 right-0 w-[450px] h-[450px] bg-gradient-to-tl from-purple-600/10 to-transparent pointer-events-none"
+        aria-hidden="true"
+      />
+
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -437,86 +490,130 @@ export function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'dashboard' && (
-          <DashboardView
-            profile={profile}
-            jobs={jobs}
-            stats={stats}
-            workflow={workflow}
-            onTriggerWorkflow={handleTriggerWorkflow}
-            isWorkflowRunning={isWorkflowRunning}
-            onSelectJobForTailor={handleSelectJobForTailor}
-            onRunPipeline={handleRunPipeline}
-            isPipelineRunning={isPipelineRunning}
-            onOpenAddJob={() => setIsAddJobOpen(true)}
-            onDiscoverJobs={handleDiscoverJobs}
-            isDiscovering={isDiscovering}
-            onNotifyTelegram={handleNotifyTelegram}
-            setActiveTab={setActiveTab}
-          />
-        )}
+      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <AnimatePresence mode="wait">
+          {activeTab === 'dashboard' && (
+            <motion.div
+              key="dashboard"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <DashboardView
+                profile={profile}
+                jobs={jobs}
+                stats={stats}
+                workflow={workflow}
+                onTriggerWorkflow={handleTriggerWorkflow}
+                isWorkflowRunning={isWorkflowRunning}
+                onSelectJobForTailor={handleSelectJobForTailor}
+                onRunPipeline={handleRunPipeline}
+                isPipelineRunning={isPipelineRunning}
+                onOpenAddJob={() => setIsAddJobOpen(true)}
+                onDiscoverJobs={handleDiscoverJobs}
+                isDiscovering={isDiscovering}
+                onNotifyTelegram={handleNotifyTelegram}
+                setActiveTab={setActiveTab}
+              />
+            </motion.div>
+          )}
 
-        {activeTab === 'jobs' && (
-          <JobFeedView
-            jobs={jobs}
-            profile={profile}
-            onEvaluateFit={handleEvaluateFit}
-            onSelectForTailoring={handleSelectJobForTailor}
-            onNotifyTelegram={handleNotifyTelegram}
-            onUpdateStatus={handleUpdateStatus}
-            onOpenAddJob={() => setIsAddJobOpen(true)}
-            onDiscoverJobs={handleDiscoverJobs}
-            isDiscovering={isDiscovering}
-            isEvaluatingId={isEvaluatingId}
-            onVerifyJobLink={handleVerifyJobLink}
-            onBatchVerifyLinks={handleBatchVerifyLinks}
-          />
-        )}
+          {activeTab === 'jobs' && (
+            <motion.div
+              key="jobs"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <JobFeedView
+                jobs={jobs}
+                profile={profile}
+                onEvaluateFit={handleEvaluateFit}
+                onSelectForTailoring={handleSelectJobForTailor}
+                onNotifyTelegram={handleNotifyTelegram}
+                onUpdateStatus={handleUpdateStatus}
+                onOpenAddJob={() => setIsAddJobOpen(true)}
+                onDiscoverJobs={handleDiscoverJobs}
+                isDiscovering={isDiscovering}
+                isEvaluatingId={isEvaluatingId}
+                onVerifyJobLink={handleVerifyJobLink}
+                onBatchVerifyLinks={handleBatchVerifyLinks}
+                onRemoveExpiredJobs={handleRemoveExpiredJobs}
+                onDeleteJob={handleDeleteJob}
+              />
+            </motion.div>
+          )}
 
-        {activeTab === 'tailor' && (
-          <DocumentStudioView
-            jobs={jobs}
-            selectedJobId={selectedJobId}
-            onSelectJob={(id) => setSelectedJobId(id)}
-            profile={profile}
-            onTailorJob={handleTailorJob}
-            isTailoring={isTailoring}
-          />
-        )}
+          {activeTab === 'tailor' && (
+            <motion.div
+              key="tailor"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <DocumentStudioView
+                jobs={jobs}
+                selectedJobId={selectedJobId}
+                onSelectJob={(id) => setSelectedJobId(id)}
+                profile={profile}
+                onTailorJob={handleTailorJob}
+                isTailoring={isTailoring}
+              />
+            </motion.div>
+          )}
 
-        {activeTab === 'profile' && (
-          <ProfileView
-            profile={profile}
-            onUpdateProfile={handleUpdateProfile}
-            onResetProfile={handleResetProfile}
-            onParseResumeText={handleParseResumeText}
-            onParseResumeDocument={handleParseResumeDocument}
-            isParsingResume={isParsingResume}
-          />
-        )}
+          {activeTab === 'profile' && (
+            <motion.div
+              key="profile"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <ProfileView
+                profile={profile}
+                onUpdateProfile={handleUpdateProfile}
+                onResetProfile={handleResetProfile}
+                onParseResumeText={handleParseResumeText}
+                onParseResumeDocument={handleParseResumeDocument}
+                isParsingResume={isParsingResume}
+              />
+            </motion.div>
+          )}
 
-        {activeTab === 'automation' && (
-          <AutomationView
-            settings={settings}
-            jobs={jobs}
-            profile={profile}
-            workflow={workflow}
-            onTriggerWorkflow={handleTriggerWorkflow}
-            onUpdateWorkflowConfig={handleUpdateWorkflowConfig}
-            isWorkflowRunning={isWorkflowRunning}
-            onUpdateSettings={handleUpdateSettings}
-            onTestNotify={async (jobId, customChatId) => {
-              const res = await fetch('/api/telegram/notify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: jobId, custom_chat_id: customChatId }),
-              }).then((r) => r.json());
-              await refreshState();
-              return res;
-            }}
-          />
-        )}
+          {activeTab === 'automation' && (
+            <motion.div
+              key="automation"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <AutomationView
+                settings={settings}
+                jobs={jobs}
+                profile={profile}
+                workflow={workflow}
+                onTriggerWorkflow={handleTriggerWorkflow}
+                onUpdateWorkflowConfig={handleUpdateWorkflowConfig}
+                isWorkflowRunning={isWorkflowRunning}
+                onUpdateSettings={handleUpdateSettings}
+                onTestNotify={async (jobId, customChatId) => {
+                  const res = await fetch('/api/telegram/notify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: jobId, custom_chat_id: customChatId }),
+                  }).then((r) => r.json());
+                  await refreshState();
+                  return res;
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       {/* Add Job Modal */}
@@ -527,24 +624,32 @@ export function App() {
       />
 
       {/* Toast Feedback Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 animate-fade-in">
-          <div
-            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold border ${
-              toastMessage.type === 'success'
-                ? 'bg-[#1A1D23] text-[#E5E7EB] border-[#2D3139]'
-                : 'bg-rose-950/90 text-rose-200 border-rose-800/80'
-            }`}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 16, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-5 right-5 z-50 pointer-events-none"
           >
-            {toastMessage.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            ) : (
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-            )}
-            <span>{toastMessage.text}</span>
-          </div>
-        </div>
-      )}
+            <div
+              className={`flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-2xl text-xs font-medium border backdrop-blur-md pointer-events-auto ${
+                toastMessage.type === 'success'
+                  ? 'bg-[#121620]/95 text-zinc-200 border-white/[0.12] shadow-black/50'
+                  : 'bg-rose-950/90 text-rose-200 border-rose-800/80 shadow-rose-950/50'
+              }`}
+            >
+              {toastMessage.type === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              )}
+              <span>{toastMessage.text}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

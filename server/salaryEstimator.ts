@@ -4,6 +4,8 @@
  * - Automatic Seniority & Experience Inference when omitted in JDs
  */
 
+import { extractExperienceYears } from './salaryHelpers.js';
+
 export interface SalaryBenchmark {
   minLpa: number;
   maxLpa: number;
@@ -91,6 +93,74 @@ export function generateSalarySearchMetadata(title: string, company: string, loc
     ambitionBoxSearchUrl,
     glassdoorSearchUrl,
     directAmbitionBoxUrl,
+  };
+}
+
+/**
+ * Searches live AmbitionBox and Glassdoor compensation data using the query string:
+ * "salary for [role] in [company] for [location]"
+ * Automatically extracts real salary ranges from Glassdoor & AmbitionBox search snippets.
+ */
+export async function searchSalaryLiveFromGlassdoorAndAmbitionBox(
+  title: string,
+  company: string,
+  location: string,
+  expRange?: [number, number],
+  apiKey?: string
+): Promise<{ minLpa: number; maxLpa: number; source: string; searchQuery: string }> {
+  const { normalizedCity } = normalizeRegion(location);
+  const cleanTitle = title.replace(/[([].*?[)\]]/g, '').trim();
+  const cleanCompany = company.trim();
+  const resolvedKey = apiKey || process.env.SERPAPI_KEY || 'GNLQpQWpHAMcEL9MguEkrxq1';
+
+  // Specific user-requested search string format: "salary for XYZ role in this company for this location"
+  const userSearchString = `salary for ${cleanTitle} in ${cleanCompany} for ${normalizedCity}`;
+  const query = `${userSearchString} site:ambitionbox.com OR site:glassdoor.co.in OR site:glassdoor.com`;
+
+  try {
+    const url = `https://www.searchapi.io/api/v1/search?engine=google&api_key=${encodeURIComponent(
+      resolvedKey
+    )}&gl=in&hl=en&num=5&q=${encodeURIComponent(query)}`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (res.ok) {
+      const data: any = await res.json();
+      const results = Array.isArray(data.organic_results) ? data.organic_results : [];
+      for (const r of results) {
+        const text = `${r.title || ''} ${r.snippet || ''}`;
+        // Look for expressions like: ₹6L - ₹9L (Glassdoor Est.), ₹6.6 L/yr - ₹8.8 L/yr, 10 - 15 LPA
+        const m =
+          text.match(/(?:₹|INR|Rs\.?)?\s*(\d{1,2}(?:\.\d+)?)\s*(?:L|LPA|Lakhs?|L\/yr)\s*(?:-|to|–)\s*(?:₹|INR|Rs\.?)?\s*(\d{1,2}(?:\.\d+)?)\s*(?:L|LPA|Lakhs?|L\/yr)/i) ||
+          text.match(/(?:₹|INR|Rs\.?)?\s*(\d{1,2}(?:\.\d+)?)\s*(?:-|to|–)\s*(?:₹|INR|Rs\.?)?\s*(\d{1,2}(?:\.\d+)?)\s*(?:L|LPA|Lakhs?|L\/yr)/i);
+        if (m) {
+          const lo = parseFloat(m[1]);
+          const hi = parseFloat(m[2]);
+          if (lo > 0 && hi >= lo && lo <= 70 && hi <= 120) {
+            return {
+              minLpa: Math.round(lo * 10) / 10,
+              maxLpa: Math.round(hi * 10) / 10,
+              source: `Glassdoor & AmbitionBox Live (${userSearchString})`,
+              searchQuery: userSearchString,
+            };
+          }
+        }
+      }
+    }
+  } catch (err: any) {
+    console.warn(`[SalarySearch] Live search failed for query "${userSearchString}":`, err.message);
+  }
+
+  // Fallback to deterministic regional market engine if search returns no exact range
+  const fallback = estimateSalaryLpa(title, company, location, expRange || [3, 6]);
+  return {
+    minLpa: fallback.minLpa,
+    maxLpa: fallback.maxLpa,
+    source: `AmbitionBox & Glassdoor Market Benchmark (${userSearchString})`,
+    searchQuery: userSearchString,
   };
 }
 
@@ -187,118 +257,30 @@ export function estimateSalaryLpa(title: string, company: string, location: stri
  * Rigorous experience extractor with fallback to title/seniority inference.
  * Guarantees that experience_range_years is NEVER undefined or missing.
  */
-export function resolveExperienceYears(text: string, title: string): ExperienceInference {
-  const cleanText = text || '';
-
-  // 1. Multi-pattern regex for explicitly stated experience in JD
-  const PATTERNS: RegExp[] = [
-    /(\d{1,2})\s*(?:-|to)\s*(\d{1,2})\s*\+?\s*(?:years?|yrs?)(?:\s*(?:of)?\s*(?:relevant|hands-on|industry|work)?\s*experience)?/i,
-    /(?:minimum|min\.?|at least)\s*(\d{1,2})\s*\+?\s*(?:years?|yrs?)(?:\s*(?:of)?\s*(?:relevant|hands-on|industry|work)?\s*experience)?/i,
-    /(\d{1,2})\s*\+\s*(?:years?|yrs?)(?:\s*(?:of)?\s*(?:relevant|hands-on|industry|work)?\s*experience)?/i,
-    /(?:experience|exp):\s*(\d{1,2})\s*(?:-|to)\s*(\d{1,2})\s*(?:years?|yrs?)/i,
-    /(?:experience|exp):\s*(\d{1,2})\s*\+?\s*(?:years?|yrs?)/i,
-    /(\d{1,2})\s*(?:years?|yrs?)\s*(?:of)?\s*(?:total\s*)?experience/i,
-  ];
-
-  for (const pat of PATTERNS) {
-    const match = pat.exec(cleanText);
-    if (match) {
-      if (match[2]) {
-        const lo = parseInt(match[1], 10);
-        const hi = parseInt(match[2], 10);
-        if (lo <= 25 && hi <= 30 && lo <= hi) {
-          return {
-            range: [lo, hi],
-            isInferred: false,
-            tier: 'Explicit',
-            reason: `Extracted directly from JD: ${match[0].trim()}`,
-          };
-        }
-      } else if (match[1]) {
-        const val = parseInt(match[1], 10);
-        if (val <= 25) {
-          // If e.g. "3+ years", bracket it realistically (3 to val+2 or val+3)
-          const hi = val <= 3 ? val + 2 : val + 3;
-          return {
-            range: [val, hi],
-            isInferred: false,
-            tier: 'Explicit',
-            reason: `Extracted directly from JD: ${match[0].trim()}`,
-          };
-        }
-      }
+export function resolveExperienceYears(text: string, title: string, link?: string): ExperienceInference {
+  const extracted = extractExperienceYears(text, undefined, title, link);
+  if (extracted) {
+    let tier = 'Explicit';
+    if (extracted.isInferred) {
+      if (extracted.range[0] >= 10) tier = 'Executive / Director';
+      else if (extracted.range[0] >= 6) tier = 'Lead / Principal';
+      else if (extracted.range[0] >= 3) tier = 'Senior';
+      else if (extracted.range[1] <= 2) tier = 'Entry / Associate';
+      else tier = 'Mid-Level';
     }
-  }
-
-  // 2. If NOT mentioned in JD, infer from Role Title & Seniority Band (CRITICAL FIX)
-  const titleLower = (title || '').toLowerCase();
-
-  if (
-    titleLower.includes('lead') ||
-    titleLower.includes('principal') ||
-    titleLower.includes('staff') ||
-    titleLower.includes('manager') ||
-    titleLower.includes('associate director')
-  ) {
     return {
-      range: [7, 10],
-      isInferred: true,
-      tier: 'Lead / Principal',
-      reason: "Inferred from Seniority ('Lead / Manager' industry standard: 7-10 Years)",
+      range: extracted.range,
+      isInferred: extracted.isInferred,
+      tier,
+      reason: extracted.reason || (extracted.isInferred ? `Inferred from ${tier} role title` : 'Exact requirement extracted from Job Description'),
     };
   }
 
-  if (
-    titleLower.includes('senior') ||
-    titleLower.includes('sr.') ||
-    titleLower.includes('sr ') ||
-    titleLower.includes('specialist ii') ||
-    titleLower.includes('consultant ii') ||
-    titleLower.includes('tier 3')
-  ) {
-    return {
-      range: [3, 6],
-      isInferred: true,
-      tier: 'Senior',
-      reason: "Inferred from Seniority ('Senior Analyst / Specialist' standard: 3-6 Years)",
-    };
-  }
-
-  if (
-    titleLower.includes('junior') ||
-    titleLower.includes('associate') ||
-    titleLower.includes('graduate') ||
-    titleLower.includes('trainee') ||
-    titleLower.includes('entry') ||
-    titleLower.includes('intern')
-  ) {
-    return {
-      range: [0, 2],
-      isInferred: true,
-      tier: 'Entry / Associate',
-      reason: "Inferred from Seniority ('Associate / Entry' standard: 0-2 Years)",
-    };
-  }
-
-  if (
-    titleLower.includes('director') ||
-    titleLower.includes('head') ||
-    titleLower.includes('vice president') ||
-    titleLower.includes('vp')
-  ) {
-    return {
-      range: [10, 15],
-      isInferred: true,
-      tier: 'Executive / Director',
-      reason: "Inferred from Seniority ('Director / Head' standard: 10-15 Years)",
-    };
-  }
-
-  // Default Mid-Level Specialist (Consultant, Analyst, Developer, Engineer)
+  // Guaranteed fallback
   return {
-    range: [2, 5],
+    range: [2, 4],
     isInferred: true,
     tier: 'Mid-Level',
-    reason: "Inferred from Role Title ('Mid-Level Professional' standard: 2-5 Years)",
+    reason: "Inferred from Role Title ('Mid-Level Professional' standard: 2-4 Years)",
   };
 }

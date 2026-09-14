@@ -52,66 +52,66 @@ export const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onAdd
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-      <div className="bg-[#0F1115] rounded-2xl border border-[#1F2937] p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-[#E5E7EB]">
-        <div className="flex items-center justify-between border-b border-[#1F2937] pb-3">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="glass-panel rounded-2xl p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-zinc-200 border border-white/[0.1]">
+        <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
           <div className="flex items-center gap-2">
             <Plus className="w-5 h-5 text-blue-400" />
-            <h3 className="font-semibold text-white text-lg">Add Job Listing for Evaluation</h3>
+            <h3 className="font-bold text-white text-lg tracking-tight">Add Job Listing for Evaluation</h3>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl font-bold cursor-pointer"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
           >
-            &times;
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3 text-xs">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-gray-400 font-medium mb-1">Job Title *</label>
+              <label className="block text-zinc-300 font-semibold mb-1">Job Title *</label>
               <input
                 type="text"
                 required
                 placeholder="e.g. Senior Power Platform Developer"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-zinc-100 text-xs font-semibold focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition"
               />
             </div>
 
             <div>
-              <label className="block text-gray-400 font-medium mb-1">Company Name *</label>
+              <label className="block text-zinc-300 font-semibold mb-1">Company Name *</label>
               <input
                 type="text"
                 required
                 placeholder="e.g. Microsoft, Deloitte"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-zinc-100 text-xs font-semibold focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-gray-400 font-medium mb-1">Location</label>
+              <label className="block text-zinc-300 font-medium mb-1">Location</label>
               <input
                 type="text"
                 placeholder="e.g. Gurugram, Bengaluru, Remote"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-zinc-100 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition"
               />
             </div>
 
             <div>
-              <label className="block text-gray-400 font-medium mb-1">ATS Portal Source</label>
+              <label className="block text-zinc-300 font-medium mb-1">ATS Portal Source</label>
               <select
                 value={atsSource}
                 onChange={(e) => setAtsSource(e.target.value)}
-                className="w-full px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-[#121620] border border-white/[0.08] rounded-xl text-zinc-100 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition"
               >
                 <option value="Workday">Workday</option>
                 <option value="Greenhouse">Greenhouse</option>
@@ -126,7 +126,7 @@ export const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onAdd
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-gray-400 font-medium">Salary Range (LPA)</label>
+                <label className="text-zinc-300 font-medium">Salary Range (LPA)</label>
                 <span className="text-[10px] text-amber-400/90 font-mono">Optional</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -135,25 +135,25 @@ export const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onAdd
                   placeholder="e.g. 18"
                   value={salaryMin}
                   onChange={(e) => setSalaryMin(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-1/2 px-2.5 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 focus:outline-none"
+                  className="w-1/2 px-2.5 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-zinc-100 focus:outline-none focus:border-blue-500"
                 />
-                <span className="text-gray-500 font-bold">-</span>
+                <span className="text-zinc-500 font-bold">-</span>
                 <input
                   type="number"
                   placeholder="e.g. 26"
                   value={salaryMax}
                   onChange={(e) => setSalaryMax(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-1/2 px-2.5 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 focus:outline-none"
+                  className="w-1/2 px-2.5 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-zinc-100 focus:outline-none focus:border-blue-500"
                 />
               </div>
-              <p className="text-[10px] text-gray-500 mt-1">
+              <p className="text-[10px] text-zinc-500 mt-1">
                 Leave blank to auto-benchmark via AmbitionBox & Glassdoor.
               </p>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-gray-400 font-medium">Experience (Years)</label>
+                <label className="text-zinc-300 font-medium">Experience (Years)</label>
                 <span className="text-[10px] text-blue-400/90 font-mono">Optional</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -162,71 +162,71 @@ export const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onAdd
                   placeholder="e.g. 3"
                   value={expMin}
                   onChange={(e) => setExpMin(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-1/2 px-2.5 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 focus:outline-none"
+                  className="w-1/2 px-2.5 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-zinc-100 focus:outline-none focus:border-blue-500"
                 />
-                <span className="text-gray-500 font-bold">-</span>
+                <span className="text-zinc-500 font-bold">-</span>
                 <input
                   type="number"
                   placeholder="e.g. 6"
                   value={expMax}
                   onChange={(e) => setExpMax(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-1/2 px-2.5 py-1.5 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 focus:outline-none"
+                  className="w-1/2 px-2.5 py-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-zinc-100 focus:outline-none focus:border-blue-500"
                 />
               </div>
-              <p className="text-[10px] text-gray-500 mt-1">
+              <p className="text-[10px] text-zinc-500 mt-1">
                 Leave blank to auto-infer from title seniority (e.g. Senior = 3-6y).
               </p>
             </div>
           </div>
 
           {/* Live AmbitionBox & Glassdoor Search String Preview */}
-          <div className="bg-[#14171E] p-2.5 rounded-xl border border-[#1F2937] space-y-1">
+          <div className="p-2.5 rounded-xl border border-white/[0.07] bg-white/[0.02] space-y-1">
             <div className="flex items-center justify-between text-[11px]">
-              <span className="font-semibold text-gray-300 flex items-center gap-1">
+              <span className="font-semibold text-zinc-300 flex items-center gap-1">
                 <span>AmbitionBox & Glassdoor Search String</span>
               </span>
-              <span className="text-[10px] text-amber-400 font-mono">Live Generator</span>
+              <span className="text-[10px] text-amber-400 font-mono font-medium">Live Generator</span>
             </div>
-            <code className="block text-[10px] text-gray-400 font-mono bg-[#0B0D11] p-1.5 rounded border border-[#1F2937]/80 truncate">
+            <code className="block text-[10px] text-zinc-400 font-mono bg-[#080A0F] p-1.5 rounded-lg border border-white/[0.06] truncate">
               "{liveSearchQuery}"
             </code>
           </div>
 
           <div>
-            <label className="block text-gray-400 font-medium mb-1">Direct Apply Link</label>
+            <label className="block text-zinc-300 font-medium mb-1">Direct Apply Link</label>
             <input
               type="url"
               placeholder="https://company.wd3.myworkdayjobs.com/careers/job/..."
               value={applyLink}
               onChange={(e) => setApplyLink(e.target.value)}
-              className="w-full px-3 py-2 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-zinc-100 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition"
             />
           </div>
 
           <div>
-            <label className="block text-gray-400 font-medium mb-1">Full Job Description *</label>
+            <label className="block text-zinc-300 font-medium mb-1">Full Job Description *</label>
             <textarea
-              rows={6}
+              rows={5}
               required
               placeholder="Paste job description, responsibilities, and qualifications here..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full p-3 bg-[#1A1D23] border border-[#2D3139] rounded-lg text-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-sans placeholder-gray-500"
+              className="w-full p-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-zinc-100 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition font-sans placeholder-zinc-500"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#1F2937]">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-gray-400 hover:bg-[#1A1D23] rounded-xl cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] rounded-xl transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-sm cursor-pointer disabled:opacity-50"
+              className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md shadow-blue-600/20 cursor-pointer disabled:opacity-50 border border-blue-400/25"
             >
               {isSubmitting ? 'Adding...' : 'Add & Stage Job'}
             </button>
