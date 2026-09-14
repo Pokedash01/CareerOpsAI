@@ -204,19 +204,18 @@ function loadStoreFromDisk() {
 
 loadStoreFromDisk();
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+export const app = express();
+const PORT = 3000;
 
-  const DEFAULT_PUBLIC_URL =
-    process.env.APP_URL ||
-    'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app';
+const DEFAULT_PUBLIC_URL =
+  process.env.APP_URL ||
+  'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app';
 
-  app.set('trust proxy', true);
+app.set('trust proxy', true);
 
-  let lastKnownBaseUrl = DEFAULT_PUBLIC_URL;
+let lastKnownBaseUrl = DEFAULT_PUBLIC_URL;
 
-  app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '10mb' }));
 
   // Track the public base URL dynamically from incoming requests
   // and trigger autonomous 4-hour catch-up if window has elapsed (handles Cloud Run idling / cold starts)
@@ -1555,24 +1554,30 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     res.json({ success: true, settings: appSettings });
   });
 
-  // --- Vite Middleware Integration ---
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+  async function startServer() {
+    // --- Vite Middleware Integration ---
+    if (process.env.NODE_ENV !== 'production') {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+    } else {
+      const distPath = path.join(process.cwd(), 'dist');
+      app.use(express.static(distPath));
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+    }
+
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`[CareerOps AI] Server running on http://0.0.0.0:${PORT}`);
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[CareerOps AI] Server running on http://0.0.0.0:${PORT}`);
-  });
-}
+  // Only start listening when not executed as a Vercel Serverless Function
+  if (!process.env.VERCEL) {
+    startServer();
+  }
 
-startServer();
+  export default app;

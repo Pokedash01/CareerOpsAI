@@ -67,15 +67,18 @@ export interface UserProfile {
 export interface MatchResult {
   is_viable: boolean;
   match_score: number;
-  detected_experience: string;
-  salary_range: string;
-  location: string;
-  skills_gap: string;
+  detected_experience?: string;
+  salary_range?: string;
+  location?: string;
+  skills_gap?: string;
   rejection_reason?: string;
   summary_reasoning?: string;
   strengths?: string[];
   weaknesses?: string[];
   evaluated_at?: string;
+  reason?: string;
+  skill_gap?: string[];
+  highlight_keywords?: string[];
 }
 
 export interface GroundingStats {
@@ -157,6 +160,7 @@ export interface AppSettings {
   workflow_enabled?: boolean;
   workflow_interval_hours?: number;
   auto_notify_telegram?: boolean;
+  serpapi_key?: string;
 }
 
 export interface WorkflowRunLog {
