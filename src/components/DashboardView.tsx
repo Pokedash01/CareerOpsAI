@@ -198,9 +198,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <span className="text-xs text-zinc-400 font-mono hidden sm:inline-block">
-              Next run: <span className="text-cyan-400 font-semibold">{remainingTime}</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full sm:w-auto">
+            <span className="text-xs text-zinc-400 font-mono flex items-center justify-between sm:justify-start gap-1.5">
+              <span className="text-zinc-500">Next run:</span>
+              <span className="text-cyan-400 font-semibold">{remainingTime}</span>
             </span>
             {onTriggerWorkflow && (
               <motion.button
@@ -208,7 +209,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 whileTap={{ scale: 0.98 }}
                 onClick={onTriggerWorkflow}
                 disabled={isWorkflowRunning}
-                className="flex items-center gap-1.5 bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-white/[0.08] transition cursor-pointer disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium px-3.5 py-2 min-h-[38px] rounded-xl border border-white/[0.08] transition cursor-pointer disabled:opacity-50 w-full sm:w-auto"
               >
                 {isWorkflowRunning ? (
                   <>
@@ -228,7 +229,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </motion.div>
 
       {/* Metrics Funnel Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3.5">
         {metrics.map((metric, idx) => {
           const Icon = metric.icon;
           return (
@@ -238,7 +239,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.08 + idx * 0.04 }}
               whileHover={{ y: -3 }}
-              className="glass-panel glass-panel-hover rounded-xl p-4 flex flex-col justify-between group"
+              className={`glass-panel glass-panel-hover rounded-xl p-3.5 sm:p-4 flex flex-col justify-between group ${
+                idx === 4 ? 'col-span-2 sm:col-span-1' : ''
+              }`}
             >
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">

@@ -120,14 +120,14 @@ export const DocumentStudioView: React.FC<DocumentStudioViewProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
             {/* Job Switcher */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <span className="text-xs text-zinc-500 font-medium hidden sm:inline">Role:</span>
               <select
                 value={activeJob.id}
                 onChange={(e) => onSelectJob(e.target.value)}
-                className="text-xs font-medium bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-blue-500/80 max-w-xs truncate"
+                className="text-xs font-medium bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 text-zinc-200 focus:outline-none focus:border-blue-500/80 w-full sm:max-w-xs truncate min-h-[38px]"
               >
                 {jobs.map((j) => (
                   <option key={j.id} value={j.id} className="bg-[#12151D] text-zinc-200">
@@ -142,7 +142,7 @@ export const DocumentStudioView: React.FC<DocumentStudioViewProps> = ({
               whileTap={{ scale: 0.98 }}
               onClick={() => onTailorJob(activeJob.id)}
               disabled={isTailoring}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-sm border border-blue-400/20 disabled:opacity-50 cursor-pointer"
+              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 min-h-[38px] rounded-xl transition shadow-sm border border-blue-400/20 disabled:opacity-50 cursor-pointer w-full sm:w-auto shrink-0"
             >
               {isTailoring ? (
                 <>
@@ -177,34 +177,34 @@ export const DocumentStudioView: React.FC<DocumentStudioViewProps> = ({
 
       {/* Document View Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
-        <div className="flex items-center gap-1.5 bg-white/[0.03] p-1 rounded-xl border border-white/[0.06]">
+        <div className="grid grid-cols-2 sm:flex items-center gap-1.5 bg-white/[0.03] p-1 rounded-xl border border-white/[0.06] w-full sm:w-auto">
           <button
             onClick={() => setDocTab('resume')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+            className={`flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[38px] rounded-lg text-xs font-medium transition cursor-pointer ${
               docTab === 'resume'
-                ? 'bg-blue-600 text-white shadow-sm'
+                ? 'bg-blue-600 text-white shadow-sm font-semibold'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]'
             }`}
           >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Tailored Resume</span>
+            <FileText className="w-3.5 h-3.5 shrink-0" />
+            <span>Resume</span>
           </button>
 
           <button
             onClick={() => setDocTab('cover_letter')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+            className={`flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[38px] rounded-lg text-xs font-medium transition cursor-pointer ${
               docTab === 'cover_letter'
-                ? 'bg-blue-600 text-white shadow-sm'
+                ? 'bg-blue-600 text-white shadow-sm font-semibold'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]'
             }`}
           >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Tailored Cover Letter</span>
+            <FileText className="w-3.5 h-3.5 shrink-0" />
+            <span>Cover Letter</span>
           </button>
         </div>
 
         {/* Download / Copy Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto pb-1 sm:pb-0">
           {docTab === 'resume' ? (
             <>
               <motion.button
@@ -308,12 +308,12 @@ export const DocumentStudioView: React.FC<DocumentStudioViewProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.2 }}
-            className="bg-[#0B0E14] rounded-xl border border-white/[0.06] p-7 sm:p-10 shadow-sm space-y-6 max-w-4xl mx-auto font-sans text-zinc-200"
+            className="bg-[#0B0E14] rounded-xl border border-white/[0.06] p-4 sm:p-7 md:p-10 shadow-sm space-y-6 max-w-4xl mx-auto font-sans text-zinc-200"
           >
             {/* Header */}
             <div className="border-b border-white/[0.06] pb-4 space-y-1">
               <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">{profile.full_name}</h1>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-400 break-words leading-relaxed">
                 {profile.contact.email} &bull; {profile.contact.phone} &bull; {profile.contact.location || 'India'} &bull; {profile.contact.links}
               </p>
             </div>
@@ -420,7 +420,7 @@ export const DocumentStudioView: React.FC<DocumentStudioViewProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.2 }}
-            className="bg-[#0B0E14] rounded-xl border border-white/[0.06] p-7 sm:p-12 shadow-sm space-y-6 max-w-4xl mx-auto font-sans leading-relaxed text-xs sm:text-sm text-zinc-300"
+            className="bg-[#0B0E14] rounded-xl border border-white/[0.06] p-4 sm:p-7 md:p-12 shadow-sm space-y-6 max-w-4xl mx-auto font-sans leading-relaxed text-xs sm:text-sm text-zinc-300"
           >
             <div className="border-b border-white/[0.06] pb-4">
               <h1 className="text-xl font-semibold text-white">{profile.full_name}</h1>

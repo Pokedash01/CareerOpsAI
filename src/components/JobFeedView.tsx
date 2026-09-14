@@ -158,16 +158,16 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full lg:w-auto">
           {/* Status Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.07] text-xs">
+          <div className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.07] text-xs overflow-x-auto no-scrollbar max-w-full">
             {filterTabs.map((tab) => {
               const isActive = statusFilter === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setStatusFilter(tab.id as any)}
-                  className={`px-3 py-1.5 rounded-lg transition-all font-semibold cursor-pointer text-xs ${
+                  className={`px-3 py-1.5 rounded-lg transition-all font-semibold cursor-pointer text-xs whitespace-nowrap shrink-0 ${
                     isActive
                       ? `${tab.activeColor} shadow-sm`
                       : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]'
@@ -180,29 +180,31 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
             })}
           </div>
 
-          {/* Remove Expired button */}
-          {expiredCount > 0 && onRemoveExpiredJobs && (
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Remove Expired button */}
+            {expiredCount > 0 && onRemoveExpiredJobs && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => onRemoveExpiredJobs()}
+                title="Remove expired or closed jobs"
+                className="flex items-center gap-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold px-3 py-2 min-h-[38px] rounded-xl border border-rose-500/25 transition cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                <span>Clean Expired</span>
+              </motion.button>
+            )}
+
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onRemoveExpiredJobs()}
-              title="Remove expired or closed jobs"
-              className="flex items-center gap-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold px-3 py-2 rounded-xl border border-rose-500/25 transition cursor-pointer"
+              onClick={onOpenAddJob}
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-semibold px-3.5 py-2 min-h-[38px] rounded-xl shadow-md shadow-blue-600/20 transition cursor-pointer border border-blue-400/25"
             >
-              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-              <span>Clean Expired</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Job</span>
             </motion.button>
-          )}
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onOpenAddJob}
-            className="flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-md shadow-blue-600/20 transition cursor-pointer border border-blue-400/25"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Job</span>
-          </motion.button>
+          </div>
         </div>
       </motion.div>
 
@@ -433,13 +435,13 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
                 </div>
 
                 {/* Bottom Actions Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-white/[0.07]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2.5 border-t border-white/[0.07]">
                   {/* Left: Status dropdown */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
                     <select
                       value={currentStatus}
                       onChange={(e) => onUpdateStatus(job.id, e.target.value)}
-                      className={`text-xs font-semibold rounded-lg px-2.5 py-1.5 border transition cursor-pointer focus:outline-none ${
+                      className={`text-xs font-semibold rounded-xl px-3 py-2 border transition cursor-pointer focus:outline-none min-h-[38px] flex-1 sm:flex-initial ${
                         currentStatus === 'rejected'
                           ? 'bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/20'
                           : currentStatus === 'interviewing'
@@ -459,31 +461,31 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
                       <button
                         onClick={() => onDeleteJob(job.id)}
                         title="Remove expired job"
-                        className="text-zinc-500 hover:text-rose-400 p-1.5 rounded-lg transition cursor-pointer"
+                        className="text-zinc-500 hover:text-rose-400 p-2 min-h-[38px] min-w-[38px] flex items-center justify-center rounded-xl transition cursor-pointer bg-white/[0.02] border border-white/[0.06]"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     )}
                   </div>
 
                   {/* Right side: Telegram alert, Documents, Apply */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => onNotifyTelegram(job)}
                       title="Send Telegram Alert"
                       aria-label="Send Telegram Alert"
-                      className="flex items-center justify-center w-8 h-8 bg-white/[0.03] hover:bg-white/[0.08] text-blue-400 hover:text-blue-300 rounded-lg transition cursor-pointer border border-white/[0.08]"
+                      className="flex items-center justify-center w-10 h-10 min-w-[40px] bg-white/[0.03] hover:bg-white/[0.08] text-blue-400 hover:text-blue-300 rounded-xl transition cursor-pointer border border-white/[0.08] shrink-0"
                     >
-                      <Send className="w-3.5 h-3.5" />
+                      <Send className="w-4 h-4" />
                     </motion.button>
 
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => onSelectForTailoring(job)}
-                      className="flex items-center gap-1.5 bg-white/[0.03] hover:bg-white/[0.08] text-zinc-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition border border-white/[0.08] cursor-pointer"
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-white/[0.03] hover:bg-white/[0.08] text-zinc-200 text-xs font-semibold px-3.5 py-2 min-h-[38px] rounded-xl transition border border-white/[0.08] cursor-pointer"
                     >
                       <FileText className="w-3.5 h-3.5 text-blue-400" />
                       <span>Documents</span>
@@ -495,10 +497,10 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
                       href={job.apply_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg transition shadow-md shadow-emerald-600/20 cursor-pointer border border-emerald-400/30"
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-semibold px-4 py-2 min-h-[38px] rounded-xl transition shadow-md shadow-emerald-600/20 cursor-pointer border border-emerald-400/30"
                     >
                       <span>Apply</span>
-                      <ExternalLink className="w-3 h-3" />
+                      <ExternalLink className="w-3.5 h-3.5" />
                     </motion.a>
                   </div>
                 </div>

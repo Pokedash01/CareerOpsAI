@@ -71,7 +71,7 @@ export function formatTelegramMessageHtml(
     `✉️ <a href="${coverLetterLink}"><b>Tailored Cover Letter</b></a>\n`;
 
   if (settings?.telegram_include_apply_link !== false && target.apply_link) {
-    htmlMessage += `🚀 <a href="${target.apply_link}"><b>Apply Link</b></a>\n`;
+    htmlMessage += `🚀 <a href="${target.apply_link}"><b>Apply Directly on Portal</b></a>\n`;
   }
 
   htmlMessage += `\n<i>Automated workflow dispatch via CareerOps-AI.</i>`;
@@ -167,6 +167,7 @@ export async function dispatchJobNotification(params: {
 
   const botToken = (customBotToken || settings?.telegram_bot_token || '').trim() || DEFAULT_TELEGRAM_BOT_TOKEN;
   const chatId = (customChatId || settings?.telegram_chat_id || '').trim() || DEFAULT_TELEGRAM_CHAT_ID;
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : undefined;
 
   // 1. First attempt backend endpoint
   try {
@@ -182,6 +183,7 @@ export async function dispatchJobNotification(params: {
         custom_chat_id: chatId,
         custom_bot_token: botToken,
         settings,
+        baseUrl: currentOrigin,
       }),
       signal: controller.signal,
     });

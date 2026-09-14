@@ -57,6 +57,15 @@ export default async function handler(req: any, res: any) {
 
     const header = settings?.telegram_custom_header || `🎯 <b>New High-Fit Role Matched! (CareerOps AI)</b>`;
 
+    const host = req.headers['host'] || '';
+    const proto = req.headers['x-forwarded-proto'] || 'https';
+    const baseUrl =
+      body.baseUrl ||
+      (req.headers['origin'] ? String(req.headers['origin']) : host ? `${proto}://${host}` : 'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app');
+
+    const resumeLink = `${baseUrl}/?tab=tailor&jobId=${encodeURIComponent(target.id)}&type=resume`;
+    const coverLetterLink = `${baseUrl}/?tab=tailor&jobId=${encodeURIComponent(target.id)}&type=cover_letter`;
+
     let htmlMessage =
       `${header}\n\n` +
       `📌 <b>Role:</b> ${escapeHtml(target.title)}\n` +
@@ -74,8 +83,13 @@ export default async function handler(req: any, res: any) {
       htmlMessage += `⚠️ <b>Skill Gap:</b> ${escapeHtml(gaps)}\n`;
     }
 
+    htmlMessage +=
+      `\n` +
+      `📄 <a href="${resumeLink}"><b>Tailored ATS Resume</b></a>\n` +
+      `✉️ <a href="${coverLetterLink}"><b>Tailored Cover Letter</b></a>\n`;
+
     if (settings?.telegram_include_apply_link !== false && target.apply_link) {
-      htmlMessage += `\n🚀 <a href="${target.apply_link}"><b>Apply Link</b></a>\n`;
+      htmlMessage += `🚀 <a href="${target.apply_link}"><b>Apply Directly on Portal</b></a>\n`;
     }
 
     htmlMessage += `\n<i>Automated workflow dispatch via CareerOps-AI.</i>`;

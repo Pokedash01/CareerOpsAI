@@ -987,12 +987,13 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
       htmlMessage += `⚠️ <b>Skill Gap:</b> ${gapsEsc}\n`;
     }
 
-    htmlMessage += `\n` +
+    htmlMessage +=
+      `\n` +
       `📄 <a href="${resumeLink}"><b>Tailored ATS Resume</b></a>\n` +
       `✉️ <a href="${coverLetterLink}"><b>Tailored Cover Letter</b></a>\n`;
 
-    if (appSettings.telegram_include_apply_link !== false) {
-      htmlMessage += `🚀 <a href="${target.apply_link}"><b>Apply Link</b></a>\n`;
+    if (appSettings.telegram_include_apply_link !== false && target.apply_link) {
+      htmlMessage += `🚀 <a href="${target.apply_link}"><b>Apply Directly on Portal</b></a>\n`;
     }
 
     htmlMessage += `\n<i>Automated workflow dispatch via CareerOps-AI.</i>`;

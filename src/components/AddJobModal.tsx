@@ -52,12 +52,12 @@ export const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onAdd
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="glass-panel rounded-2xl p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-zinc-200 border border-white/[0.1]">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
+      <div className="glass-panel rounded-2xl p-4 sm:p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-zinc-200 border border-white/[0.1] my-auto">
         <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
           <div className="flex items-center gap-2">
             <Plus className="w-5 h-5 text-blue-400" />
-            <h3 className="font-bold text-white text-lg tracking-tight">Add Job Listing for Evaluation</h3>
+            <h3 className="font-bold text-white text-base sm:text-lg tracking-tight">Add Job Listing for Evaluation</h3>
           </div>
           <button
             onClick={onClose}
@@ -68,7 +68,7 @@ export const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onAdd
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3 text-xs">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-zinc-300 font-semibold mb-1">Job Title *</label>
               <input
@@ -94,7 +94,7 @@ export const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onAdd
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-zinc-300 font-medium mb-1">Location</label>
               <input
@@ -123,7 +123,7 @@ export const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onAdd
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-zinc-300 font-medium">Salary Range (LPA)</label>

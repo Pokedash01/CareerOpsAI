@@ -92,8 +92,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             </div>
 
-            {/* Center Navigation Tabs with Animated Spring Pill */}
-            <nav className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.07] backdrop-blur-sm shadow-inner shadow-black/20">
+            {/* Center Navigation Tabs with Animated Spring Pill (Desktop only) */}
+            <nav className="hidden md:flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.07] backdrop-blur-sm shadow-inner shadow-black/20">
               {navTabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -145,7 +145,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </nav>
 
             {/* Right Action: Run Pipeline & AI status */}
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 sm:gap-2.5">
               <div className="hidden xl:flex items-center gap-1.5 text-[11px] font-medium text-zinc-400 bg-white/[0.03] px-2.5 py-1.5 rounded-lg border border-white/[0.06]">
                 <Sparkles className="w-3 h-3 text-blue-400" />
                 <span>Gemini 3.8 Flash</span>
@@ -156,17 +156,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                 whileTap={{ scale: 0.98 }}
                 onClick={onRunPipeline}
                 disabled={isPipelineRunning}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all shadow-md shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border border-blue-400/20"
+                className="flex items-center justify-center gap-1.5 sm:gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-semibold px-3 sm:px-3.5 py-2 min-h-[38px] rounded-xl transition-all shadow-md shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border border-blue-400/20"
               >
                 {isPipelineRunning ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
-                    <span className="hidden sm:inline">Executing Automation...</span>
+                    <span className="hidden sm:inline">Executing...</span>
                   </>
                 ) : (
                   <>
                     <PlayCircle className="w-3.5 h-3.5" />
-                    <span>Trigger Automation</span>
+                    <span className="hidden sm:inline">Trigger Automation</span>
+                    <span className="sm:hidden font-bold">Run</span>
                   </>
                 )}
               </motion.button>
@@ -174,6 +175,70 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
       </motion.header>
+
+      {/* Mobile Fixed Bottom Navigation Bar (Phone Friendly) */}
+      <nav
+        aria-label="Mobile Navigation"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#080B11]/95 backdrop-blur-xl border-t border-white/[0.1] px-1 pt-1.5 pb-[calc(env(safe-area-inset-bottom,0px)+6px)] shadow-2xl shadow-black/80"
+      >
+        <div className="grid grid-cols-5 gap-0.5 max-w-md mx-auto">
+          {navTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            const shortLabel =
+              tab.id === 'dashboard'
+                ? 'Home'
+                : tab.id === 'jobs'
+                ? 'Jobs'
+                : tab.id === 'tailor'
+                ? 'Docs'
+                : tab.id === 'profile'
+                ? 'Profile'
+                : 'Alerts';
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative flex flex-col items-center justify-center py-1.5 px-0.5 rounded-xl transition-colors select-none min-h-[46px] cursor-pointer ${
+                  isActive
+                    ? 'text-blue-400 font-semibold'
+                    : 'text-zinc-400 hover:text-zinc-200 active:text-zinc-100'
+                }`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="mobileActiveTabGlow"
+                    className="absolute inset-0 bg-blue-500/10 rounded-xl border border-blue-500/25 shadow-inner"
+                    transition={{ type: 'spring', bounce: 0.15, duration: 0.35 }}
+                  />
+                )}
+                <div className="relative z-10 flex flex-col items-center gap-0.5">
+                  <div className="relative">
+                    <Icon
+                      className={`w-4 h-4 transition-transform ${
+                        isActive ? 'scale-110 text-blue-400' : 'text-zinc-400'
+                      }`}
+                    />
+                    {typeof tab.count === 'number' && tab.count > 0 && (
+                      <span className="absolute -top-1.5 -right-2.5 text-[9px] font-bold px-1.5 py-0 rounded-full bg-emerald-500 text-white shadow-xs">
+                        {tab.count}
+                      </span>
+                    )}
+                  </div>
+                  <span
+                    className={`text-[10px] tracking-tight truncate max-w-full ${
+                      isActive ? 'font-bold text-white' : 'font-medium text-zinc-400'
+                    }`}
+                  >
+                    {shortLabel}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       {/* Structural layout spacer guaranteeing page content never gets covered by fixed navbar */}
       <div className="h-16 shrink-0 w-full" aria-hidden="true" />

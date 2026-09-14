@@ -767,7 +767,7 @@ export function App() {
       />
 
       {/* Main Content Area */}
-      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-28 md:pb-10">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
             <motion.div
@@ -911,7 +911,7 @@ export function App() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-5 right-5 z-50 pointer-events-none"
+            className="fixed bottom-20 md:bottom-5 right-4 md:right-5 left-4 md:left-auto z-50 pointer-events-none flex justify-center md:justify-end"
           >
             <div
               className={`flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-2xl text-xs font-medium border backdrop-blur-md pointer-events-auto ${

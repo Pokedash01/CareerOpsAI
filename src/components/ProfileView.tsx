@@ -325,11 +325,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto shrink-0">
           <button
             type="button"
             onClick={() => setShowParseModal(true)}
-            className="h-9 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-semibold px-3.5 rounded-xl transition cursor-pointer shadow-md shadow-blue-600/20 border border-blue-400/20 whitespace-nowrap"
+            className="h-10 sm:h-9 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-semibold px-3.5 rounded-xl transition cursor-pointer shadow-md shadow-blue-600/20 border border-blue-400/20 whitespace-nowrap w-full sm:w-auto"
           >
             <FileUp className="w-4 h-4" />
             <span>Upload Resume (PDF/Word)</span>
@@ -338,7 +338,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <button
             type="button"
             onClick={onResetProfile}
-            className="h-9 inline-flex items-center justify-center gap-2 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white text-xs font-semibold px-3.5 rounded-xl transition cursor-pointer border border-white/[0.08] whitespace-nowrap"
+            className="h-10 sm:h-9 inline-flex items-center justify-center gap-2 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white text-xs font-semibold px-3.5 rounded-xl transition cursor-pointer border border-white/[0.08] whitespace-nowrap w-full sm:w-auto"
           >
             <RotateCcw className="w-3.5 h-3.5 text-zinc-400" />
             <span>Reset to Kartik's Profile</span>
@@ -347,7 +347,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <button
             type="button"
             onClick={handleSave}
-            className="h-9 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 rounded-xl transition shadow-md shadow-emerald-600/20 cursor-pointer whitespace-nowrap border border-emerald-400/20"
+            className="h-10 sm:h-9 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 rounded-xl transition shadow-md shadow-emerald-600/20 cursor-pointer whitespace-nowrap border border-emerald-400/20 w-full sm:w-auto"
           >
             {saveSuccess ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
             <span>{saveSuccess ? 'Saved!' : 'Save Profile'}</span>
@@ -1215,8 +1215,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
       {/* AI Resume Parser Modal */}
       {showParseModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="glass-panel rounded-2xl p-6 max-w-2xl w-full shadow-2xl space-y-5 border border-white/[0.1]">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
+          <div className="glass-panel rounded-2xl p-4 sm:p-6 max-w-2xl w-full shadow-2xl space-y-4 sm:space-y-5 border border-white/[0.1] my-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-[#1F2937] pb-4">
               <div className="flex items-center gap-2.5">
