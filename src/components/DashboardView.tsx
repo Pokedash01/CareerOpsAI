@@ -170,15 +170,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>Explore Jobs</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02, y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setActiveTab('tailor')}
-              className="flex items-center gap-2 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 text-xs font-semibold px-4 py-2.5 rounded-xl border border-white/[0.08] transition shadow-sm cursor-pointer"
-            >
-              <FileText className="w-3.5 h-3.5 text-blue-400" />
-              <span>Tailor Resume</span>
-            </motion.button>
           </div>
         </div>
       </motion.div>
@@ -204,15 +195,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   ? new Date(workflow.last_run).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                   : 'Recent'}
               </span>
-            </span>
-
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 shadow-sm shadow-emerald-500/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-medium">Telegram Alerts ≥75%</span>
-            </span>
-
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/25 text-blue-400 shadow-sm shadow-blue-500/10">
-              <span className="font-medium">Continuous Sync Live</span>
             </span>
           </div>
 
@@ -292,7 +274,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
               <div>
                 <h2 className="font-semibold text-white text-sm">Priority Matches (≥75%)</h2>
-                <p className="text-[11px] text-zinc-400">Deterministic constraint matches tailored to candidate spec</p>
               </div>
             </div>
             <button
@@ -381,7 +362,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       className="text-[11px] font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1 transition cursor-pointer"
                     >
                       <FileText className="w-3 h-3" />
-                      <span>Tailor Resume</span>
+                      <span>Tailor Documents</span>
                     </button>
                     <button
                       onClick={() => onNotifyTelegram(job)}
@@ -497,33 +478,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 Autonomous ATS discovery scans, link checks, and Telegram dispatches
               </p>
             </div>
-            {onTriggerWorkflow && (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onTriggerWorkflow}
-                disabled={isWorkflowRunning}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition cursor-pointer disabled:opacity-50 border border-blue-400/25"
-              >
-                {isWorkflowRunning ? (
-                  <>
-                    <RefreshCw className="w-3 h-3 animate-spin" />
-                    <span>Running...</span>
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-3 h-3 text-amber-300" />
-                    <span>Trigger Automation</span>
-                  </>
-                )}
-              </motion.button>
-            )}
           </div>
 
           <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
             {(!workflow?.runs || workflow.runs.length === 0) ? (
               <div className="p-4 bg-white/[0.02] rounded-xl border border-white/[0.06] text-xs text-zinc-400">
-                No execution history yet. Click "Trigger Automation" above to run the cycle now.
+                No execution history yet.
               </div>
             ) : (
               workflow.runs.map((run) => (
@@ -561,8 +521,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <div className="flex flex-wrap items-center gap-3 text-[10px] text-zinc-400 pt-1 border-t border-white/[0.06] font-mono">
                     <span className="text-blue-400 font-semibold">+{run.new_jobs_found} fresh jobs</span>
                     <span className="text-emerald-400 font-semibold">{run.high_fit_count} high-fit matches</span>
-                    <span className="text-violet-400 font-semibold">{run.notified_count} Telegram alerts</span>
-                    <span className="text-zinc-400">Evaluated: {run.evaluated_count}</span>
                   </div>
                 </div>
               ))

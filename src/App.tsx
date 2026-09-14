@@ -739,7 +739,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080B11] text-[#E2E8F0] flex flex-col font-sans selection:bg-blue-600 selection:text-white relative overflow-hidden bg-grid-ambient">
+    <div className="min-h-screen bg-[#080B11] text-[#E2E8F0] flex flex-col font-sans selection:bg-blue-600 selection:text-white relative overflow-x-clip bg-grid-ambient">
       {/* Organic Ambient Glow Spheres (Haikei / Blob generator principle) */}
       <div
         className="ambient-glow-sphere -top-32 right-1/4 w-[550px] h-[350px] bg-gradient-to-br from-blue-600/12 via-indigo-600/8 to-transparent pointer-events-none"
