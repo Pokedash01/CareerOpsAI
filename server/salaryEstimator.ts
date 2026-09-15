@@ -150,8 +150,8 @@ export async function searchSalaryLiveFromGlassdoorAndAmbitionBox(
         }
       }
     }
-  } catch (err: any) {
-    console.warn(`[SalarySearch] Live search failed for query "${userSearchString}":`, err.message);
+  } catch {
+    // Graceful fallback to benchmark if live search aborts or is throttled
   }
 
   // Fallback to deterministic regional market engine if search returns no exact range

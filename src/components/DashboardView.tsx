@@ -65,13 +65,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   useEffect(() => {
     const updateCountdown = () => {
+      if (isWorkflowRunning || workflow?.is_running) {
+        setRemainingTime('Scanning now...');
+        return;
+      }
       if (!workflow?.next_run) {
         setRemainingTime('04h 00m 00s');
         return;
       }
       const diff = new Date(workflow.next_run).getTime() - Date.now();
       if (diff <= 0) {
-        setRemainingTime('Scanning now...');
+        // Compute upcoming slot if target time has passed and automation is idle
+        const intervalMs = (workflow.interval_hours || 4) * 60 * 60 * 1000;
+        const elapsed = Date.now() - new Date(workflow.next_run).getTime();
+        const nextCycleDiff = intervalMs - (elapsed % intervalMs);
+        const hours = Math.floor(nextCycleDiff / (1000 * 60 * 60));
+        const mins = Math.floor((nextCycleDiff % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((nextCycleDiff % (1000 * 60)) / 1000);
+        setRemainingTime(
+          `${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`
+        );
         return;
       }
       const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -85,7 +98,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [workflow?.next_run]);
+  }, [workflow?.next_run, workflow?.interval_hours, isWorkflowRunning, workflow?.is_running]);
 
   const metrics = [
     {
@@ -145,13 +158,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/25 shadow-sm shadow-blue-500/10">
-                Autonomous Pipeline
-              </span>
-              <span className="text-zinc-600 text-xs">•</span>
-              <span className="text-xs text-zinc-400 font-medium">Candidate Profile Active</span>
-            </div>
             <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               Career Engine for {profile.full_name}
             </h1>
@@ -203,27 +209,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="text-zinc-500">Next run:</span>
               <span className="text-cyan-400 font-semibold">{remainingTime}</span>
             </span>
-            {onTriggerWorkflow && (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onTriggerWorkflow}
-                disabled={isWorkflowRunning}
-                className="flex items-center justify-center gap-1.5 bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium px-3.5 py-2 min-h-[38px] rounded-xl border border-white/[0.08] transition cursor-pointer disabled:opacity-50 w-full sm:w-auto"
-              >
-                {isWorkflowRunning ? (
-                  <>
-                    <RefreshCw className="w-3 h-3 animate-spin text-blue-400" />
-                    <span>Executing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-3 h-3 text-amber-400" />
-                    <span>Run Automation Now</span>
-                  </>
-                )}
-              </motion.button>
-            )}
           </div>
         </div>
       </motion.div>

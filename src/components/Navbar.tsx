@@ -40,16 +40,41 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Stabilize mobile bottom nav against iOS Safari / Chrome address bar and keyboard shifts
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const resetPosition = () => {
+      const navEl = document.getElementById('mobile-bottom-nav');
+      if (!navEl) return;
+      if (window.visualViewport) {
+        // Keep docked cleanly at the bottom
+        navEl.style.bottom = '0px';
+      }
+    };
+
+    window.visualViewport?.addEventListener('resize', resetPosition);
+    window.visualViewport?.addEventListener('scroll', resetPosition);
+    window.addEventListener('resize', resetPosition);
+    window.addEventListener('orientationchange', resetPosition);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', resetPosition);
+      window.visualViewport?.removeEventListener('scroll', resetPosition);
+      window.removeEventListener('resize', resetPosition);
+      window.removeEventListener('orientationchange', resetPosition);
+    };
+  }, []);
+
   interface NavTabItem {
     id: NavbarProps['activeTab'];
     label: string;
     icon: typeof LayoutDashboard;
-    count?: number;
   }
 
   const navTabs: NavTabItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'jobs', label: 'Jobs', icon: Briefcase, count: stats?.high_fit_count },
+    { id: 'jobs', label: 'Jobs', icon: Briefcase },
     { id: 'tailor', label: 'Documents', icon: FileText },
     { id: 'profile', label: 'Profile', icon: UserCheck },
     { id: 'automation', label: 'Telegram & Alerts', icon: Send },
@@ -127,17 +152,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                       >
                         {tab.label}
                       </span>
-                      {typeof tab.count === 'number' && tab.count > 0 && (
-                        <span
-                          className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold border ${
-                            isActive
-                              ? 'bg-white/20 text-white border-white/30'
-                              : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                          }`}
-                        >
-                          {tab.count}
-                        </span>
-                      )}
                     </span>
                   </motion.button>
                 );
@@ -178,7 +192,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Fixed Bottom Navigation Bar (Phone Friendly) */}
       <nav
+        id="mobile-bottom-nav"
         aria-label="Mobile Navigation"
+        style={{
+          transform: 'translate3d(0, 0, 0)',
+          WebkitTransform: 'translate3d(0, 0, 0)',
+          touchAction: 'manipulation',
+        }}
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#080B11]/95 backdrop-blur-xl border-t border-white/[0.1] px-1 pt-1.5 pb-[calc(env(safe-area-inset-bottom,0px)+6px)] shadow-2xl shadow-black/80"
       >
         <div className="grid grid-cols-5 gap-0.5 max-w-md mx-auto">
@@ -214,18 +234,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                   />
                 )}
                 <div className="relative z-10 flex flex-col items-center gap-0.5">
-                  <div className="relative">
-                    <Icon
-                      className={`w-4 h-4 transition-transform ${
-                        isActive ? 'scale-110 text-blue-400' : 'text-zinc-400'
-                      }`}
-                    />
-                    {typeof tab.count === 'number' && tab.count > 0 && (
-                      <span className="absolute -top-1.5 -right-2.5 text-[9px] font-bold px-1.5 py-0 rounded-full bg-emerald-500 text-white shadow-xs">
-                        {tab.count}
-                      </span>
-                    )}
-                  </div>
+                  <Icon
+                    className={`w-4 h-4 transition-transform ${
+                      isActive ? 'scale-110 text-blue-400' : 'text-zinc-400'
+                    }`}
+                  />
                   <span
                     className={`text-[10px] tracking-tight truncate max-w-full ${
                       isActive ? 'font-bold text-white' : 'font-medium text-zinc-400'
@@ -238,6 +251,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             );
           })}
         </div>
+
+        {/* Anti-gap bottom underlay: extends 120px below screen to permanently eliminate any blank space during rubber-banding or address bar collapse */}
+        <div
+          className="absolute top-full left-0 right-0 h-36 bg-[#080B11] pointer-events-none"
+          aria-hidden="true"
+        />
       </nav>
 
       {/* Structural layout spacer guaranteeing page content never gets covered by fixed navbar */}

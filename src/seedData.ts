@@ -2621,8 +2621,8 @@ export const INITIAL_SETTINGS: AppSettings = {
 export const INITIAL_WORKFLOW: WorkflowState = {
   "enabled": true,
   "interval_hours": 4,
-  "last_run": "2026-09-14T08:41:15.455Z",
-  "next_run": "2026-09-14T12:41:15.455Z",
+  "last_run": new Date().toISOString(),
+  "next_run": new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
   "is_running": false,
   "total_runs": 7,
   "auto_notify_telegram": true,

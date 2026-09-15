@@ -13,17 +13,26 @@
     --accent-purple: #8B5CF6;
   }
 
+  html {
+    background-color: #080B11;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
+  }
+
   body {
-    background-color: var(--bg-base);
+    background-color: #080B11;
     color: #E2E8F0;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
     min-height: 100vh;
+    min-height: 100dvh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     position: relative;
     overflow-x: hidden;
+    overscroll-behavior-y: none;
   }
 
   .font-display {

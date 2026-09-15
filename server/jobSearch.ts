@@ -1,7 +1,7 @@
 import { UserProfile, JobListing } from '../src/types.js';
 import { isGenericSearchLink, verifyJobPosting } from './linkVerifier.js';
 import { extractSalaryLpa, extractExperienceYears } from './salaryHelpers.js';
-import { searchSalaryLiveFromGlassdoorAndAmbitionBox } from './salaryEstimator.js';
+import { searchSalaryLiveFromGlassdoorAndAmbitionBox, estimateSalaryLpa } from './salaryEstimator.js';
 import crypto from 'crypto';
 
 export { extractSalaryLpa, extractExperienceYears };
@@ -735,26 +735,29 @@ async function searchGoogle(query: string, apiKey: string, page: number = 0): Pr
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), 20000);
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timeout);
 
     if (!res.ok) {
-      console.warn(`[SearchApi] Request failed with HTTP ${res.status}: ${await res.text().catch(() => '')}`);
+      console.warn(`[SearchApi] Request failed with HTTP ${res.status}`);
       return [];
     }
 
     const data: any = await res.json();
     return Array.isArray(data.organic_results) ? data.organic_results : [];
   } catch (err: any) {
-    console.error(`[SearchApi] Exception for query "${query}":`, err.message);
+    console.warn(`[SearchApi] Primary query issue (${err.message}). Trying fallback provider...`);
 
     // Fallback: Try SerpApi with tbs=qdr:d7
     try {
       const serpUrl = `https://serpapi.com/search.json?engine=google&tbs=qdr:d7&api_key=${encodeURIComponent(
         apiKey
       )}&gl=in&hl=en&num=15&q=${encodeURIComponent(query)}`;
-      const serpRes = await fetch(serpUrl);
+      const fbController = new AbortController();
+      const fbTimeout = setTimeout(() => fbController.abort(), 15000);
+      const serpRes = await fetch(serpUrl, { signal: fbController.signal });
+      clearTimeout(fbTimeout);
       if (serpRes.ok) {
         const serpData: any = await serpRes.json();
         return Array.isArray(serpData.organic_results) ? serpData.organic_results : [];
@@ -1039,17 +1042,10 @@ export async function discoverJobsForProfile(
           let salarySource: string | undefined = finalSalaryRange ? 'Stated in Job Description' : undefined;
 
           if (!finalSalaryRange) {
-            // Live Glassdoor and AmbitionBox search for salary
-            const liveSalary = await searchSalaryLiveFromGlassdoorAndAmbitionBox(
-              cand.cleanedTitle,
-              cand.cleanedCompany,
-              location,
-              finalExpRange,
-              apiKey
-            );
-            finalSalaryRange = [liveSalary.minLpa, liveSalary.maxLpa];
+            const benchmark = estimateSalaryLpa(cand.cleanedTitle, cand.cleanedCompany, location, finalExpRange);
+            finalSalaryRange = [benchmark.minLpa, benchmark.maxLpa];
             salaryIsEstimated = true;
-            salarySource = liveSalary.source;
+            salarySource = benchmark.source;
           }
 
           const daysAgo = Math.min(3, Math.max(0, pageDateCheck.postedDaysAgo));

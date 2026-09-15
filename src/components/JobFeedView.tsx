@@ -17,9 +17,14 @@ import {
   RotateCcw,
   Trash2,
   AlertTriangle,
+  Check,
+  CheckSquare,
+  Square,
+  X,
+  FolderInput,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { JobListing, UserProfile } from '../types.js';
+import { JobListing, UserProfile, JobStatus } from '../types.js';
 
 interface JobFeedViewProps {
   jobs: JobListing[];
@@ -36,6 +41,9 @@ interface JobFeedViewProps {
   onBatchVerifyLinks?: () => Promise<void>;
   onRemoveExpiredJobs?: () => Promise<void>;
   onDeleteJob?: (jobId: string) => Promise<void>;
+  onBatchUpdateStatus?: (jobIds: string[], status: JobStatus) => Promise<void>;
+  onBatchDeleteJobs?: (jobIds: string[]) => Promise<void>;
+  onBatchNotifyTelegram?: (jobs: JobListing[]) => Promise<void> | void;
 }
 
 export const JobFeedView: React.FC<JobFeedViewProps> = ({
@@ -51,10 +59,16 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
   isEvaluatingId,
   onRemoveExpiredJobs,
   onDeleteJob,
+  onBatchUpdateStatus,
+  onBatchDeleteJobs,
+  onBatchNotifyTelegram,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'discovered' | 'applied' | 'interviewing' | 'rejected' | 'all'>('discovered');
   const [expandedJdId, setExpandedJdId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+  const [isSendingTelegram, setIsSendingTelegram] = useState(false);
 
   const expiredCount = jobs.filter(
     (j) => j.status === 'expired' || j.verification_status === 'expired_or_invalid' || j.company_name.toLowerCase().includes('state street')
@@ -138,8 +152,104 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
     },
   ] as const;
 
+  const isAllSelected = sortedJobs.length > 0 && sortedJobs.every((j) => selectedIds.includes(j.id));
+  const isSomeSelected = selectedIds.length > 0;
+
+  const handleTabChange = (tabId: typeof statusFilter) => {
+    setStatusFilter(tabId);
+    setSelectedIds([]);
+  };
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(sortedJobs.map((j) => j.id));
+    }
+  };
+
+  const toggleSelectJob = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const clearSelection = () => {
+    setSelectedIds([]);
+  };
+
+  const handleBatchMove = async (targetStatus: JobStatus) => {
+    if (selectedIds.length === 0 || isBatchProcessing) return;
+    setIsBatchProcessing(true);
+    try {
+      if (onBatchUpdateStatus) {
+        await onBatchUpdateStatus(selectedIds, targetStatus);
+      } else {
+        for (const id of selectedIds) {
+          await onUpdateStatus(id, targetStatus);
+        }
+      }
+      setSelectedIds([]);
+    } finally {
+      setIsBatchProcessing(false);
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.length === 0 || isBatchProcessing) return;
+    const count = selectedIds.length;
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${count} selected ${count === 1 ? 'job' : 'jobs'} from your pipeline?`
+    );
+    if (confirmed) {
+      setIsBatchProcessing(true);
+      try {
+        if (onBatchDeleteJobs) {
+          await onBatchDeleteJobs(selectedIds);
+        } else if (onDeleteJob) {
+          for (const id of selectedIds) {
+            await onDeleteJob(id);
+          }
+        }
+        setSelectedIds([]);
+      } finally {
+        setIsBatchProcessing(false);
+      }
+    }
+  };
+
+  const handleSingleDelete = async (jobId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!onDeleteJob) return;
+    if (window.confirm('Are you sure you want to remove this job from your pipeline?')) {
+      await onDeleteJob(jobId);
+      setSelectedIds((prev) => prev.filter((id) => id !== jobId));
+    }
+  };
+
+  const handleBatchTelegramAlerts = async () => {
+    if (selectedIds.length === 0 || isSendingTelegram) return;
+    const selectedJobsList = jobs.filter((j) => selectedIds.includes(j.id));
+    if (selectedJobsList.length === 0) return;
+
+    setIsSendingTelegram(true);
+    try {
+      if (onBatchNotifyTelegram) {
+        await onBatchNotifyTelegram(selectedJobsList);
+      } else {
+        for (const job of selectedJobsList) {
+          await onNotifyTelegram(job);
+          await new Promise((r) => setTimeout(r, 300));
+        }
+      }
+    } finally {
+      setIsSendingTelegram(false);
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Search & Actions Header */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
@@ -166,7 +276,7 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setStatusFilter(tab.id as any)}
+                  onClick={() => handleTabChange(tab.id as any)}
                   className={`px-3 py-1.5 rounded-lg transition-all font-semibold cursor-pointer text-xs whitespace-nowrap shrink-0 ${
                     isActive
                       ? `${tab.activeColor} shadow-sm`
@@ -181,6 +291,30 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* Multi-select toggle */}
+            {sortedJobs.length > 0 && (
+              <button
+                type="button"
+                onClick={toggleSelectAll}
+                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 min-h-[38px] rounded-xl border transition cursor-pointer ${
+                  isAllSelected
+                    ? 'bg-blue-600/25 text-blue-300 border-blue-500/40 hover:bg-blue-600/35'
+                    : isSomeSelected
+                    ? 'bg-blue-500/10 text-blue-300 border-blue-500/25 hover:bg-blue-500/20'
+                    : 'bg-white/[0.03] text-zinc-300 border-white/[0.08] hover:bg-white/[0.06]'
+                }`}
+                title={isAllSelected ? 'Deselect all jobs' : 'Select all jobs in this view'}
+              >
+                {isAllSelected ? (
+                  <CheckSquare className="w-3.5 h-3.5 text-blue-400" />
+                ) : (
+                  <Square className="w-3.5 h-3.5 text-zinc-400" />
+                )}
+                <span className="hidden sm:inline">{isAllSelected ? 'Deselect All' : `Select All (${sortedJobs.length})`}</span>
+                <span className="sm:hidden">{isAllSelected ? 'Deselect' : 'All'}</span>
+              </button>
+            )}
+
             {/* Remove Expired button */}
             {expiredCount > 0 && onRemoveExpiredJobs && (
               <motion.button
@@ -191,7 +325,7 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
                 className="flex items-center gap-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold px-3 py-2 min-h-[38px] rounded-xl border border-rose-500/25 transition cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-                <span>Clean Expired</span>
+                <span className="hidden sm:inline">Clean Expired</span>
               </motion.button>
             )}
 
@@ -207,6 +341,147 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
           </div>
         </div>
       </motion.div>
+
+      {/* Multi-Select Floating / Sticky Batch Action Toolbar */}
+      <AnimatePresence>
+        {selectedIds.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.99 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.99 }}
+            transition={{ duration: 0.2 }}
+            className="sticky top-20 z-30 bg-[#0c121e]/95 backdrop-blur-xl border border-blue-500/40 rounded-2xl p-3 sm:p-4 shadow-2xl shadow-black/80 flex flex-col md:flex-row md:items-center justify-between gap-3.5 ring-1 ring-blue-500/20"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shrink-0">
+                  <CheckSquare className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white font-display">
+                      {selectedIds.length} {selectedIds.length === 1 ? 'Job' : 'Jobs'} Selected
+                    </span>
+                    <span className="text-xs text-zinc-400 font-medium">
+                      (of {sortedJobs.length} visible)
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400">
+                    Bulk move across sub-tabs, send Telegram alerts, or delete.
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Select All in toolbar */}
+              <button
+                type="button"
+                onClick={toggleSelectAll}
+                className="self-start sm:self-auto flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 transition cursor-pointer"
+                title={isAllSelected ? 'Deselect all jobs' : `Select all ${sortedJobs.length} jobs`}
+              >
+                {isAllSelected ? (
+                  <>
+                    <Square className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Deselect All</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckSquare className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Select All ({sortedJobs.length})</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Send Telegram Alerts for Selected */}
+              <button
+                type="button"
+                disabled={isBatchProcessing || isSendingTelegram}
+                onClick={handleBatchTelegramAlerts}
+                className="flex items-center gap-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-200 hover:text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-blue-500/40 transition shadow-sm cursor-pointer disabled:opacity-50"
+                title="Send Telegram alert for all selected jobs"
+              >
+                {isSendingTelegram ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
+                ) : (
+                  <Send className="w-3.5 h-3.5 text-blue-400" />
+                )}
+                <span>Telegram ({selectedIds.length})</span>
+              </button>
+
+              {/* Move to Sub-Tabs */}
+              <div className="flex items-center gap-1 bg-white/[0.04] p-1 rounded-xl border border-white/[0.08]">
+                <span className="text-[11px] font-semibold text-zinc-400 px-2 flex items-center gap-1">
+                  <FolderInput className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>Move to:</span>
+                </span>
+                <button
+                  type="button"
+                  disabled={isBatchProcessing || isSendingTelegram}
+                  onClick={() => handleBatchMove('discovered')}
+                  className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/25 text-blue-400 border border-blue-500/25 transition cursor-pointer disabled:opacity-50"
+                  title="Move selected jobs to Discovered sub-tab"
+                >
+                  Discovered
+                </button>
+                <button
+                  type="button"
+                  disabled={isBatchProcessing || isSendingTelegram}
+                  onClick={() => handleBatchMove('applied')}
+                  className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/25 text-sky-400 border border-sky-500/25 transition cursor-pointer disabled:opacity-50"
+                  title="Move selected jobs to Applied sub-tab"
+                >
+                  Applied
+                </button>
+                <button
+                  type="button"
+                  disabled={isBatchProcessing || isSendingTelegram}
+                  onClick={() => handleBatchMove('interviewing')}
+                  className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/25 text-amber-400 border border-amber-500/25 transition cursor-pointer disabled:opacity-50"
+                  title="Move selected jobs to Interviewing sub-tab"
+                >
+                  Interviewing
+                </button>
+                <button
+                  type="button"
+                  disabled={isBatchProcessing || isSendingTelegram}
+                  onClick={() => handleBatchMove('rejected')}
+                  className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 border border-rose-500/25 transition cursor-pointer disabled:opacity-50"
+                  title="Move selected jobs to Rejected sub-tab"
+                >
+                  Rejected
+                </button>
+              </div>
+
+              {/* Delete Selected Jobs */}
+              <button
+                type="button"
+                disabled={isBatchProcessing || isSendingTelegram}
+                onClick={handleBatchDelete}
+                className="flex items-center gap-1.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 hover:text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-rose-500/40 transition shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {isBatchProcessing ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                )}
+                <span>Delete ({selectedIds.length})</span>
+              </button>
+
+              {/* Clear Selection */}
+              <button
+                type="button"
+                onClick={clearSelection}
+                title="Cancel selection"
+                className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer border border-transparent hover:border-white/[0.08]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Jobs List */}
       <div className="space-y-3.5">
@@ -256,23 +531,44 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
                 ? 'expired'
                 : 'discovered';
 
+            const isSelected = selectedIds.includes(job.id);
+
             return (
               <motion.div
                 key={job.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, delay: Math.min(idx * 0.03, 0.3) }}
-                className={`glass-panel glass-panel-hover rounded-xl p-4 sm:p-5 space-y-3.5 ${
-                  isExpired ? 'border-rose-900/30 bg-[#120B0E]/60' : ''
+                className={`glass-panel glass-panel-hover rounded-xl p-4 sm:p-5 space-y-3.5 transition-all ${
+                  isSelected
+                    ? 'border-blue-500/50 bg-[#0c1322]/90 shadow-lg shadow-blue-950/40 ring-1 ring-blue-500/30'
+                    : isExpired
+                    ? 'border-rose-900/30 bg-[#120B0E]/60'
+                    : ''
                 }`}
               >
                 {/* Header Row */}
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-display font-bold text-white text-base tracking-tight leading-snug">
-                        {job.title}
-                      </h3>
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    {/* Checkbox for multi-select */}
+                    <button
+                      type="button"
+                      onClick={(e) => toggleSelectJob(job.id, e)}
+                      aria-label={isSelected ? `Deselect ${job.title}` : `Select ${job.title}`}
+                      className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all cursor-pointer shrink-0 mt-0.5 ${
+                        isSelected
+                          ? 'bg-blue-600 border-blue-400 text-white shadow-sm shadow-blue-600/40'
+                          : 'bg-white/[0.04] border-white/[0.18] hover:border-blue-400/60 text-transparent'
+                      }`}
+                    >
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </button>
+
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-display font-bold text-white text-base tracking-tight leading-snug">
+                          {job.title}
+                        </h3>
                       
                       {/* ATS Source Tag */}
                       <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/[0.04] text-zinc-300 border border-white/[0.08]">
@@ -356,8 +652,9 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
                       )}
                     </div>
                   </div>
+                </div>
 
-                  {/* Match Score Indicator (Circular Ring) */}
+                {/* Match Score Indicator (Circular Ring) */}
                   <div className="flex items-center gap-2.5 shrink-0">
                     {job.fit ? (
                       <div className="relative w-12 h-12 flex items-center justify-center">
@@ -457,11 +754,13 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
                       <option value="rejected" className="bg-[#12151D] text-zinc-200">Rejected</option>
                     </select>
 
-                    {isExpired && onDeleteJob && (
+                    {onDeleteJob && (
                       <button
-                        onClick={() => onDeleteJob(job.id)}
-                        title="Remove expired job"
-                        className="text-zinc-500 hover:text-rose-400 p-2 min-h-[38px] min-w-[38px] flex items-center justify-center rounded-xl transition cursor-pointer bg-white/[0.02] border border-white/[0.06]"
+                        type="button"
+                        onClick={(e) => handleSingleDelete(job.id, e)}
+                        title="Delete this job from pipeline"
+                        aria-label="Delete this job"
+                        className="text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 p-2 min-h-[38px] min-w-[38px] flex items-center justify-center rounded-xl transition cursor-pointer bg-white/[0.02] border border-white/[0.06] hover:border-rose-500/25"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

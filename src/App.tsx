@@ -6,16 +6,16 @@ import { DocumentStudioView } from './components/DocumentStudioView.js';
 import { ProfileView } from './components/ProfileView.js';
 import { AutomationView } from './components/AutomationView.js';
 import { AddJobModal } from './components/AddJobModal.js';
-import { UserProfile, JobListing, PipelineStats, AppSettings, WorkflowState } from './types.js';
+import { UserProfile, JobListing, PipelineStats, AppSettings, WorkflowState, JobStatus } from './types.js';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { INITIAL_PROFILE, INITIAL_JOBS, INITIAL_SETTINGS, INITIAL_WORKFLOW, INITIAL_STATS } from './seedData.js';
 import { dispatchJobNotification } from './lib/telegramClient.js';
 
-async function safeFetchJson<T>(url: string, init?: RequestInit): Promise<T | null> {
+async function safeFetchJson<T>(url: string, init?: RequestInit, timeoutMs = 50000): Promise<T | null> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     const res = await fetch(url, { ...init, signal: controller.signal });
     clearTimeout(timeoutId);
     if (!res.ok) return null;
@@ -414,6 +414,39 @@ export function App() {
     }
   };
 
+  // 5b. Batch Notify Telegram
+  const handleBatchNotifyTelegram = async (jobsToNotify: JobListing[]) => {
+    if (jobsToNotify.length === 0) return;
+    showToast(`Dispatching ${jobsToNotify.length} Telegram alert(s)...`);
+    let successCount = 0;
+    let failedCount = 0;
+
+    for (const job of jobsToNotify) {
+      try {
+        const result = await dispatchJobNotification({
+          job,
+          candidateName: profile.full_name,
+          settings,
+        });
+        if (result.delivered || result.simulated) {
+          successCount++;
+        } else {
+          failedCount++;
+        }
+      } catch {
+        failedCount++;
+      }
+      // Small pause between messages to prevent Telegram rate limits
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+
+    if (failedCount === 0) {
+      showToast(`Dispatched ${successCount} Telegram alert(s) successfully!`);
+    } else {
+      showToast(`Dispatched ${successCount} alert(s); ${failedCount} failed.`, 'error');
+    }
+  };
+
   // 6. Update Status
   const handleUpdateStatus = async (jobId: string, status: any) => {
     try {
@@ -469,6 +502,71 @@ export function App() {
       showToast('Job removed from pipeline.');
     } catch (err: any) {
       showToast(err.message || 'Error deleting job', 'error');
+    }
+  };
+
+  // Batch Move Jobs between sub-tabs
+  const handleBatchUpdateStatus = async (jobIds: string[], status: JobStatus) => {
+    if (!jobIds.length) return;
+    try {
+      const idSet = new Set(jobIds);
+      setJobs((prev) => {
+        const updated = prev.map((j) => (idSet.has(j.id) ? { ...j, status } : j));
+        try {
+          localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+
+      const res = await safeFetchJson<any>('/api/jobs/batch-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: jobIds, status }),
+      });
+
+      if (res?.jobs) {
+        setJobs(res.jobs);
+        try {
+          localStorage.setItem('careerops_jobs', JSON.stringify(res.jobs));
+        } catch {}
+      }
+      await refreshState();
+      const statusTitle = status.charAt(0).toUpperCase() + status.slice(1);
+      showToast(`Moved ${jobIds.length} ${jobIds.length === 1 ? 'job' : 'jobs'} to "${statusTitle}"`);
+    } catch (err: any) {
+      showToast(err.message || 'Error updating status for selected jobs', 'error');
+    }
+  };
+
+  // Batch Delete Jobs
+  const handleBatchDeleteJobs = async (jobIds: string[]) => {
+    if (!jobIds.length) return;
+    try {
+      const idSet = new Set(jobIds);
+      setJobs((prev) => {
+        const updated = prev.filter((j) => !idSet.has(j.id));
+        try {
+          localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+
+      const res = await safeFetchJson<any>('/api/jobs/batch-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: jobIds }),
+      });
+
+      if (res?.jobs) {
+        setJobs(res.jobs);
+        try {
+          localStorage.setItem('careerops_jobs', JSON.stringify(res.jobs));
+        } catch {}
+      }
+      await refreshState();
+      showToast(`Deleted ${jobIds.length} ${jobIds.length === 1 ? 'job' : 'jobs'}`);
+    } catch (err: any) {
+      showToast(err.message || 'Error deleting selected jobs', 'error');
     }
   };
 
@@ -819,6 +917,9 @@ export function App() {
                 onBatchVerifyLinks={handleBatchVerifyLinks}
                 onRemoveExpiredJobs={handleRemoveExpiredJobs}
                 onDeleteJob={handleDeleteJob}
+                onBatchUpdateStatus={handleBatchUpdateStatus}
+                onBatchDeleteJobs={handleBatchDeleteJobs}
+                onBatchNotifyTelegram={handleBatchNotifyTelegram}
               />
             </motion.div>
           )}

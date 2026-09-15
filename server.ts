@@ -13,8 +13,9 @@ import { parseAndEnrichCandidateResume } from './server/resumeScraper.js';
 import { getGeminiClient, cleanJsonResponse } from './server/gemini.js';
 import crypto from 'crypto';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'data');
 const STORE_FILE = path.join(DATA_DIR, 'careerops_store.json');
+const BUNDLED_STORE_FILE = path.join(process.cwd(), 'data', 'careerops_store.json');
 
 let currentProfile: UserProfile = { ...INITIAL_PROFILE };
 // Filter out any expired jobs initially and blacklisted entries (State Street, SOTI)
@@ -99,8 +100,13 @@ function saveStoreToDisk() {
 
 function loadStoreFromDisk() {
   try {
-    if (fs.existsSync(STORE_FILE)) {
-      const raw = fs.readFileSync(STORE_FILE, 'utf-8');
+    const fileToLoad = fs.existsSync(STORE_FILE)
+      ? STORE_FILE
+      : fs.existsSync(BUNDLED_STORE_FILE)
+      ? BUNDLED_STORE_FILE
+      : null;
+    if (fileToLoad) {
+      const raw = fs.readFileSync(fileToLoad, 'utf-8');
       const data = JSON.parse(raw);
       if (data.currentProfile) currentProfile = data.currentProfile;
       if (Array.isArray(data.jobListings)) {
@@ -191,6 +197,14 @@ function loadStoreFromDisk() {
       if (data.workflowState) {
         Object.assign(workflowState, data.workflowState);
         workflowState.is_running = false; // release any stale lock
+        const now = Date.now();
+        const nextTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
+        const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1000;
+        if (nextTime <= now) {
+          const elapsed = now - (workflowState.last_run ? new Date(workflowState.last_run).getTime() : (now - intervalMs));
+          const remainingInCycle = intervalMs - (elapsed % intervalMs);
+          workflowState.next_run = new Date(now + Math.max(remainingInCycle, 60000)).toISOString();
+        }
       }
       console.log(`[Store] Restored ${jobListings.length} jobs, ${Object.keys(seenJobs).length} seen entries, and workflow state from disk.`);
       return;
@@ -217,41 +231,24 @@ let lastKnownBaseUrl = DEFAULT_PUBLIC_URL;
 
 app.use(express.json({ limit: '10mb' }));
 
-  // Track the public base URL dynamically from incoming requests
-  // and trigger autonomous 4-hour catch-up if window has elapsed (handles Cloud Run idling / cold starts)
-  app.use((req, res, next) => {
-    const host = (req.headers['x-forwarded-host'] as string) || req.headers.host || '';
-    if (
-      host &&
-      !host.includes('localhost') &&
-      !host.includes('127.0.0.1') &&
-      !host.startsWith('10.') &&
-      !host.startsWith('172.') &&
-      !host.startsWith('192.168.')
-    ) {
-      const proto = host.includes('.run.app')
-        ? 'https'
-        : (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
-      lastKnownBaseUrl = `${proto}://${host}`;
-    }
-
-    // Cloud Run Self-Healing: Check if 4 hours elapsed while container was sleeping or offline
-    if (workflowState.enabled && !workflowState.is_running) {
-      const now = Date.now();
-      const lastRunTime = workflowState.last_run ? new Date(workflowState.last_run).getTime() : 0;
-      const nextRunTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
-      const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1000;
-
-      if ((nextRunTime > 0 && now >= nextRunTime) || (lastRunTime > 0 && now - lastRunTime >= intervalMs)) {
-        console.log(`[Cloud Run Autonomous Scheduler] 4-hour window reached (${new Date().toISOString()}). Triggering background cycle...`);
-        executeWorkflowCycle('scheduled_4h').catch((err) => {
-          console.error('[Cloud Run Autonomous Scheduler] Catch-up execution error:', err);
-        });
-      }
-    }
-
-    next();
-  });
+// Track the public base URL dynamically from incoming requests
+app.use((req, res, next) => {
+  const host = (req.headers['x-forwarded-host'] as string) || req.headers.host || '';
+  if (
+    host &&
+    !host.includes('localhost') &&
+    !host.includes('127.0.0.1') &&
+    !host.startsWith('10.') &&
+    !host.startsWith('172.') &&
+    !host.startsWith('192.168.')
+  ) {
+    const proto = host.includes('.run.app')
+      ? 'https'
+      : (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
+    lastKnownBaseUrl = `${proto}://${host}`;
+  }
+  next();
+});
 
   // --- Health Check ---
   app.get('/api/health', (req, res) => {
@@ -775,7 +772,39 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     if (!target) return res.status(404).json({ error: 'Job listing not found.' });
 
     target.status = status;
-    res.json({ success: true, job: target });
+    saveStoreToDisk();
+    res.json({ success: true, job: target, jobs: jobListings });
+  });
+
+  // Batch update status for multiple jobs (move from one sub-tab to another)
+  app.post('/api/jobs/batch-status', (req, res) => {
+    const { ids, status } = req.body;
+    if (!Array.isArray(ids) || !status) {
+      return res.status(400).json({ error: 'ids array and status required' });
+    }
+    const idSet = new Set(ids);
+    let updatedCount = 0;
+    jobListings.forEach((j) => {
+      if (idSet.has(j.id)) {
+        j.status = status;
+        updatedCount++;
+      }
+    });
+    saveStoreToDisk();
+    res.json({ success: true, updatedCount, jobs: jobListings });
+  });
+
+  // Batch delete jobs
+  app.post('/api/jobs/batch-delete', (req, res) => {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ error: 'ids array required' });
+    }
+    const idSet = new Set(ids);
+    const initialCount = jobListings.length;
+    jobListings = jobListings.filter((j) => !idSet.has(j.id));
+    saveStoreToDisk();
+    res.json({ success: true, deletedCount: initialCount - jobListings.length, jobs: jobListings });
   });
 
   // --- Match & Fit Evaluation ---
@@ -881,6 +910,7 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
   // --- Run Full Automation / Pipeline Batch (Unified with Workflow Engine) ---
   app.post('/api/pipeline/run', async (req, res) => {
     const result = await executeWorkflowCycle('manual');
+    saveStoreToDisk();
     res.json({
       success: true,
       result,
@@ -1256,10 +1286,13 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
         status: 'failed',
         summary: `Workflow execution issue: ${err.message}`,
       };
+      const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1000;
+      workflowState.next_run = new Date(Date.now() + intervalMs).toISOString();
       workflowState.runs.unshift(failedLog);
       return { success: false, error: err.message, jobs: jobListings };
     } finally {
       workflowState.is_running = false;
+      saveStoreToDisk();
     }
   }
 
