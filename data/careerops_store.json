@@ -107,6 +107,45 @@
   },
   "jobListings": [
     {
+      "id": "9d2fa173be361ff4",
+      "title": "Lead Business Analyst",
+      "company_name": "Fil",
+      "location": "Gurgaon",
+      "salary_range_lpa": [
+        24,
+        38
+      ],
+      "salary_is_estimated": true,
+      "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+      "experience_range_years": [
+        7,
+        11
+      ],
+      "experience_is_inferred": false,
+      "experience_inferred_reason": "Exact requirement extracted from Job Description: 7+ years of experience",
+      "description": "The Lead Business Analyst will play a pivotal role in driving enterprise-wide finance transformation initiatives across Finance Data platform, Workstreams like ...\n\nRequisition posted on Fil career portal. Direct application link verified active.",
+      "apply_link": "https://fil.wd3.myworkdayjobs.com/en-US/001/job/Gurgaon-Office/Lead-Business-Analyst_J69759-1",
+      "ats_source": "Workday",
+      "discovered_at": "2026-09-15T16:03:03.574Z",
+      "posted_date": "2026-09-14T16:03:03.574Z",
+      "posted_days_ago": 1,
+      "is_direct_posting": true,
+      "verification_status": "verified_active",
+      "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
+      "verified_at": "2026-09-15T16:12:30.479Z",
+      "status": "rejected",
+      "fit": {
+        "is_viable": false,
+        "match_score": 0,
+        "detected_experience": "7-11 Years",
+        "salary_range": "₹24 - ₹38 LPA",
+        "location": "Gurgaon",
+        "skills_gap": "Seniority gap",
+        "rejection_reason": "Role requires 7+ years, candidate profile has 3.2 years.",
+        "evaluated_at": "2026-09-15T16:03:12.595Z"
+      }
+    },
+    {
       "id": "3b18b89dfeaea21f",
       "title": "Deployment Analyst",
       "company_name": "Wtilth Technologies",
@@ -132,7 +171,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-15T15:15:07.244Z",
+      "verified_at": "2026-09-15T16:12:29.710Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -171,7 +210,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-15T15:15:06.730Z",
+      "verified_at": "2026-09-15T16:12:29.711Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -275,7 +314,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-15T15:13:49.426Z",
+      "verified_at": "2026-09-15T16:12:29.711Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -314,7 +353,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-15T15:13:51.069Z",
+      "verified_at": "2026-09-15T16:02:48.003Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -352,7 +391,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-15T15:13:52.073Z",
+      "verified_at": "2026-09-15T16:02:48.003Z",
       "status": "discovered",
       "fit": {
         "is_viable": true,
@@ -2727,9 +2766,9 @@
     "8d82f497f6dbb3c4"
   ],
   "seenJobs": {
-    "9dfe6112a2137e75": "2026-09-15T15:39:53.117Z",
-    "https://soti.careers/jobs/bi-solutions-analyst-gurugram": "2026-09-15T15:39:53.117Z",
-    "soti_business intelligence & solutions analyst": "2026-09-15T15:39:53.117Z",
+    "9dfe6112a2137e75": "2026-09-15T16:12:21.947Z",
+    "https://soti.careers/jobs/bi-solutions-analyst-gurugram": "2026-09-15T16:12:21.947Z",
+    "soti_business intelligence & solutions analyst": "2026-09-15T16:12:21.947Z",
     "gtn-prod-ba-01": "2026-09-05T05:39:51.735Z",
     "gartner_senior product business analyst": "2026-09-05T05:39:51.735Z",
     "https://gartner.wd5.myworkdayjobs.com/en-us/gartner_careers/job/gurugram/senior-product-business-analyst_jr10928": "2026-09-05T05:39:51.735Z",
@@ -2885,7 +2924,10 @@
     "luxurypresence_luxury presence - senior data analyst, gtm analytics": "2026-09-15T15:14:58.415Z",
     "3b18b89dfeaea21f": "2026-09-15T15:15:02.569Z",
     "https://in.linkedin.com/jobs/view/deployment-analyst-power-platform-solutions-at-wtilth-technologies-4424065666": "2026-09-15T15:15:02.569Z",
-    "wtilth technologies_deployment analyst": "2026-09-15T15:15:02.569Z"
+    "wtilth technologies_deployment analyst": "2026-09-15T15:15:02.569Z",
+    "9d2fa173be361ff4": "2026-09-15T16:03:03.574Z",
+    "https://fil.wd3.myworkdayjobs.com/en-US/001/job/Gurgaon-Office/Lead-Business-Analyst_J69759-1": "2026-09-15T16:03:03.574Z",
+    "fil_lead business analyst": "2026-09-15T16:03:03.574Z"
   },
   "appSettings": {
     "min_match_score": 75,
@@ -2906,12 +2948,36 @@
   "workflowState": {
     "enabled": true,
     "interval_hours": 4,
-    "last_run": "2026-09-14T08:41:15.455Z",
-    "next_run": "2026-09-15T16:41:15.455Z",
+    "last_run": "2026-09-15T16:12:51.083Z",
+    "next_run": "2026-09-15T20:12:51.083Z",
     "is_running": false,
-    "total_runs": 7,
+    "total_runs": 9,
     "auto_notify_telegram": true,
     "runs": [
+      {
+        "id": "run-1789488749691",
+        "started_at": "2026-09-15T16:12:29.691Z",
+        "completed_at": "2026-09-15T16:12:51.083Z",
+        "trigger": "manual",
+        "new_jobs_found": 0,
+        "evaluated_count": 0,
+        "high_fit_count": 28,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Automation cycle: Scanned links (0 expired identified), discovered 0 fresh jobs. Evaluated 0 listings, 28 high-fit matches, 0 Telegram alerts dispatched."
+      },
+      {
+        "id": "run-1789488168000",
+        "started_at": "2026-09-15T16:02:48.000Z",
+        "completed_at": "2026-09-15T16:03:12.596Z",
+        "trigger": "manual",
+        "new_jobs_found": 1,
+        "evaluated_count": 1,
+        "high_fit_count": 28,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Automation cycle: Scanned links (0 expired identified), discovered 1 fresh jobs. Evaluated 1 listings, 28 high-fit matches, 0 Telegram alerts dispatched."
+      },
       {
         "id": "run-1789375230583",
         "started_at": "2026-09-14T08:40:30.583Z",

@@ -1,27 +1,19 @@
 {
   "version": 2,
   "functions": {
-    "api/pipeline/run.ts": {
+    "api/index.ts": {
       "maxDuration": 60,
-      "memory": 1024
-    },
-    "api/telegram/notify.ts": {
-      "maxDuration": 30,
       "memory": 1024
     }
   },
   "rewrites": [
     {
-      "source": "/api/pipeline/run",
-      "destination": "/api/pipeline/run"
-    },
-    {
-      "source": "/api/telegram/notify",
-      "destination": "/api/telegram/notify"
-    },
-    {
       "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "destination": "/api/index.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

@@ -253,16 +253,16 @@ export function App() {
       let notifCount = res?.notified_count ?? res?.result?.run?.notified_count ?? 0;
       let expiredCount = res?.expired_count ?? res?.result?.expiredCount ?? 0;
 
-      if (res?.jobs && res.jobs.length > 0 && newCount > 0) {
+      if (res && res.jobs) {
         setJobs(res.jobs);
         try {
           localStorage.setItem('careerops_jobs', JSON.stringify(res.jobs));
         } catch {}
-        if (res?.workflow) {
+        if (res.workflow) {
           setWorkflow(res.workflow);
         }
       } else {
-        // 2. Client-side Autonomous Engine fallback (guaranteed on Vercel or offline)
+        // 2. Client-side Autonomous Engine fallback (emergency offline mode)
         const clientCycle = await runClientWorkflowCycle(jobs, profile, settings);
         newCount = clientCycle.newly_added_count;
         highCount = clientCycle.high_fit_count;
