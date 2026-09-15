@@ -6,11 +6,13 @@ import { DocumentStudioView } from './components/DocumentStudioView.js';
 import { ProfileView } from './components/ProfileView.js';
 import { AutomationView } from './components/AutomationView.js';
 import { AddJobModal } from './components/AddJobModal.js';
+import { MobileBottomNav } from './components/MobileBottomNav.js';
 import { UserProfile, JobListing, PipelineStats, AppSettings, WorkflowState, JobStatus } from './types.js';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { INITIAL_PROFILE, INITIAL_JOBS, INITIAL_SETTINGS, INITIAL_WORKFLOW, INITIAL_STATS } from './seedData.js';
 import { dispatchJobNotification } from './lib/telegramClient.js';
+import { runClientWorkflowCycle } from './lib/clientAutomation.js';
 
 async function safeFetchJson<T>(url: string, init?: RequestInit, timeoutMs = 50000): Promise<T | null> {
   try {
@@ -244,28 +246,45 @@ export function App() {
     setIsPipelineRunning(true);
     setIsWorkflowRunning(true);
     try {
-      const res = await safeFetchJson<any>('/api/pipeline/run', { method: 'POST' });
-      if (res?.jobs) {
+      // 1. Try server-side pipeline endpoint first
+      let res = await safeFetchJson<any>('/api/pipeline/run', { method: 'POST' });
+      let newCount = res?.newly_added_count ?? res?.result?.newlyAddedCount ?? 0;
+      let highCount = res?.high_fit_count ?? res?.result?.run?.high_fit_count ?? 0;
+      let notifCount = res?.notified_count ?? res?.result?.run?.notified_count ?? 0;
+      let expiredCount = res?.expired_count ?? res?.result?.expiredCount ?? 0;
+
+      if (res?.jobs && res.jobs.length > 0 && newCount > 0) {
         setJobs(res.jobs);
         try {
           localStorage.setItem('careerops_jobs', JSON.stringify(res.jobs));
         } catch {}
+        if (res?.workflow) {
+          setWorkflow(res.workflow);
+        }
+      } else {
+        // 2. Client-side Autonomous Engine fallback (guaranteed on Vercel or offline)
+        const clientCycle = await runClientWorkflowCycle(jobs, profile, settings);
+        newCount = clientCycle.newly_added_count;
+        highCount = clientCycle.high_fit_count;
+        notifCount = clientCycle.notified_count;
+        expiredCount = clientCycle.expired_count;
+
+        setJobs(clientCycle.jobs);
+        setWorkflow(clientCycle.workflow);
+        try {
+          localStorage.setItem('careerops_jobs', JSON.stringify(clientCycle.jobs));
+          localStorage.setItem('careerops_workflow', JSON.stringify(clientCycle.workflow));
+        } catch {}
       }
-      if (res?.workflow) {
-        setWorkflow(res.workflow);
-      }
+
       await refreshState();
-      const newCount = res?.newly_added_count ?? res?.result?.newlyAddedCount ?? 0;
-      const highCount = res?.high_fit_count ?? res?.result?.run?.high_fit_count ?? 0;
-      const notifCount = res?.notified_count ?? res?.result?.run?.notified_count ?? 0;
-      const expiredCount = res?.expired_count ?? res?.result?.expiredCount ?? 0;
 
       let msg = `Automation executed: Discovered ${newCount} fresh jobs, ${highCount} high-fit matches.`;
       if (expiredCount > 0) {
         msg += ` Identified ${expiredCount} expired links.`;
       }
       if (notifCount > 0) {
-        msg += ` Dispatched ${notifCount} Telegram alerts.`;
+        msg += ` Dispatched ${notifCount} Telegram alert(s).`;
       }
       showToast(msg);
     } catch (err: any) {
@@ -996,6 +1015,9 @@ export function App() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Mobile Bottom Navigation Bar (Phone Friendly, Zero-Jitter) */}
+      <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {/* Add Job Modal */}
       <AddJobModal

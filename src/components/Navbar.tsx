@@ -40,32 +40,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Stabilize mobile bottom nav against iOS Safari / Chrome address bar and keyboard shifts
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const resetPosition = () => {
-      const navEl = document.getElementById('mobile-bottom-nav');
-      if (!navEl) return;
-      if (window.visualViewport) {
-        // Keep docked cleanly at the bottom
-        navEl.style.bottom = '0px';
-      }
-    };
-
-    window.visualViewport?.addEventListener('resize', resetPosition);
-    window.visualViewport?.addEventListener('scroll', resetPosition);
-    window.addEventListener('resize', resetPosition);
-    window.addEventListener('orientationchange', resetPosition);
-
-    return () => {
-      window.visualViewport?.removeEventListener('resize', resetPosition);
-      window.visualViewport?.removeEventListener('scroll', resetPosition);
-      window.removeEventListener('resize', resetPosition);
-      window.removeEventListener('orientationchange', resetPosition);
-    };
-  }, []);
-
   interface NavTabItem {
     id: NavbarProps['activeTab'];
     label: string;
@@ -189,75 +163,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
       </motion.header>
-
-      {/* Mobile Fixed Bottom Navigation Bar (Phone Friendly) */}
-      <nav
-        id="mobile-bottom-nav"
-        aria-label="Mobile Navigation"
-        style={{
-          transform: 'translate3d(0, 0, 0)',
-          WebkitTransform: 'translate3d(0, 0, 0)',
-          touchAction: 'manipulation',
-        }}
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#080B11]/95 backdrop-blur-xl border-t border-white/[0.1] px-1 pt-1.5 pb-[calc(env(safe-area-inset-bottom,0px)+6px)] shadow-2xl shadow-black/80"
-      >
-        <div className="grid grid-cols-5 gap-0.5 max-w-md mx-auto">
-          {navTabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            const shortLabel =
-              tab.id === 'dashboard'
-                ? 'Home'
-                : tab.id === 'jobs'
-                ? 'Jobs'
-                : tab.id === 'tailor'
-                ? 'Docs'
-                : tab.id === 'profile'
-                ? 'Profile'
-                : 'Alerts';
-
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative flex flex-col items-center justify-center py-1.5 px-0.5 rounded-xl transition-colors select-none min-h-[46px] cursor-pointer ${
-                  isActive
-                    ? 'text-blue-400 font-semibold'
-                    : 'text-zinc-400 hover:text-zinc-200 active:text-zinc-100'
-                }`}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="mobileActiveTabGlow"
-                    className="absolute inset-0 bg-blue-500/10 rounded-xl border border-blue-500/25 shadow-inner"
-                    transition={{ type: 'spring', bounce: 0.15, duration: 0.35 }}
-                  />
-                )}
-                <div className="relative z-10 flex flex-col items-center gap-0.5">
-                  <Icon
-                    className={`w-4 h-4 transition-transform ${
-                      isActive ? 'scale-110 text-blue-400' : 'text-zinc-400'
-                    }`}
-                  />
-                  <span
-                    className={`text-[10px] tracking-tight truncate max-w-full ${
-                      isActive ? 'font-bold text-white' : 'font-medium text-zinc-400'
-                    }`}
-                  >
-                    {shortLabel}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Anti-gap bottom underlay: extends 120px below screen to permanently eliminate any blank space during rubber-banding or address bar collapse */}
-        <div
-          className="absolute top-full left-0 right-0 h-36 bg-[#080B11] pointer-events-none"
-          aria-hidden="true"
-        />
-      </nav>
 
       {/* Structural layout spacer guaranteeing page content never gets covered by fixed navbar */}
       <div className="h-16 shrink-0 w-full" aria-hidden="true" />
