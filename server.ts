@@ -87,12 +87,11 @@ function applyLoadedData(data: any) {
     Object.assign(workflowState, data.workflowState);
     workflowState.is_running = false; // release any stale lock
     const now = Date.now();
-    const nextTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
     const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1000;
+    const nextTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
     if (nextTime <= now) {
-      const elapsed = now - (workflowState.last_run ? new Date(workflowState.last_run).getTime() : (now - intervalMs));
-      const remainingInCycle = intervalMs - (elapsed % intervalMs);
-      workflowState.next_run = new Date(now + Math.max(remainingInCycle, 60000)).toISOString();
+      const nextTimestamp = Math.ceil((now + 1000) / intervalMs) * intervalMs;
+      workflowState.next_run = new Date(nextTimestamp).toISOString();
     }
   }
   if (Array.isArray(data.notifiedJobIds)) {
@@ -239,6 +238,14 @@ app.use((req, res, next) => {
 });
 
 let lastKnownBaseUrl = DEFAULT_PUBLIC_URL;
+
+// Prevent Express body-parser from hanging on Vercel or AWS Lambda when req.body is already an object
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+    (req as any)._body = true;
+  }
+  next();
+});
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -1075,6 +1082,10 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
           };
         }
         console.log(`[Telegram] Successfully dispatched alert for ${target.title} to chat ${chatId}`);
+        if (target.status !== 'applied') {
+          target.status = 'notified';
+        }
+        saveStoreToDisk();
 
         return { delivered: true, simulated: false, message_html: htmlMessage, telegram_response: tgData, chat_id: chatId };
       } catch (err: any) {
@@ -1273,7 +1284,7 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
       const completedAt = new Date().toISOString();
       workflowState.last_run = completedAt;
       const intervalMs = workflowState.interval_hours * 60 * 60 * 1000;
-      workflowState.next_run = new Date(Date.now() + intervalMs).toISOString();
+      workflowState.next_run = new Date(Math.ceil((Date.now() + 1000) / intervalMs) * intervalMs).toISOString();
       workflowState.total_runs++;
       setupWorkflowScheduler(); // Resets countdown timer interval
 
@@ -1324,7 +1335,7 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
         summary: `Workflow execution issue: ${err.message}`,
       };
       const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1000;
-      workflowState.next_run = new Date(Date.now() + intervalMs).toISOString();
+      workflowState.next_run = new Date(Math.ceil((Date.now() + 1000) / intervalMs) * intervalMs).toISOString();
       workflowState.runs.unshift(failedLog);
       return { success: false, error: err.message, jobs: jobListings };
     } finally {
@@ -1494,6 +1505,25 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
   });
 
   // --- Live Cross-System Real-Time Synchronization Endpoint ---
+  app.get('/api/state/sync', (req, res) => {
+    const now = Date.now();
+    const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1000;
+    const nextTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
+    if (nextTime <= now) {
+      const nextTimestamp = Math.ceil((now + 1000) / intervalMs) * intervalMs;
+      workflowState.next_run = new Date(nextTimestamp).toISOString();
+    }
+    res.json({
+      success: true,
+      profile: currentProfile,
+      jobs: jobListings,
+      stats: computePipelineStats(),
+      workflow: workflowState,
+      settings: appSettings,
+      last_updated: new Date().toISOString(),
+    });
+  });
+
   app.post('/api/state/sync', async (req, res) => {
     const { jobs, profile, settings, workflow } = req.body;
     let modified = false;
@@ -1662,12 +1692,11 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
   // --- Pipeline Stats & State ---
   app.get('/api/state', (req, res) => {
     const now = Date.now();
-    const nextTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
     const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1000;
+    const nextTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
     if (nextTime <= now) {
-      const elapsed = now - (workflowState.last_run ? new Date(workflowState.last_run).getTime() : (now - intervalMs));
-      const remainingInCycle = intervalMs - (elapsed % intervalMs);
-      workflowState.next_run = new Date(now + Math.max(remainingInCycle, 60000)).toISOString();
+      const nextTimestamp = Math.ceil((now + 1000) / intervalMs) * intervalMs;
+      workflowState.next_run = new Date(nextTimestamp).toISOString();
     }
 
     res.json({

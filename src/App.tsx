@@ -7,6 +7,7 @@ import { ProfileView } from './components/ProfileView.js';
 import { AutomationView } from './components/AutomationView.js';
 import { AddJobModal } from './components/AddJobModal.js';
 import { MobileBottomNav } from './components/MobileBottomNav.js';
+import { SyncDevicesModal } from './components/SyncDevicesModal.js';
 import { UserProfile, JobListing, PipelineStats, AppSettings, WorkflowState, JobStatus } from './types.js';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -34,7 +35,16 @@ async function safeFetchJson<T>(url: string, init?: RequestInit, timeoutMs = 200
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-      const res = await fetch(candidate, { ...init, signal: controller.signal });
+      const isCross = candidate.startsWith('http') && !candidate.startsWith(currentOrigin);
+      const res = await fetch(candidate, {
+        ...init,
+        credentials: isCross ? 'omit' : 'include',
+        headers: {
+          Accept: 'application/json',
+          ...(init?.headers || {}),
+        },
+        signal: controller.signal,
+      });
       clearTimeout(timeoutId);
       if (!res.ok) continue;
       const contentType = res.headers.get('content-type') || '';
@@ -147,6 +157,7 @@ export function App() {
   const [isTailoring, setIsTailoring] = useState(false);
   const [isParsingResume, setIsParsingResume] = useState(false);
   const [isAddJobOpen, setIsAddJobOpen] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
@@ -154,51 +165,85 @@ export function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  // BroadcastChannel for instant zero-latency multi-tab synchronization on same device
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return;
+    const channel = new BroadcastChannel('careerops_broadcast');
+    channel.onmessage = (event) => {
+      if (event.data?.type === 'SYNC_SNAPSHOT' && event.data.payload) {
+        const { jobs: newJobs, profile: newProf, settings: newSet, workflow: newWf, stats: newSt } = event.data.payload;
+        if (Array.isArray(newJobs)) setJobs(newJobs);
+        if (newProf) setProfile(newProf);
+        if (newSet) setSettings(newSet);
+        if (newWf) setWorkflow(newWf);
+        if (newSt) setStats(newSt);
+      }
+    };
+    return () => channel.close();
+  }, []);
+
   // Initial load: sync with backend if available, otherwise stay gracefully active
   useEffect(() => {
     async function loadData() {
       try {
-        const [profRes, jobsRes, stateRes] = await Promise.all([
-          safeFetchJson<UserProfile>('/api/profile'),
-          safeFetchJson<JobListing[]>('/api/jobs'),
-          safeFetchJson<{ stats?: PipelineStats; workflow?: WorkflowState; settings?: AppSettings }>('/api/state'),
-        ]);
+        // Attempt atomic single-request synchronization first
+        const syncRes = await safeFetchJson<any>('/api/state/sync', undefined, 12000);
 
-        if (profRes && profRes.full_name) {
-          setProfile(profRes);
-          try {
-            localStorage.setItem('careerops_profile', JSON.stringify(profRes));
-          } catch {}
+        if (syncRes && Array.isArray(syncRes.jobs) && syncRes.jobs.length > 0) {
+          setJobs(syncRes.jobs);
           setIsBackendConnected(true);
+          try { localStorage.setItem('careerops_jobs', JSON.stringify(syncRes.jobs)); } catch {}
+
+          if (syncRes.profile?.full_name) {
+            setProfile(syncRes.profile);
+            try { localStorage.setItem('careerops_profile', JSON.stringify(syncRes.profile)); } catch {}
+          }
+          if (syncRes.stats) {
+            setStats(syncRes.stats);
+            try { localStorage.setItem('careerops_stats', JSON.stringify(syncRes.stats)); } catch {}
+          }
+          if (syncRes.workflow) {
+            setWorkflow(syncRes.workflow);
+            try { localStorage.setItem('careerops_workflow', JSON.stringify(syncRes.workflow)); } catch {}
+          }
+          if (syncRes.settings) {
+            setSettings(syncRes.settings);
+            try { localStorage.setItem('careerops_settings', JSON.stringify(syncRes.settings)); } catch {}
+          }
         } else {
-          setIsBackendConnected(false);
-        }
+          // Fallback to split endpoints
+          const [profRes, jobsRes, stateRes] = await Promise.all([
+            safeFetchJson<UserProfile>('/api/profile'),
+            safeFetchJson<JobListing[]>('/api/jobs'),
+            safeFetchJson<{ stats?: PipelineStats; workflow?: WorkflowState; settings?: AppSettings }>('/api/state'),
+          ]);
 
-        if (Array.isArray(jobsRes) && jobsRes.length > 0) {
-          setJobs(jobsRes);
-          try {
-            localStorage.setItem('careerops_jobs', JSON.stringify(jobsRes));
-          } catch {}
-        }
+          if (profRes && profRes.full_name) {
+            setProfile(profRes);
+            try { localStorage.setItem('careerops_profile', JSON.stringify(profRes)); } catch {}
+            setIsBackendConnected(true);
+          } else {
+            setIsBackendConnected(false);
+          }
 
-        if (stateRes) {
-          if (stateRes.stats) {
-            setStats(stateRes.stats);
-            try {
-              localStorage.setItem('careerops_stats', JSON.stringify(stateRes.stats));
-            } catch {}
+          if (Array.isArray(jobsRes) && jobsRes.length > 0) {
+            setJobs(jobsRes);
+            try { localStorage.setItem('careerops_jobs', JSON.stringify(jobsRes)); } catch {}
           }
-          if (stateRes.workflow) {
-            setWorkflow(stateRes.workflow);
-            try {
-              localStorage.setItem('careerops_workflow', JSON.stringify(stateRes.workflow));
-            } catch {}
-          }
-          if (stateRes.settings) {
-            setSettings(stateRes.settings);
-            try {
-              localStorage.setItem('careerops_settings', JSON.stringify(stateRes.settings));
-            } catch {}
+
+          if (stateRes) {
+            if (stateRes.stats) {
+              setStats(stateRes.stats);
+              try { localStorage.setItem('careerops_stats', JSON.stringify(stateRes.stats)); } catch {}
+            }
+            if (stateRes.workflow) {
+              setWorkflow(stateRes.workflow);
+              try { localStorage.setItem('careerops_workflow', JSON.stringify(stateRes.workflow)); } catch {}
+            }
+            if (stateRes.settings) {
+              setSettings(stateRes.settings);
+              try { localStorage.setItem('careerops_settings', JSON.stringify(stateRes.settings)); } catch {}
+            }
           }
         }
 
@@ -225,42 +270,34 @@ export function App() {
   useEffect(() => {
     const fetchLatest = async () => {
       try {
-        const [jobsRes, stateRes] = await Promise.all([
-          safeFetchJson<JobListing[]>('/api/jobs', undefined, 15000),
-          safeFetchJson<{ stats?: PipelineStats; workflow?: WorkflowState; settings?: AppSettings; profile?: UserProfile }>('/api/state', undefined, 15000),
-        ]);
-        if (Array.isArray(jobsRes) && jobsRes.length > 0) {
-          setJobs(jobsRes);
+        const syncRes = await safeFetchJson<any>('/api/state/sync', undefined, 10000);
+        if (syncRes && Array.isArray(syncRes.jobs) && syncRes.jobs.length > 0) {
           setIsBackendConnected(true);
-          try {
-            localStorage.setItem('careerops_jobs', JSON.stringify(jobsRes));
-          } catch {}
-        }
-        if (stateRes) {
-          setIsBackendConnected(true);
-          if (stateRes.stats) {
-            setStats(stateRes.stats);
-            try {
-              localStorage.setItem('careerops_stats', JSON.stringify(stateRes.stats));
-            } catch {}
+          setJobs((prev) => {
+            // Check if status changed or count changed
+            const isDifferent = syncRes.jobs.length !== prev.length ||
+              syncRes.jobs.some((nj: JobListing, i: number) => nj.id !== prev[i]?.id || nj.status !== prev[i]?.status);
+            if (isDifferent) {
+              try { localStorage.setItem('careerops_jobs', JSON.stringify(syncRes.jobs)); } catch {}
+              return syncRes.jobs;
+            }
+            return prev;
+          });
+          if (syncRes.stats) {
+            setStats(syncRes.stats);
+            try { localStorage.setItem('careerops_stats', JSON.stringify(syncRes.stats)); } catch {}
           }
-          if (stateRes.workflow) {
-            setWorkflow(stateRes.workflow);
-            try {
-              localStorage.setItem('careerops_workflow', JSON.stringify(stateRes.workflow));
-            } catch {}
+          if (syncRes.workflow) {
+            setWorkflow(syncRes.workflow);
+            try { localStorage.setItem('careerops_workflow', JSON.stringify(syncRes.workflow)); } catch {}
           }
-          if (stateRes.settings) {
-            setSettings(stateRes.settings);
-            try {
-              localStorage.setItem('careerops_settings', JSON.stringify(stateRes.settings));
-            } catch {}
+          if (syncRes.settings) {
+            setSettings(syncRes.settings);
+            try { localStorage.setItem('careerops_settings', JSON.stringify(syncRes.settings)); } catch {}
           }
-          if (stateRes.profile) {
-            setProfile(stateRes.profile);
-            try {
-              localStorage.setItem('careerops_profile', JSON.stringify(stateRes.profile));
-            } catch {}
+          if (syncRes.profile?.full_name) {
+            setProfile(syncRes.profile);
+            try { localStorage.setItem('careerops_profile', JSON.stringify(syncRes.profile)); } catch {}
           }
         }
       } catch (err) {
@@ -268,8 +305,8 @@ export function App() {
       }
     };
 
-    // Fast 5-second interval for real-time synchronization
-    const pollInterval = setInterval(fetchLatest, 5000);
+    // Fast 4-second interval for real-time synchronization across all devices
+    const pollInterval = setInterval(fetchLatest, 4000);
 
     // Instant sync when user focuses back on window / tab
     const handleFocus = () => {
@@ -482,10 +519,9 @@ export function App() {
         settings,
       });
 
-      if (result.delivered) {
+      if (result.delivered || result.simulated) {
         showToast(`Telegram alert dispatched for ${job.title}!`);
-      } else if (result.simulated) {
-        showToast(`Simulated Telegram alert generated for ${job.title}!`);
+        handleUpdateStatus(job.id, 'notified');
       } else {
         showToast(result.error || `Failed to dispatch alert to Telegram`, 'error');
       }
@@ -510,6 +546,7 @@ export function App() {
         });
         if (result.delivered || result.simulated) {
           successCount++;
+          handleUpdateStatus(job.id, 'notified');
         } else {
           failedCount++;
         }
@@ -535,6 +572,13 @@ export function App() {
         try {
           localStorage.setItem('careerops_jobs', JSON.stringify(updated));
         } catch {}
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+          try {
+            const ch = new BroadcastChannel('careerops_broadcast');
+            ch.postMessage({ type: 'SYNC_SNAPSHOT', payload: { jobs: updated } });
+            ch.close();
+          } catch {}
+        }
         return updated;
       });
 
@@ -558,6 +602,57 @@ export function App() {
     } catch (err: any) {
       showToast(err.message || 'Error updating status', 'error');
     }
+  };
+
+  // Force two-way cloud sync across all devices
+  const handleForceSync = async () => {
+    try {
+      const res = await safeFetchJson<any>('/api/state/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobs,
+          profile,
+          settings,
+          workflow,
+        }),
+      });
+      if (res && res.jobs) {
+        setJobs(res.jobs);
+        if (res.stats) setStats(res.stats);
+        if (res.workflow) setWorkflow(res.workflow);
+        if (res.settings) setSettings(res.settings);
+        if (res.profile) setProfile(res.profile);
+      }
+      setIsBackendConnected(true);
+    } catch (err) {
+      console.warn('Sync failed:', err);
+    }
+  };
+
+  // Import full state JSON
+  const handleImportState = (imported: any) => {
+    if (Array.isArray(imported.jobs)) {
+      setJobs(imported.jobs);
+      try { localStorage.setItem('careerops_jobs', JSON.stringify(imported.jobs)); } catch {}
+    }
+    if (imported.profile) {
+      setProfile(imported.profile);
+      try { localStorage.setItem('careerops_profile', JSON.stringify(imported.profile)); } catch {}
+    }
+    if (imported.settings) {
+      setSettings(imported.settings);
+      try { localStorage.setItem('careerops_settings', JSON.stringify(imported.settings)); } catch {}
+    }
+    if (imported.workflow) {
+      setWorkflow(imported.workflow);
+      try { localStorage.setItem('careerops_workflow', JSON.stringify(imported.workflow)); } catch {}
+    }
+    safeFetchJson('/api/state/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(imported),
+    }).catch(() => {});
   };
 
   // Delete Job
@@ -942,6 +1037,8 @@ export function App() {
         onRunPipeline={handleRunPipeline}
         isPipelineRunning={isPipelineRunning}
         candidateName={profile.full_name}
+        onOpenSyncModal={() => setIsSyncModalOpen(true)}
+        jobCount={jobs.length}
       />
 
       {/* Main Content Area */}
@@ -1079,6 +1176,21 @@ export function App() {
 
       {/* Mobile Bottom Navigation Bar (Phone Friendly, Zero-Jitter) */}
       <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+
+      {/* Sync Devices Modal */}
+      <SyncDevicesModal
+        isOpen={isSyncModalOpen}
+        onClose={() => setIsSyncModalOpen(false)}
+        jobs={jobs}
+        profile={profile}
+        settings={settings}
+        workflow={workflow}
+        stats={stats}
+        isBackendConnected={isBackendConnected}
+        onForceSync={handleForceSync}
+        onImportState={handleImportState}
+        showToast={showToast}
+      />
 
       {/* Add Job Modal */}
       <AddJobModal

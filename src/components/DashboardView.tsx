@@ -23,6 +23,7 @@ import {
   Check,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { getSynchronizedRemaining } from '../lib/syncClock.js';
 import { UserProfile, JobListing, PipelineStats, WorkflowState } from '../types.js';
 
 interface DashboardViewProps {
@@ -65,34 +66,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   useEffect(() => {
     const updateCountdown = () => {
-      if (isWorkflowRunning || workflow?.is_running) {
-        setRemainingTime('Scanning now...');
-        return;
-      }
-      if (!workflow?.next_run) {
-        setRemainingTime('04h 00m 00s');
-        return;
-      }
-      const diff = new Date(workflow.next_run).getTime() - Date.now();
-      if (diff <= 0) {
-        // Compute upcoming slot if target time has passed and automation is idle
-        const intervalMs = (workflow.interval_hours || 4) * 60 * 60 * 1000;
-        const elapsed = Date.now() - new Date(workflow.next_run).getTime();
-        const nextCycleDiff = intervalMs - (elapsed % intervalMs);
-        const hours = Math.floor(nextCycleDiff / (1000 * 60 * 60));
-        const mins = Math.floor((nextCycleDiff % (1000 * 60 * 60)) / (1000 * 60));
-        const secs = Math.floor((nextCycleDiff % (1000 * 60)) / 1000);
-        setRemainingTime(
-          `${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`
-        );
-        return;
-      }
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const secs = Math.floor((diff % (1000 * 60)) / 1000);
-      setRemainingTime(
-        `${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`
+      const remaining = getSynchronizedRemaining(
+        workflow?.next_run,
+        workflow?.interval_hours || 4,
+        Boolean(isWorkflowRunning || workflow?.is_running)
       );
+      setRemainingTime(remaining);
     };
 
     updateCountdown();

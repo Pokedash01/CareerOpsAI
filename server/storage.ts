@@ -76,19 +76,22 @@ export async function saveToRemoteKV(data: StorageData): Promise<boolean> {
 /**
  * Loads store synchronously from local disk / tmp / bundled files
  */
+const candidatePaths = [
+  STORE_FILE,
+  BUNDLED_STORE_FILE,
+  path.join(process.cwd(), 'careerops_store.json'),
+  path.join('/tmp', 'careerops_store.json'),
+];
+
 export function loadFromDisk(): StorageData | null {
   try {
-    const fileToLoad = fs.existsSync(STORE_FILE)
-      ? STORE_FILE
-      : fs.existsSync(BUNDLED_STORE_FILE)
-      ? BUNDLED_STORE_FILE
-      : null;
-
-    if (fileToLoad) {
-      const raw = fs.readFileSync(fileToLoad, 'utf-8');
-      const data = JSON.parse(raw);
-      if (data && Array.isArray(data.jobListings)) {
-        return data;
+    for (const filePath of candidatePaths) {
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, 'utf-8');
+        const data = JSON.parse(raw);
+        if (data && Array.isArray(data.jobListings) && data.jobListings.length > 0) {
+          return data;
+        }
       }
     }
   } catch (err) {

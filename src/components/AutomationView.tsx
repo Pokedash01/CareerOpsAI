@@ -20,6 +20,7 @@ import {
   Info,
 } from 'lucide-react';
 import { AppSettings, JobListing, UserProfile, WorkflowState } from '../types.js';
+import { getSynchronizedRemaining } from '../lib/syncClock.js';
 
 interface AutomationViewProps {
   settings: AppSettings;
@@ -83,33 +84,12 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 
   useEffect(() => {
     const updateCountdown = () => {
-      if (workflow?.is_running) {
-        setRemainingTime('Scanning now...');
-        return;
-      }
-      if (!workflow?.next_run) {
-        setRemainingTime('04h 00m 00s');
-        return;
-      }
-      const diff = new Date(workflow.next_run).getTime() - Date.now();
-      if (diff <= 0) {
-        const intervalMs = (workflow.interval_hours || 4) * 60 * 60 * 1000;
-        const elapsed = Date.now() - new Date(workflow.next_run).getTime();
-        const nextCycleDiff = intervalMs - (elapsed % intervalMs);
-        const hours = Math.floor(nextCycleDiff / (1000 * 60 * 60));
-        const mins = Math.floor((nextCycleDiff % (1000 * 60 * 60)) / (1000 * 60));
-        const secs = Math.floor((nextCycleDiff % (1000 * 60)) / 1000);
-        setRemainingTime(
-          `${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`
-        );
-        return;
-      }
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const secs = Math.floor((diff % (1000 * 60)) / 1000);
-      setRemainingTime(
-        `${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`
+      const remaining = getSynchronizedRemaining(
+        workflow?.next_run,
+        workflow?.interval_hours || 4,
+        Boolean(workflow?.is_running)
       );
+      setRemainingTime(remaining);
     };
 
     updateCountdown();

@@ -190,14 +190,28 @@ export async function dispatchJobNotification(params: {
   for (const endpoint of uniqueEndpoints) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 12000);
+      const timeout = setTimeout(() => controller.abort(), 15000);
 
       const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
         body: JSON.stringify({
           id: job.id,
-          job,
+          job: {
+            id: job.id,
+            title: job.title,
+            company_name: job.company_name,
+            location: job.location,
+            description: job.description?.slice(0, 1500),
+            fit: job.fit,
+            apply_link: job.apply_link,
+            salary_range_lpa: job.salary_range_lpa,
+            experience_range_years: job.experience_range_years,
+          },
           custom_chat_id: chatId,
           custom_bot_token: botToken,
           settings,
@@ -226,11 +240,11 @@ export async function dispatchJobNotification(params: {
           };
         }
       } else {
-        lastBackendError = data?.error || `HTTP ${res.status} from ${endpoint}`;
+        lastBackendError = data?.error || `Server returned HTTP ${res.status}`;
       }
     } catch (err: any) {
-      console.warn(`[Telegram Dispatch] Endpoint ${endpoint} unreachable:`, err?.message || err);
-      lastBackendError = err?.message || 'Connection failed';
+      console.warn(`[Telegram Dispatch] Endpoint ${endpoint} note:`, err?.message || err);
+      lastBackendError = err?.message || 'Connection could not be established';
     }
   }
 
@@ -238,11 +252,15 @@ export async function dispatchJobNotification(params: {
   const html = formatTelegramMessageHtml(job, candidateName, settings);
   const directResult = await sendTelegramDirect(botToken, chatId, html);
 
-  if (!directResult.delivered && lastBackendError && directResult.error?.toLowerCase().includes('failed to fetch')) {
-    return {
-      ...directResult,
-      error: `Dispatch failed: ${lastBackendError}. Browser direct fetch was also blocked by network/CORS.`,
-    };
+  if (!directResult.delivered) {
+    const isFetchFail = directResult.error?.toLowerCase().includes('failed to fetch') ||
+      directResult.error?.toLowerCase().includes('network');
+    if (isFetchFail) {
+      return {
+        ...directResult,
+        error: `Telegram notification could not be delivered. Please ensure the backend is running and that bot token & chat ID (${chatId}) are authorized.`,
+      };
+    }
   }
 
   return directResult;

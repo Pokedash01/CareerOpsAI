@@ -7,6 +7,10 @@ export default function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+  // Prevent Express body-parser from hanging on Vercel
+  if (req.body && typeof req.body === 'object') {
+    req._body = true;
+  }
   return (app as any)(req, res);
 }
 
