@@ -71,6 +71,7 @@ let jobListings: JobListing[] = INITIAL_JOBS.filter(
     j.id !== '9dfe6112a2137e75'
 );
 const notifiedJobIds = new Set<string>();
+const deletedJobIds = new Set<string>();
 const seenJobs: Record<string, string> = {};
 
 // Permanently blacklist fake/dead SOTI seed in memory
@@ -148,6 +149,11 @@ function applyLoadedData(data: any) {
       workflowState.next_run = new Date(nextTimestamp).toISOString();
     }
   }
+  if (Array.isArray(data.deletedJobIds)) {
+    for (const id of data.deletedJobIds) {
+      if (id) deletedJobIds.add(id);
+    }
+  }
   if (Array.isArray(data.notifiedJobIds)) {
     for (const id of data.notifiedJobIds) notifiedJobIds.add(id);
   }
@@ -161,9 +167,10 @@ function applyLoadedData(data: any) {
   seenJobs['soti_business intelligence & solutions analyst'] = new Date().toISOString();
 
   if (Array.isArray(data.jobListings)) {
-    // Purge expired jobs, SOTI, State Street, aggregators, search links, and bogus titles
+    // Purge expired jobs, SOTI, State Street, aggregators, search links, bogus titles, and deleted jobs
     jobListings = data.jobListings.filter(
       (j: JobListing) =>
+        !deletedJobIds.has(j.id) &&
         j.status !== 'expired' &&
         j.verification_status !== 'expired_or_invalid' &&
         !j.company_name.toLowerCase().includes('state street') &&
@@ -239,6 +246,7 @@ async function replicateToPeers(data: StorageData) {
           profile: data.currentProfile,
           settings: data.appSettings,
           workflow: data.workflowState,
+          deleted_ids: data.deletedJobIds,
           _replicated: true,
         }),
       }).catch(() => {});
@@ -251,11 +259,12 @@ function saveStoreToDisk(shouldReplicate = true) {
     workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
     const data: StorageData = {
       currentProfile,
-      jobListings,
+      jobListings: jobListings.filter((j) => !deletedJobIds.has(j.id)),
       notifiedJobIds: Array.from(notifiedJobIds),
       seenJobs,
       appSettings,
       workflowState,
+      deletedJobIds: Array.from(deletedJobIds),
       lastUpdated: new Date().toISOString(),
     };
     saveToDisk(data);
@@ -283,12 +292,19 @@ function loadStoreFromDisk() {
         .then((res) => res.json())
         .then((peerData: any) => {
           if (peerData && Array.isArray(peerData.jobs) && peerData.jobs.length > 0) {
-            console.log(`[Store] Hydrated from peer ${peer} (${peerData.jobs.length} jobs)`);
+            if (Array.isArray(peerData.deleted_ids)) {
+              for (const id of peerData.deleted_ids) {
+                if (id) deletedJobIds.add(id);
+              }
+            }
+            const nonDeletedJobs = peerData.jobs.filter((j: any) => !deletedJobIds.has(j.id));
+            console.log(`[Store] Hydrated from peer ${peer} (${nonDeletedJobs.length} jobs)`);
             applyLoadedData({
               currentProfile: peerData.profile,
-              jobListings: peerData.jobs,
+              jobListings: nonDeletedJobs,
               appSettings: peerData.settings,
               workflowState: peerData.workflow,
+              deletedJobIds: Array.from(deletedJobIds),
               notifiedJobIds: [],
               seenJobs: {},
             });
@@ -299,6 +315,7 @@ function loadStoreFromDisk() {
               seenJobs,
               appSettings,
               workflowState,
+              deletedJobIds: Array.from(deletedJobIds),
               lastUpdated: new Date().toISOString(),
             });
           }
@@ -673,25 +690,30 @@ app.use((req, res, next) => {
   // Remove Expired Jobs endpoint
   app.post('/api/jobs/remove-expired', (req, res) => {
     const initialCount = jobListings.length;
-    jobListings = jobListings.filter(
+    const expired = jobListings.filter(
       (j) =>
-        j.status !== 'expired' &&
-        j.verification_status !== 'expired_or_invalid' &&
-        !j.company_name.toLowerCase().includes('state street')
+        j.status === 'expired' ||
+        j.verification_status === 'expired_or_invalid' ||
+        j.company_name.toLowerCase().includes('state street')
     );
+    for (const j of expired) {
+      deletedJobIds.add(j.id);
+    }
+    jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
     const removedCount = initialCount - jobListings.length;
     saveStoreToDisk();
     console.log(`[Remove Expired] Purged ${removedCount} expired/invalid jobs. ${jobListings.length} remain.`);
-    res.json({ success: true, removedCount, remainingCount: jobListings.length, jobs: jobListings });
+    res.json({ success: true, removedCount, remainingCount: jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds) });
   });
 
   // Delete specific job endpoint
   app.delete('/api/jobs/:id', (req, res) => {
     const { id } = req.params;
+    if (id) deletedJobIds.add(id);
     const initialCount = jobListings.length;
-    jobListings = jobListings.filter((j) => j.id !== id);
+    jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
     saveStoreToDisk();
-    res.json({ success: true, deleted: initialCount > jobListings.length, jobs: jobListings });
+    res.json({ success: true, deleted: initialCount > jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds) });
   });
 
   // --- Download Cover Letter Endpoint (Direct mobile file download) ---
@@ -925,11 +947,13 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     if (!Array.isArray(ids)) {
       return res.status(400).json({ error: 'ids array required' });
     }
-    const idSet = new Set(ids);
+    for (const id of ids) {
+      if (id) deletedJobIds.add(id);
+    }
     const initialCount = jobListings.length;
-    jobListings = jobListings.filter((j) => !idSet.has(j.id));
+    jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
     saveStoreToDisk();
-    res.json({ success: true, deletedCount: initialCount - jobListings.length, jobs: jobListings });
+    res.json({ success: true, deletedCount: initialCount - jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds) });
   });
 
   // --- Match & Fit Evaluation ---
@@ -1614,20 +1638,38 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
   // --- Live Cross-System Real-Time Synchronization Endpoint ---
   app.get('/api/state/sync', (req, res) => {
     workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
+    const activeJobs = jobListings.filter((j) => !deletedJobIds.has(j.id));
     res.json({
       success: true,
       profile: currentProfile,
-      jobs: jobListings,
+      jobs: activeJobs,
       stats: computePipelineStats(),
       workflow: workflowState,
       settings: appSettings,
+      deleted_ids: Array.from(deletedJobIds),
       last_updated: new Date().toISOString(),
     });
   });
 
   app.post('/api/state/sync', async (req, res) => {
-    const { jobs, profile, settings, workflow, _replicated } = req.body;
+    const { jobs, profile, settings, workflow, deleted_ids, _replicated } = req.body;
     let modified = false;
+
+    if (Array.isArray(deleted_ids)) {
+      for (const id of deleted_ids) {
+        if (id && !deletedJobIds.has(id)) {
+          deletedJobIds.add(id);
+          modified = true;
+        }
+      }
+      if (deletedJobIds.size > 0) {
+        const prevCount = jobListings.length;
+        jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
+        if (jobListings.length !== prevCount) {
+          modified = true;
+        }
+      }
+    }
 
     if (profile && profile.full_name) {
       currentProfile = { ...currentProfile, ...profile };
@@ -1646,11 +1688,13 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     }
 
     if (Array.isArray(jobs) && jobs.length > 0) {
+      // Filter out any incoming jobs that have been deleted
+      const validJobs = jobs.filter((j: JobListing) => j && j.id && !deletedJobIds.has(j.id));
       const existingMap = new Map<string, JobListing>();
       for (const j of jobListings) {
         existingMap.set(j.id, j);
       }
-      for (const incJob of jobs) {
+      for (const incJob of validJobs) {
         if (!incJob || !incJob.id) continue;
         if (existingMap.has(incJob.id)) {
           const current = existingMap.get(incJob.id)!;
@@ -1685,13 +1729,15 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     }
 
     workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
+    const activeJobs = jobListings.filter((j) => !deletedJobIds.has(j.id));
     res.json({
       success: true,
       profile: currentProfile,
-      jobs: jobListings,
+      jobs: activeJobs,
       stats: computePipelineStats(),
       workflow: workflowState,
       settings: appSettings,
+      deleted_ids: Array.from(deletedJobIds),
       last_updated: new Date().toISOString(),
     });
   });

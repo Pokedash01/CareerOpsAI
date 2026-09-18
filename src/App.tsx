@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from './components/Navbar.js';
 import { DashboardView } from './components/DashboardView.js';
 import { JobFeedView } from './components/JobFeedView.js';
@@ -73,12 +73,40 @@ async function safeFetchJson<T>(url: string, init?: RequestInit, timeoutMs = 200
   return null;
 }
 
+const DELETED_JOBS_KEY = 'careerops_deleted_job_ids';
+
+export function getDeletedJobIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(DELETED_JOBS_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set<string>(arr);
+    }
+  } catch {}
+  return new Set<string>();
+}
+
+export function addDeletedJobIds(ids: string[]): void {
+  try {
+    const current = getDeletedJobIds();
+    for (const id of ids) {
+      if (id) current.add(id);
+    }
+    localStorage.setItem(DELETED_JOBS_KEY, JSON.stringify(Array.from(current)));
+  } catch {}
+}
+
+export function addDeletedJobId(id: string): void {
+  addDeletedJobIds([id]);
+}
+
 // Global real-time cloud synchronizer pushing latest snapshots to both cloud servers
 export async function syncStateToCloud(snapshot: {
   jobs?: JobListing[];
   profile?: UserProfile;
   settings?: AppSettings;
   workflow?: WorkflowState;
+  deleted_ids?: string[];
 }) {
   const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
   const endpoints = ['/api/state/sync'];
@@ -89,7 +117,10 @@ export async function syncStateToCloud(snapshot: {
     endpoints.push(`${LIVE_PREVIEW_ORIGIN}/api/state/sync`);
   }
 
-  const payload = JSON.stringify(snapshot);
+  const payload = JSON.stringify({
+    ...snapshot,
+    deleted_ids: snapshot.deleted_ids || Array.from(getDeletedJobIds()),
+  });
   await Promise.allSettled(
     endpoints.map((endpoint) =>
       fetch(endpoint, {
@@ -146,14 +177,17 @@ export function App() {
   });
 
   const [jobs, setJobs] = useState<JobListing[]>(() => {
+    const deleted = getDeletedJobIds();
     try {
       const cached = localStorage.getItem('careerops_jobs');
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.filter((j: JobListing) => !deleted.has(j.id));
+        }
       }
     } catch {}
-    return INITIAL_JOBS;
+    return INITIAL_JOBS.filter((j) => !deleted.has(j.id));
   });
 
   const [stats, setStats] = useState<PipelineStats>(() => {
@@ -191,6 +225,24 @@ export function App() {
     return INITIAL_SETTINGS;
   });
 
+  // Dynamically computed stats strictly calculated from current job inventory to prevent stale resets
+  const computedStats: PipelineStats = useMemo(() => {
+    const total = jobs.length;
+    const viable = jobs.filter((j) => j.fit?.is_viable).length;
+    const highFit = jobs.filter((j) => (j.fit?.match_score || 0) >= (settings.min_match_score || 75)).length;
+    const notified = jobs.filter((j) => j.status === 'notified').length;
+    const applied = jobs.filter((j) => j.status === 'applied').length;
+    return {
+      total_jobs: total,
+      seen_count: total,
+      viable_count: viable,
+      high_fit_count: highFit,
+      notified_count: notified,
+      applied_count: applied,
+      last_run: workflow.last_run || stats.last_run || new Date().toISOString(),
+    };
+  }, [jobs, settings.min_match_score, workflow.last_run, stats.last_run]);
+
   const [isBackendConnected, setIsBackendConnected] = useState<boolean | null>(null);
 
   const [selectedJobId, setSelectedJobId] = useState<string | null>(() => {
@@ -216,7 +268,10 @@ export function App() {
     channel.onmessage = (event) => {
       if (event.data?.type === 'SYNC_SNAPSHOT' && event.data.payload) {
         const { jobs: newJobs, profile: newProf, settings: newSet, workflow: newWf, stats: newSt } = event.data.payload;
-        if (Array.isArray(newJobs)) setJobs(newJobs);
+        const deleted = getDeletedJobIds();
+        if (Array.isArray(newJobs)) {
+          setJobs(newJobs.filter((j: JobListing) => !deleted.has(j.id)));
+        }
         if (newProf) setProfile(newProf);
         if (newSet) setSettings(newSet);
         if (newWf) setWorkflow(newWf);
@@ -233,10 +288,15 @@ export function App() {
         // Attempt atomic single-request synchronization first
         const syncRes = await safeFetchJson<any>('/api/state/sync', undefined, 12000);
 
-        if (syncRes && Array.isArray(syncRes.jobs) && syncRes.jobs.length > 0) {
-          setJobs(syncRes.jobs);
+        if (syncRes && Array.isArray(syncRes.jobs)) {
+          if (Array.isArray(syncRes.deleted_ids)) {
+            addDeletedJobIds(syncRes.deleted_ids);
+          }
+          const deleted = getDeletedJobIds();
+          const cleanJobs = syncRes.jobs.filter((j: JobListing) => !deleted.has(j.id));
+          setJobs(cleanJobs);
           setIsBackendConnected(true);
-          try { localStorage.setItem('careerops_jobs', JSON.stringify(syncRes.jobs)); } catch {}
+          try { localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs)); } catch {}
 
           if (syncRes.profile?.full_name) {
             setProfile(syncRes.profile);
@@ -271,8 +331,10 @@ export function App() {
           }
 
           if (Array.isArray(jobsRes) && jobsRes.length > 0) {
-            setJobs(jobsRes);
-            try { localStorage.setItem('careerops_jobs', JSON.stringify(jobsRes)); } catch {}
+            const deleted = getDeletedJobIds();
+            const cleanJobs = jobsRes.filter((j: JobListing) => !deleted.has(j.id));
+            setJobs(cleanJobs);
+            try { localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs)); } catch {}
           }
 
           if (stateRes) {
@@ -315,21 +377,24 @@ export function App() {
     const fetchLatest = async () => {
       try {
         const syncRes = await safeFetchJson<any>('/api/state/sync', undefined, 8000);
-        if (syncRes && Array.isArray(syncRes.jobs) && syncRes.jobs.length > 0) {
+        if (syncRes && Array.isArray(syncRes.jobs)) {
+          if (Array.isArray(syncRes.deleted_ids)) {
+            addDeletedJobIds(syncRes.deleted_ids);
+          }
           setIsBackendConnected(true);
+          const deleted = getDeletedJobIds();
+          const incomingValid = syncRes.jobs.filter((j: JobListing) => !deleted.has(j.id));
+          const incomingMap = new Map<string, JobListing>(incomingValid.map((j: JobListing) => [j.id, j]));
+
           setJobs((prev) => {
-            if (syncRes.jobs.length !== prev.length) {
-              try { localStorage.setItem('careerops_jobs', JSON.stringify(syncRes.jobs)); } catch {}
-              return syncRes.jobs;
-            }
-            const prevMap = new Map<string, JobListing>(prev.map((j) => [j.id, j]));
-            let hasChange = false;
-            const merged = syncRes.jobs.map((nj: JobListing) => {
-              const pj = prevMap.get(nj.id);
-              if (!pj) {
-                hasChange = true;
-                return nj;
-              }
+            const cleanPrev = prev.filter((j) => !deleted.has(j.id));
+            const prevMap = new Map<string, JobListing>(cleanPrev.map((j) => [j.id, j]));
+            const brandNewJobs = incomingValid.filter((j: JobListing) => !prevMap.has(j.id));
+
+            let hasChange = cleanPrev.length !== prev.length;
+            let merged = cleanPrev.map((pj) => {
+              const nj = incomingMap.get(pj.id);
+              if (!nj) return pj;
               if (
                 pj.status !== nj.status ||
                 pj.verification_status !== nj.verification_status ||
@@ -341,6 +406,12 @@ export function App() {
               }
               return pj;
             });
+
+            if (brandNewJobs.length > 0) {
+              merged = [...brandNewJobs, ...merged];
+              hasChange = true;
+            }
+
             if (hasChange) {
               try { localStorage.setItem('careerops_jobs', JSON.stringify(merged)); } catch {}
               return merged;
@@ -684,6 +755,7 @@ export function App() {
   // Delete Job
   const handleDeleteJob = async (jobId: string) => {
     try {
+      addDeletedJobId(jobId);
       const updated = jobs.filter((j) => j.id !== jobId);
       setJobs(updated);
       try {
@@ -696,13 +768,21 @@ export function App() {
           ch.close();
         } catch {}
       }
-      syncStateToCloud({ jobs: updated, profile, settings, workflow }).catch(() => {});
+      syncStateToCloud({
+        jobs: updated,
+        profile,
+        settings,
+        workflow,
+        deleted_ids: Array.from(getDeletedJobIds()),
+      }).catch(() => {});
 
       const res = await safeFetchJson<any>(`/api/jobs/${jobId}`, { method: 'DELETE' });
       if (res?.jobs) {
-        setJobs(res.jobs);
+        const deleted = getDeletedJobIds();
+        const cleanJobs = res.jobs.filter((j: JobListing) => !deleted.has(j.id));
+        setJobs(cleanJobs);
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(res.jobs));
+          localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs));
         } catch {}
       }
       await refreshState();
@@ -732,9 +812,11 @@ export function App() {
       });
 
       if (res?.jobs) {
-        setJobs(res.jobs);
+        const deleted = getDeletedJobIds();
+        const cleanJobs = res.jobs.filter((j: JobListing) => !deleted.has(j.id));
+        setJobs(cleanJobs);
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(res.jobs));
+          localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs));
         } catch {}
       }
       await refreshState();
@@ -749,14 +831,29 @@ export function App() {
   const handleBatchDeleteJobs = async (jobIds: string[]) => {
     if (!jobIds.length) return;
     try {
+      addDeletedJobIds(jobIds);
       const idSet = new Set(jobIds);
-      setJobs((prev) => {
-        const updated = prev.filter((j) => !idSet.has(j.id));
+      const updated = jobs.filter((j) => !idSet.has(j.id));
+      setJobs(updated);
+      try {
+        localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+      } catch {}
+
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+          const ch = new BroadcastChannel('careerops_broadcast');
+          ch.postMessage({ type: 'SYNC_SNAPSHOT', payload: { jobs: updated } });
+          ch.close();
         } catch {}
-        return updated;
-      });
+      }
+
+      syncStateToCloud({
+        jobs: updated,
+        profile,
+        settings,
+        workflow,
+        deleted_ids: Array.from(getDeletedJobIds()),
+      }).catch(() => {});
 
       const res = await safeFetchJson<any>('/api/jobs/batch-delete', {
         method: 'POST',
@@ -765,9 +862,11 @@ export function App() {
       });
 
       if (res?.jobs) {
-        setJobs(res.jobs);
+        const deleted = getDeletedJobIds();
+        const cleanJobs = res.jobs.filter((j: JobListing) => !deleted.has(j.id));
+        setJobs(cleanJobs);
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(res.jobs));
+          localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs));
         } catch {}
       }
       await refreshState();
@@ -780,19 +879,32 @@ export function App() {
   // Remove All Expired Jobs
   const handleRemoveExpiredJobs = async () => {
     try {
-      setJobs((prev) => {
-        const updated = prev.filter((j) => j.status !== 'expired' && j.verification_status !== 'expired_or_invalid');
-        try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(updated));
-        } catch {}
-        return updated;
-      });
+      const expired = jobs.filter((j) => j.status === 'expired' || j.verification_status === 'expired_or_invalid');
+      const expiredIds = expired.map((j) => j.id);
+      if (expiredIds.length > 0) {
+        addDeletedJobIds(expiredIds);
+      }
+      const updated = jobs.filter((j) => j.status !== 'expired' && j.verification_status !== 'expired_or_invalid');
+      setJobs(updated);
+      try {
+        localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+      } catch {}
+
+      syncStateToCloud({
+        jobs: updated,
+        profile,
+        settings,
+        workflow,
+        deleted_ids: Array.from(getDeletedJobIds()),
+      }).catch(() => {});
 
       const res = await safeFetchJson<any>('/api/jobs/remove-expired', { method: 'POST' });
       if (res?.jobs) {
-        setJobs(res.jobs);
+        const deleted = getDeletedJobIds();
+        const cleanJobs = res.jobs.filter((j: JobListing) => !deleted.has(j.id));
+        setJobs(cleanJobs);
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(res.jobs));
+          localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs));
         } catch {}
       }
       await refreshState();
@@ -1065,7 +1177,7 @@ export function App() {
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        stats={stats}
+        stats={computedStats}
         onRunPipeline={handleRunPipeline}
         isPipelineRunning={isPipelineRunning}
         candidateName={profile.full_name}
@@ -1085,7 +1197,7 @@ export function App() {
               <DashboardView
                 profile={profile}
                 jobs={jobs}
-                stats={stats}
+                stats={computedStats}
                 workflow={workflow}
                 onTriggerWorkflow={handleTriggerWorkflow}
                 isWorkflowRunning={isWorkflowRunning}

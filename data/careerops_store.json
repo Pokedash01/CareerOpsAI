@@ -107,6 +107,472 @@
   },
   "jobListings": [
     {
+      "id": "90f943841b863e7f",
+      "title": "Power BI Specialist/Data analyst",
+      "company_name": "Hitachi",
+      "location": "Chennai",
+      "salary_range_lpa": [
+        9,
+        16
+      ],
+      "salary_is_estimated": true,
+      "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+      "experience_range_years": [
+        2,
+        4
+      ],
+      "experience_is_inferred": true,
+      "experience_inferred_reason": "Inferred from Role Title ('Mid-Level Professional' standard: 2-4 Years)",
+      "description": "... power Apps, Power Automate using SharePoint / Dataverse or SQL as ... Proven hands-on experience with Power BI Desktop and Power BI Service in ...\n\nRequisition posted on Hitachi career portal. Direct application link verified active.",
+      "apply_link": "https://hitachi.wd1.myworkdayjobs.com/en-US/hitachi/job/Power-BI-Specialist-Data-analyst_R0144246",
+      "ats_source": "Workday",
+      "discovered_at": "2026-09-18T08:13:35.538Z",
+      "posted_date": "2026-09-15T08:13:35.538Z",
+      "posted_days_ago": 3,
+      "is_direct_posting": true,
+      "verification_status": "verified_active",
+      "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
+      "verified_at": "2026-09-18T08:13:35.538Z",
+      "status": "rejected",
+      "fit": {
+        "is_viable": false,
+        "match_score": 0,
+        "detected_experience": "Not evaluated",
+        "salary_range": "Not evaluated",
+        "location": "Chennai",
+        "skills_gap": "Location mismatch",
+        "rejection_reason": "Location 'Chennai' not in preferred list [Gurgaon, Gurugram, Noida, Delhi, Remote, Bangalore, Bengaluru]",
+        "evaluated_at": "2026-09-18T08:13:36.798Z"
+      }
+    },
+    {
+      "id": "0b8112e0e79c3309",
+      "title": "Business Analyst",
+      "company_name": "Worldwide",
+      "location": "Not specified",
+      "salary_range_lpa": [
+        22,
+        35
+      ],
+      "salary_is_estimated": true,
+      "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+      "experience_range_years": [
+        5,
+        8
+      ],
+      "experience_is_inferred": false,
+      "experience_inferred_reason": "Exact requirement extracted from Job Description: 5+ years experience",
+      "description": "SUMMARY: The Business Analyst (BA) will work with other stakeholders within the organization to deliver the solutions by translating business ...\n\nRequisition posted on Worldwide career portal. Direct application link verified active.",
+      "apply_link": "https://worldwide.wd1.myworkdayjobs.com/en-US/External/job/Trivandrum/Business-Analyst---India_JR102991",
+      "ats_source": "Workday",
+      "discovered_at": "2026-09-18T08:13:32.302Z",
+      "posted_date": "2026-09-16T08:13:32.302Z",
+      "posted_days_ago": 2,
+      "is_direct_posting": true,
+      "verification_status": "verified_active",
+      "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
+      "verified_at": "2026-09-18T08:13:32.302Z",
+      "status": "discovered",
+      "fit": {
+        "is_viable": true,
+        "match_score": 82,
+        "detected_experience": "5-8 Years",
+        "salary_range": "₹22 - ₹35 LPA",
+        "location": "Not specified",
+        "skills_gap": "None",
+        "summary_reasoning": "Direct target role match for Business Analyst. Strong alignment with  in Not specified.",
+        "strengths": [
+          "Direct match with candidate target role: Business Analyst"
+        ],
+        "weaknesses": [],
+        "evaluated_at": "2026-09-18T08:13:53.835Z"
+      },
+      "tailored": {
+        "job_title": "Business Analyst",
+        "company": "Worldwide",
+        "jd_keywords": [
+          "Power Platform",
+          "Automation",
+          "Power BI",
+          "Copilot",
+          "SQL"
+        ],
+        "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
+        "skills_ordered": [
+          "MS Excel",
+          "Copilot GenAI (Agents)",
+          "Power Automate",
+          "Power BI",
+          "SharePoint Online",
+          "Power Apps",
+          "Copilot Studio",
+          "SQL",
+          "Python",
+          "Process Automation",
+          "VBA Macros",
+          "Lean Six Sigma"
+        ],
+        "experience": [
+          {
+            "company": "KPMG",
+            "bullets": [
+              "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
+              "Built end-to-end solution to facilitate migration of old Excel‑based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
+              "Built and managed multiple VBA‑macros‑based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
+              "Built a multi‑modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
+              "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
+            ]
+          },
+          {
+            "company": "GlobalLogic Technologies Private Limited",
+            "bullets": [
+              "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
+              "Piloted a project to extract relevant answers from multi‑level documents to build an AI training dataset.",
+              "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
+              "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
+              "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
+            ]
+          }
+        ],
+        "cover_letter_paragraphs": [
+          "I am writing to express my strong enthusiasm for the Business Analyst position at Worldwide. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
+          "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
+          "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Worldwide.",
+          "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Worldwide."
+        ],
+        "generated_at": "2026-09-18T08:14:02.161Z",
+        "grounding_stats": {
+          "total_bullets": 10,
+          "grounded_count": 10,
+          "hallucinations_blocked": 0,
+          "metrics_verified": true
+        }
+      }
+    },
+    {
+      "id": "5816b194c70faf0c",
+      "title": "Power BI Developer (Active Secret clearance required)",
+      "company_name": "Truetandem",
+      "location": "Remote",
+      "salary_range_lpa": [
+        102,
+        125
+      ],
+      "salary_is_estimated": false,
+      "salary_source": "Stated in Job Description",
+      "experience_range_years": [
+        2,
+        4
+      ],
+      "experience_is_inferred": true,
+      "experience_inferred_reason": "Inferred from Role Title ('Mid-Level Professional' standard: 2-4 Years)",
+      "description": "True Tandem - Power BI Developer (Active Secret clearance required) Power BI Developer (Active Secret clearance required) Remote All / Full time / Remote apply for this job Company Description TrueTandem's mission is to be a trusted information technology solutions provider, committed to the success of our customers, communities and employees. To enable this mission, we listen to our customers’ needs, empower our dedicated and talented employees, envision success together, and deliver innovative cost-effective solutions. For our customers, we aim to deliver more power to meet their business outcomes through technology implementation, integration, optimization and customization. We enable some of the most well-known companies, nonprofits and federal agencies in the United States to intelligently plan and develop their applications, modernize their infrastructure and manage their data. As a Power BI Developer on our solutions delivery team, you will have the unique opportunity to support the technical development for projects advancing the digital transformation of critical government systems with true mission impact. &nbsp; &nbsp;Our delivery teams are driven to explore new ideas and technology, and care deeply about collaboration, feedback, and iteration. We follow agile practices, and use modern tech stacks, and constantly challenge each other to grow and improve. Technical members of our solutions teams require little guidance, but love to learn, collaborate, and solve problems. This position requires experience and passion for coding, and a strong desire to solve our customers’ unique technology challenges. Role and Responsibilities: Design, develop, test, deploy, and maintain Power BI dashboards, reports, dataflows and semantic models. Engineer and optimize data connections with Dataverse. Work with stakeholders to gather and translate business and reporting requirements into technical solutions. Develop complex calculations and business logic using DAX (Data Analysis Expressions). Use Power Query/M to connect, transform, cleanse, and prepare data for reporting. Implement Security and other appropriate data-access controls. Implement BI governance, version control, report lifecycle management and workspace organization Required Skills Active Secret Clearance or higher is required&nbsp; Minimum of 4 years designing and developing Power BI reports, dashboards, and integrations with complex datasets Minimum of 4 years of experience scripting in data engineering languages such as SQL, Power Query M, DAX Strong hands-on experience with Microsoft Power BI Desktop and Power BI Service. Ability to be self-driven and proactive with planning, development, and customer engagement. Excellent communication, collaboration, and customer management skills Ability to train data analysts on how to create reports Preferred Skills Experience with Microsoft Power Apps, Power Automate Experience with Dataverse, Azure Data, Databrick or other data sources &nbsp; $120,000 - $147,000 a year The above salary range represents a general guideline; however, TrueTandem considers several factors when determining base salary offers such as the scope and responsibilities of the position and the candidate's experience, education, skills and current market conditions. &nbsp; In addition, TrueTandem provides a variety of benefits including health insurance coverage, dental and vision plans, life and disability insurance, company paid holidays and paid time off (PTO). Our retirement plan offers a variety of investment options to build toward your retirement. &nbsp; &nbsp; U.S. Citizenship is required for all positions with a government clearance and certain other restricted positions. Additional Information TrueTandem is an equal opportunity employer, committed to diversity and inclusion in the workplace and affords equal opportunity to all qualified applicants for all positions without regard to protected veteran status, qualified individuals with disabilities and all individuals without regard to race, color, religion, sex, sexual orientation, gender identity, national origin, age or any other status protected under local, state or federal laws. Equal Opportunity Employer - Minorities/Females/Disabled/Veterans We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. apply for this job True Tandem Home Page Jobs powered by",
+      "apply_link": "https://jobs.lever.co/truetandem/f9e53ae9-6126-49e0-be40-c59aef46ddd3",
+      "ats_source": "Lever",
+      "discovered_at": "2026-09-18T08:13:31.663Z",
+      "posted_date": "2026-09-17T08:13:31.663Z",
+      "posted_days_ago": 1,
+      "is_direct_posting": true,
+      "verification_status": "verified_active",
+      "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+      "verified_at": "2026-09-18T08:13:31.663Z",
+      "status": "discovered",
+      "fit": {
+        "is_viable": true,
+        "match_score": 95,
+        "detected_experience": "2-4 Years",
+        "salary_range": "₹102 - ₹125 LPA",
+        "location": "Remote",
+        "skills_gap": "None",
+        "summary_reasoning": "Direct target role match for Power BI Developer (Active Secret clearance required). Strong alignment with MS Excel, Power Automate, Power BI in Remote.",
+        "strengths": [
+          "Direct match with candidate target role: Power BI Developer (Active Secret clearance required)",
+          "Demonstrated competency in MS Excel",
+          "Demonstrated competency in Power Automate",
+          "Demonstrated competency in Power BI",
+          "Demonstrated competency in Power Apps",
+          "Demonstrated competency in SQL"
+        ],
+        "weaknesses": [],
+        "evaluated_at": "2026-09-18T08:13:40.754Z"
+      },
+      "tailored": {
+        "job_title": "Power BI Developer (Active Secret clearance required)",
+        "company": "Truetandem",
+        "jd_keywords": [
+          "Power Platform",
+          "Automation",
+          "Power BI",
+          "Copilot",
+          "SQL"
+        ],
+        "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
+        "skills_ordered": [
+          "MS Excel",
+          "Copilot GenAI (Agents)",
+          "Power Automate",
+          "Power BI",
+          "SharePoint Online",
+          "Power Apps",
+          "Copilot Studio",
+          "SQL",
+          "Python",
+          "Process Automation",
+          "VBA Macros",
+          "Lean Six Sigma"
+        ],
+        "experience": [
+          {
+            "company": "KPMG",
+            "bullets": [
+              "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
+              "Built end-to-end solution to facilitate migration of old Excel‑based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
+              "Built and managed multiple VBA‑macros‑based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
+              "Built a multi‑modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
+              "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
+            ]
+          },
+          {
+            "company": "GlobalLogic Technologies Private Limited",
+            "bullets": [
+              "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
+              "Piloted a project to extract relevant answers from multi‑level documents to build an AI training dataset.",
+              "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
+              "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
+              "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
+            ]
+          }
+        ],
+        "cover_letter_paragraphs": [
+          "I am writing to express my strong enthusiasm for the Power BI Developer (Active Secret clearance required) position at Truetandem. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
+          "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
+          "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Truetandem.",
+          "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Truetandem."
+        ],
+        "generated_at": "2026-09-18T08:13:48.352Z",
+        "grounding_stats": {
+          "total_bullets": 10,
+          "grounded_count": 10,
+          "hallucinations_blocked": 0,
+          "metrics_verified": true
+        }
+      }
+    },
+    {
+      "id": "e7f2e7da0ac13125",
+      "title": "Beghou Consulting - Power BI Developer (318)",
+      "company_name": "Beghouconsulting",
+      "location": "Bangalore",
+      "salary_range_lpa": [
+        11,
+        19
+      ],
+      "salary_is_estimated": true,
+      "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+      "experience_range_years": [
+        2,
+        4
+      ],
+      "experience_is_inferred": false,
+      "experience_inferred_reason": "Exact requirement extracted from Job Description: Experience : 2 to 4 years",
+      "description": "Beghou Consulting - Consultant - Power BI Developer (318) Consultant - Power BI Developer (318) Pune / Bangalore Consulting – Consulting / Hybrid apply for this job Beghou brings over three decades of experience helping life sciences companies optimize their commercialization through strategic insight, advanced analytics, and technology. From developing go-to-market strategies and building foundational data analytics infrastructures to leveraging artificial intelligence to improve customer insights and engagement, Beghou helps life sciences companies maximize performance across their portfolios. Beghou also deploys proprietary and third-party technology solutions to help companies forecast performance, design territories, manage customer data, organize, and report on medical and commercial data, and more. Headquartered in Evanston, Illinois, we have 10 global offices. Our mission is to bring together analytical minds and innovative technology to help life sciences companies navigate the complexity of health care and improve patient outcomes. We are seeking a motivated Power BI Developer to join our data analytics team. The ideal candidate will assist in developing interactive dashboards, reports, and data visualizations to help business users make informed decisions. You will work closely with data analysts, business stakeholders, and senior developers to transform raw data into meaningful insights We'll trust you to Develop and maintain Power BI reports, dashboards, and visualizations. Connect, transform, and model data from various sources in Power BI. Assist in data analysis and provide actionable insights. Optimize Power BI reports for performance and usability. Collaborate with stakeholders to understand reporting needs and business objectives. Ensure data accuracy and integrity in reporting solutions. Stay up to date with Power BI best practices and new features. Troubleshoot and resolve Power BI-related issues. Additional Responsibilities : Perform other project-related tasks as needed. You'll need to have Education : Bachelor’s or Master’s degree in Computer Science, Data Science, Information Technology, or a related field. Experience : 2 to 4 years of experience in Power BI and other Visualization tools Like Tableau is added advantage. Proficiency in creating interactive dashboards and visualizations. Solid experience in Power BI, including DAX and Power Query. Strong SQL skills, including complex queries and calculated fields. Experience working with large datasets, patient data, or market access analytics Technical Skills : Familiarity with data warehousing concepts and ETL processes. Experience with Power BI Service. Knowledge of cloud platforms (AWS, Azure, Google Cloud) is a plus. Soft Skills : Strong analytical and problem-solving abilities. Excellent verbal and written communication skills. Ability to work in a collaborative, team-oriented environment. At Beghou Consulting, you'll join a highly collaborative, values-driven team where technical excellence, analytical rigor, and personal growth converge. Whether you're passionate about AI innovation, building commercialization strategies, or shaping the next generation of data-first solutions in life sciences, this is a place to make an impact! We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. apply for this job Beghou Consulting Home Page Jobs powered by",
+      "apply_link": "https://jobs.lever.co/beghouconsulting/b26af326-54b6-4028-8fd2-efd092408909",
+      "ats_source": "Lever",
+      "discovered_at": "2026-09-18T08:13:31.699Z",
+      "posted_date": "2026-09-17T08:13:31.699Z",
+      "posted_days_ago": 1,
+      "is_direct_posting": true,
+      "verification_status": "verified_active",
+      "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+      "verified_at": "2026-09-18T08:13:31.699Z",
+      "status": "discovered",
+      "fit": {
+        "is_viable": true,
+        "match_score": 95,
+        "detected_experience": "2-4 Years",
+        "salary_range": "₹11 - ₹19 LPA",
+        "location": "Bangalore",
+        "skills_gap": "None",
+        "summary_reasoning": "Direct target role match for Beghou Consulting - Power BI Developer (318). Strong alignment with MS Excel, Power BI, SQL in Bangalore.",
+        "strengths": [
+          "Direct match with candidate target role: Beghou Consulting - Power BI Developer (318)",
+          "Demonstrated competency in MS Excel",
+          "Demonstrated competency in Power BI",
+          "Demonstrated competency in SQL"
+        ],
+        "weaknesses": [],
+        "evaluated_at": "2026-09-18T08:13:58.909Z"
+      },
+      "tailored": {
+        "job_title": "Beghou Consulting - Power BI Developer (318)",
+        "company": "Beghouconsulting",
+        "jd_keywords": [
+          "Power Platform",
+          "Automation",
+          "Power BI",
+          "Copilot",
+          "SQL"
+        ],
+        "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
+        "skills_ordered": [
+          "MS Excel",
+          "Copilot GenAI (Agents)",
+          "Power Automate",
+          "Power BI",
+          "SharePoint Online",
+          "Power Apps",
+          "Copilot Studio",
+          "SQL",
+          "Python",
+          "Process Automation",
+          "VBA Macros",
+          "Lean Six Sigma"
+        ],
+        "experience": [
+          {
+            "company": "KPMG",
+            "bullets": [
+              "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
+              "Built end-to-end solution to facilitate migration of old Excel‑based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
+              "Built and managed multiple VBA‑macros‑based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
+              "Built a multi‑modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
+              "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
+            ]
+          },
+          {
+            "company": "GlobalLogic Technologies Private Limited",
+            "bullets": [
+              "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
+              "Piloted a project to extract relevant answers from multi‑level documents to build an AI training dataset.",
+              "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
+              "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
+              "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
+            ]
+          }
+        ],
+        "cover_letter_paragraphs": [
+          "I am writing to express my strong enthusiasm for the Beghou Consulting - Power BI Developer (318) position at Beghouconsulting. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
+          "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
+          "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Beghouconsulting.",
+          "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Beghouconsulting."
+        ],
+        "generated_at": "2026-09-18T08:14:06.236Z",
+        "grounding_stats": {
+          "total_bullets": 10,
+          "grounded_count": 10,
+          "hallucinations_blocked": 0,
+          "metrics_verified": true
+        }
+      }
+    },
+    {
+      "id": "f4004405d9c00c39",
+      "title": "Business Intelligence Data Analyst",
+      "company_name": "Openx",
+      "location": "Remote",
+      "salary_range_lpa": [
+        79,
+        94
+      ],
+      "salary_is_estimated": false,
+      "salary_source": "Stated in Job Description",
+      "experience_range_years": [
+        1,
+        3
+      ],
+      "experience_is_inferred": false,
+      "experience_inferred_reason": "Exact requirement extracted from Job Description: 1-3 years",
+      "description": "OpenX - Business Intelligence Data Analyst Business Intelligence Data Analyst US - Remote Finance – Finance / Full-Time / Remote apply for this job Company at a Glance OpenX is focused on unleashing the full economic potential of digital media companies. We do this by making digital advertising markets and technologies that are designed to deliver optimal value to publishers and advertisers on every ad served across all screens. At OpenX, we have built a team that is uniquely experienced in designing and operating high-scale ad marketplaces, and we are constantly on the lookout for thoughtful, creative executors who are as fascinated as we are about finding new ways to apply a blend of market design, technical innovation, operational excellence, and empathetic partner service to the frontiers of digital advertising. Data Analyst – Business Intelligence Location: Remote Position Summary: OpenX Technologies, Inc. is looking for a Data Analyst to join our dynamic and high-performing Business Intelligence team within the Finance organization. Our organization’s mission is to steer the financial growth of OpenX through the delivery of world-class financial intelligence, guidance and services. &nbsp;In this mission we value reliability, integrity and fearless stewardship of OpenX’s business. We strive to operate with objectivity, rigor and strategic insight.&nbsp; The ideal candidate will be a highly engaged and intellectually curious data analyst with one to three years of experience in an analytic role. You will be responsible for developing in-depth business analyses, providing ad hoc analytic support to the entire business, and driving the scaling and automation of reporting processes. &nbsp;You will have the opportunity to design and execute quantitative analyses using large and complex data sets, and learn about the dynamic ad tech industry from within one of its leading companies. Responsibilities: Build performance and revenue reporting tools for internal customers Help build and automate data and reporting processes for the Finance organization Ad-hoc analysis and reporting, serving teams across the company Execute deep dive quantitative analyses that translates data into actionable insights Provide analytical and decision-making support for key company initiatives Present analysis and share findings with both technical and non-technical stakeholders Key Qualifications: 1-3 years of analytical work experience, preferably within a business intelligence, corporate finance or strategic planning role. &nbsp;Experience working with large data sets is preferred. Bachelor’s degree in a quantitative field (such as Mathematics, Statistics, Finance, Economics, Physics), Master’s degree in a quantitative field is preferred. Strong analytical abilities and the ability to form key, succinct insights and recommendations from analyses involving large amounts of complex data. Curiosity to identify and ability to solve difficult problems. Prior experience with relational database systems; strong SQL skills are required. &nbsp;Previous experience with Google BigQuery is a definite plus. Strong quantitative skills and proficiency with MS Office and Google suite of applications, and prior experience with scripting languages (such as Python) preferred. Outstanding written and verbal communication skills.&nbsp; Ability to interface with and effectively present to multiple levels of management. Extremely proactive with a strong bias for action; naturally inquisitive; desire to continuously improve current business practices/processes. Organized, detail-oriented, and ability to multi-task.&nbsp; $93,500 - $110,000 a year Pursuant to any state, local ordinance, or local hiring regulations, we will consider for employment any qualified applicant, including those with arrest and conviction records, in a manner consistent with the applicable regulation.&nbsp; OpenX is committed to fair and equitable compensation practices. For all applicants, the base salary range is noted above, per year + bonus + equity + benefits. A candidate’s salary is determined by various factors including, but not limited to, relevant work experience, skills, and certifications.&nbsp; A summary of our benefits, which include medical, dental, vision, 401k, equity and more, can be viewed here:&nbsp; https://www.openx.com/company/careers/ &nbsp;A candidate’s salary is determined by various factors including, but not limited to, relevant work experience, skills, and certifications.&nbsp;&nbsp; OpenX VALUES Our five company values form a solid bedrock serving to define us as a group and guide the company. Our values remind us that how we do things often matters as much as what we do. WE ARE ONE We are one team. There are no exceptions. We are a group of strong and diverse individuals unified by a shared mission. We embrace challenges and win together as a team. We respect and care about our colleagues and cultivate an inclusive culture WE ARE CUSTOMER CENTRIC We innovate on behalf of our customers. We understand, respect, and listen carefully to our customers. We build great products to solve our customers’ problems. We manage our customers’ expectations clearly and honestly. We are a trusted partner to all of our customers - we act with integrity at all times. We care. OPENX IS OURS We are all owners of OpenX We all have a voice to improve OpenX We stake our personal and professional reputations on the excellence of our work We are not interested in just \"doing our jobs\"; we take ownership to drive results WE ARE AN OPEN BOOK We understand and respect what each of us does.&nbsp;We are eager to teach and share what we know with others, both internally and externally. We are eager to learn from others and we ask questions internally and externally.&nbsp; WE EVOLVE FAST We take responsible risks and own and learn from our mistakes. We recognize and repeat success.&nbsp;We actively seek out and provide constructive feedback. We adapt quickly and embrace change. We tackle growth and learning with real urgency. We are endlessly curious. OpenX TRAITS Our three traits capture what makes a great team member at OpenX. HUMBLE Ideal team players are humble and demonstrate integrity. They put the team's success above their own, share credit generously, and value collective achievements. They are self-assured, open to coaching, and committed to continuous learning. DRIVEN Ideal team players are results-driven and motivated. They are curious, always seeking more to do, learn, and take on. As proactive problem-solvers, they take initiative without needing external motivation. They continuously think about the next steps and opportunities for improvement. SMART Ideal team players are smart and possess the intellectual acumen to understand the complexities of our organization and industry. They are interpersonally intelligent, good communicators, and exemplify sound judgment in their interactions across the company to foster a collaborative environment. OpenX is committed to equal employment opportunities. It is a fundamental principle at OpenX not to discriminate against employees or applicants for employment on any legally-recognized basis including, but not limited to: age, race, creed, color, religion, national origin, sexual orientation, sex, disability, predisposing genetic characteristics, genetic information, military or veteran status, marital status, gender identity/transgender status, pregnancy, childbirth or related medical condition, and other protected characteristic as established by law. OpenX Applicant Privacy Policy Applicants can review our Applicant Privacy Policy at any time by visiting the following link:&nbsp; https://www.openx.com/privacy-center/applicant-privacy-policy/ . Effective Date: November 21, 2024 apply for this job OpenX Home Page Jobs powered by",
+      "apply_link": "https://jobs.lever.co/openx/df23b30a-21b5-4055-9698-5b5c2767df3c",
+      "ats_source": "Lever",
+      "discovered_at": "2026-09-18T08:13:31.925Z",
+      "posted_date": "2026-09-17T08:13:31.925Z",
+      "posted_days_ago": 1,
+      "is_direct_posting": true,
+      "verification_status": "verified_active",
+      "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+      "verified_at": "2026-09-18T08:13:31.925Z",
+      "status": "discovered",
+      "fit": {
+        "is_viable": true,
+        "match_score": 95,
+        "detected_experience": "1-3 Years",
+        "salary_range": "₹79 - ₹94 LPA",
+        "location": "Remote",
+        "skills_gap": "None",
+        "summary_reasoning": "Direct target role match for Business Intelligence Data Analyst. Strong alignment with MS Excel, SQL, Python in Remote.",
+        "strengths": [
+          "Direct match with candidate target role: Business Intelligence Data Analyst",
+          "Demonstrated competency in MS Excel",
+          "Demonstrated competency in SQL",
+          "Demonstrated competency in Python"
+        ],
+        "weaknesses": [],
+        "evaluated_at": "2026-09-18T08:14:00.239Z"
+      },
+      "tailored": {
+        "job_title": "Business Intelligence Data Analyst",
+        "company": "Openx",
+        "jd_keywords": [
+          "Power Platform",
+          "Automation",
+          "Power BI",
+          "Copilot",
+          "SQL"
+        ],
+        "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
+        "skills_ordered": [
+          "MS Excel",
+          "Copilot GenAI (Agents)",
+          "Power Automate",
+          "Power BI",
+          "SharePoint Online",
+          "Power Apps",
+          "Copilot Studio",
+          "SQL",
+          "Python",
+          "Process Automation",
+          "VBA Macros",
+          "Lean Six Sigma"
+        ],
+        "experience": [
+          {
+            "company": "KPMG",
+            "bullets": [
+              "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
+              "Built end-to-end solution to facilitate migration of old Excel‑based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
+              "Built and managed multiple VBA‑macros‑based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
+              "Built a multi‑modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
+              "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
+            ]
+          },
+          {
+            "company": "GlobalLogic Technologies Private Limited",
+            "bullets": [
+              "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
+              "Piloted a project to extract relevant answers from multi‑level documents to build an AI training dataset.",
+              "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
+              "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
+              "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
+            ]
+          }
+        ],
+        "cover_letter_paragraphs": [
+          "I am writing to express my strong enthusiasm for the Business Intelligence Data Analyst position at Openx. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
+          "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
+          "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Openx.",
+          "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Openx."
+        ],
+        "generated_at": "2026-09-18T08:14:00.512Z",
+        "grounding_stats": {
+          "total_bullets": 10,
+          "grounded_count": 10,
+          "hallucinations_blocked": 0,
+          "metrics_verified": true
+        }
+      }
+    },
+    {
       "id": "9d2fa173be361ff4",
       "title": "Lead Business Analyst",
       "company_name": "Fil",
@@ -132,7 +598,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-      "verified_at": "2026-09-15T16:12:30.479Z",
+      "verified_at": "2026-09-18T08:13:09.494Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -232,7 +698,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-15T16:12:29.710Z",
+      "verified_at": "2026-09-18T08:13:08.483Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -271,7 +737,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-15T16:12:29.711Z",
+      "verified_at": "2026-09-18T08:13:08.483Z",
       "status": "rejected",
       "fit": {
         "is_viable": true,
@@ -375,7 +841,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-15T16:12:29.711Z",
+      "verified_at": "2026-09-18T08:13:08.483Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -414,7 +880,7 @@
       "is_direct_posting": true,
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-      "verified_at": "2026-09-15T16:02:48.003Z",
+      "verified_at": "2026-09-18T08:13:08.484Z",
       "status": "rejected",
       "fit": {
         "is_viable": false,
@@ -2825,12 +3291,16 @@
     "810ab4223ca8ee8c",
     "347c7b14d7484894",
     "8d82f497f6dbb3c4",
-    "9d2fa173be361ff4"
+    "9d2fa173be361ff4",
+    "5816b194c70faf0c",
+    "0b8112e0e79c3309",
+    "e7f2e7da0ac13125",
+    "f4004405d9c00c39"
   ],
   "seenJobs": {
-    "9dfe6112a2137e75": "2026-09-18T07:27:49.184Z",
-    "https://soti.careers/jobs/bi-solutions-analyst-gurugram": "2026-09-18T07:27:49.184Z",
-    "soti_business intelligence & solutions analyst": "2026-09-18T07:27:49.184Z",
+    "9dfe6112a2137e75": "2026-09-18T09:02:42.388Z",
+    "https://soti.careers/jobs/bi-solutions-analyst-gurugram": "2026-09-18T09:02:42.388Z",
+    "soti_business intelligence & solutions analyst": "2026-09-18T09:02:42.388Z",
     "gtn-prod-ba-01": "2026-09-05T05:39:51.735Z",
     "gartner_senior product business analyst": "2026-09-05T05:39:51.735Z",
     "https://gartner.wd5.myworkdayjobs.com/en-us/gartner_careers/job/gurugram/senior-product-business-analyst_jr10928": "2026-09-05T05:39:51.735Z",
@@ -2987,9 +3457,24 @@
     "3b18b89dfeaea21f": "2026-09-15T15:15:02.569Z",
     "https://in.linkedin.com/jobs/view/deployment-analyst-power-platform-solutions-at-wtilth-technologies-4424065666": "2026-09-15T15:15:02.569Z",
     "wtilth technologies_deployment analyst": "2026-09-15T15:15:02.569Z",
-    "9d2fa173be361ff4": "2026-09-18T07:28:06.945Z",
-    "https://fil.wd3.myworkdayjobs.com/en-US/001/job/Gurgaon-Office/Lead-Business-Analyst_J69759-1": "2026-09-18T07:28:06.945Z",
-    "fil_lead business analyst": "2026-09-18T07:28:06.945Z"
+    "9d2fa173be361ff4": "2026-09-15T16:03:03.574Z",
+    "https://fil.wd3.myworkdayjobs.com/en-US/001/job/Gurgaon-Office/Lead-Business-Analyst_J69759-1": "2026-09-15T16:03:03.574Z",
+    "fil_lead business analyst": "2026-09-15T16:03:03.574Z",
+    "f4004405d9c00c39": "2026-09-18T08:13:31.925Z",
+    "https://jobs.lever.co/openx/df23b30a-21b5-4055-9698-5b5c2767df3c": "2026-09-18T08:13:31.925Z",
+    "openx_business intelligence data analyst": "2026-09-18T08:13:31.925Z",
+    "e7f2e7da0ac13125": "2026-09-18T08:13:31.699Z",
+    "https://jobs.lever.co/beghouconsulting/b26af326-54b6-4028-8fd2-efd092408909": "2026-09-18T08:13:31.699Z",
+    "beghouconsulting_beghou consulting - power bi developer (318)": "2026-09-18T08:13:31.699Z",
+    "5816b194c70faf0c": "2026-09-18T08:13:31.663Z",
+    "https://jobs.lever.co/truetandem/f9e53ae9-6126-49e0-be40-c59aef46ddd3": "2026-09-18T08:13:31.663Z",
+    "truetandem_power bi developer (active secret clearance required)": "2026-09-18T08:13:31.663Z",
+    "0b8112e0e79c3309": "2026-09-18T08:13:32.302Z",
+    "https://worldwide.wd1.myworkdayjobs.com/en-US/External/job/Trivandrum/Business-Analyst---India_JR102991": "2026-09-18T08:13:32.302Z",
+    "worldwide_business analyst": "2026-09-18T08:13:32.302Z",
+    "90f943841b863e7f": "2026-09-18T08:13:35.538Z",
+    "https://hitachi.wd1.myworkdayjobs.com/en-US/hitachi/job/Power-BI-Specialist-Data-analyst_R0144246": "2026-09-18T08:13:35.538Z",
+    "hitachi_power bi specialist/data analyst": "2026-09-18T08:13:35.538Z"
   },
   "appSettings": {
     "min_match_score": 75,
@@ -3010,12 +3495,24 @@
   "workflowState": {
     "enabled": true,
     "interval_hours": 4,
-    "last_run": "2026-09-15T16:12:51.083Z",
-    "next_run": "2026-09-18T08:12:51.083Z",
+    "last_run": "2026-09-18T08:14:00.795Z",
+    "next_run": "2026-09-18T12:00:00.000Z",
     "is_running": false,
-    "total_runs": 9,
+    "total_runs": 10,
     "auto_notify_telegram": true,
     "runs": [
+      {
+        "id": "run-1789719188424",
+        "started_at": "2026-09-18T08:13:08.424Z",
+        "completed_at": "2026-09-18T08:14:00.795Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 5,
+        "evaluated_count": 5,
+        "high_fit_count": 36,
+        "notified_count": 4,
+        "status": "completed",
+        "summary": "Automated cycle: Scanned existing links (0 expired identified), discovered 5 fresh jobs. Evaluated 5 listings, 36 high-fit matches, 4 Telegram alerts dispatched."
+      },
       {
         "id": "run-1789488749691",
         "started_at": "2026-09-15T16:12:29.691Z",
@@ -3126,5 +3623,6 @@
       }
     ]
   },
-  "lastUpdated": "2026-09-18T07:28:06.945Z"
+  "deletedJobIds": [],
+  "lastUpdated": "2026-09-18T09:02:54.093Z"
 }

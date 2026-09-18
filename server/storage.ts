@@ -8,6 +8,7 @@ export interface StorageData {
   seenJobs: Record<string, string>;
   appSettings: any;
   workflowState: any;
+  deletedJobIds?: string[];
   lastUpdated?: string;
 }
 
