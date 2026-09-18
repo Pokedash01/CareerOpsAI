@@ -2819,7 +2819,7 @@ export const INITIAL_WORKFLOW: WorkflowState = {
   "enabled": true,
   "interval_hours": 4,
   "last_run": "2026-09-15T16:12:51.083Z",
-  "next_run": "2026-09-18T08:12:51.083Z",
+  "next_run": new Date(Math.ceil((Date.now() + 1000) / (4 * 3600 * 1000)) * (4 * 3600 * 1000)).toISOString(),
   "is_running": false,
   "total_runs": 9,
   "auto_notify_telegram": true,

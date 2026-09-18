@@ -7,7 +7,6 @@ import { ProfileView } from './components/ProfileView.js';
 import { AutomationView } from './components/AutomationView.js';
 import { AddJobModal } from './components/AddJobModal.js';
 import { MobileBottomNav } from './components/MobileBottomNav.js';
-import { SyncDevicesModal } from './components/SyncDevicesModal.js';
 import { UserProfile, JobListing, PipelineStats, AppSettings, WorkflowState, JobStatus } from './types.js';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -49,12 +48,58 @@ async function safeFetchJson<T>(url: string, init?: RequestInit, timeoutMs = 200
       if (!res.ok) continue;
       const contentType = res.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) continue;
-      return await res.json();
+      const data = await res.json();
+
+      // If this request modified state, replicate across peer origins in the background
+      if (init?.method && init.method !== 'GET' && candidateUrls.length > 1) {
+        for (const alt of candidateUrls) {
+          if (alt !== candidate) {
+            const isAltCross = alt.startsWith('http') && !alt.startsWith(currentOrigin);
+            fetch(alt, {
+              ...init,
+              credentials: isAltCross ? 'omit' : 'include',
+              headers: { Accept: 'application/json', ...(init?.headers || {}) },
+              keepalive: true,
+            }).catch(() => {});
+          }
+        }
+      }
+
+      return data;
     } catch {
       // Continue to next failover URL
     }
   }
   return null;
+}
+
+// Global real-time cloud synchronizer pushing latest snapshots to both cloud servers
+export async function syncStateToCloud(snapshot: {
+  jobs?: JobListing[];
+  profile?: UserProfile;
+  settings?: AppSettings;
+  workflow?: WorkflowState;
+}) {
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  const endpoints = ['/api/state/sync'];
+  if (!currentOrigin.includes('ais-dev-w2ikgh4niy7jalbtjcsxj4')) {
+    endpoints.push(`${LIVE_PRIMARY_ORIGIN}/api/state/sync`);
+  }
+  if (!currentOrigin.includes('ais-pre-w2ikgh4niy7jalbtjcsxj4')) {
+    endpoints.push(`${LIVE_PREVIEW_ORIGIN}/api/state/sync`);
+  }
+
+  const payload = JSON.stringify(snapshot);
+  await Promise.allSettled(
+    endpoints.map((endpoint) =>
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: payload,
+        keepalive: true,
+      }).catch(() => {})
+    )
+  );
 }
 
 function generateFallbackTailored(job: JobListing, candidate: UserProfile) {
@@ -157,7 +202,6 @@ export function App() {
   const [isTailoring, setIsTailoring] = useState(false);
   const [isParsingResume, setIsParsingResume] = useState(false);
   const [isAddJobOpen, setIsAddJobOpen] = useState(false);
-  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
@@ -270,16 +314,36 @@ export function App() {
   useEffect(() => {
     const fetchLatest = async () => {
       try {
-        const syncRes = await safeFetchJson<any>('/api/state/sync', undefined, 10000);
+        const syncRes = await safeFetchJson<any>('/api/state/sync', undefined, 8000);
         if (syncRes && Array.isArray(syncRes.jobs) && syncRes.jobs.length > 0) {
           setIsBackendConnected(true);
           setJobs((prev) => {
-            // Check if status changed or count changed
-            const isDifferent = syncRes.jobs.length !== prev.length ||
-              syncRes.jobs.some((nj: JobListing, i: number) => nj.id !== prev[i]?.id || nj.status !== prev[i]?.status);
-            if (isDifferent) {
+            if (syncRes.jobs.length !== prev.length) {
               try { localStorage.setItem('careerops_jobs', JSON.stringify(syncRes.jobs)); } catch {}
               return syncRes.jobs;
+            }
+            const prevMap = new Map<string, JobListing>(prev.map((j) => [j.id, j]));
+            let hasChange = false;
+            const merged = syncRes.jobs.map((nj: JobListing) => {
+              const pj = prevMap.get(nj.id);
+              if (!pj) {
+                hasChange = true;
+                return nj;
+              }
+              if (
+                pj.status !== nj.status ||
+                pj.verification_status !== nj.verification_status ||
+                (!pj.tailored_resume && nj.tailored_resume) ||
+                pj.notes !== nj.notes
+              ) {
+                hasChange = true;
+                return { ...pj, ...nj };
+              }
+              return pj;
+            });
+            if (hasChange) {
+              try { localStorage.setItem('careerops_jobs', JSON.stringify(merged)); } catch {}
+              return merged;
             }
             return prev;
           });
@@ -288,8 +352,20 @@ export function App() {
             try { localStorage.setItem('careerops_stats', JSON.stringify(syncRes.stats)); } catch {}
           }
           if (syncRes.workflow) {
-            setWorkflow(syncRes.workflow);
-            try { localStorage.setItem('careerops_workflow', JSON.stringify(syncRes.workflow)); } catch {}
+            setWorkflow((prevWf) => {
+              const incoming = syncRes.workflow;
+              if (
+                prevWf.next_run !== incoming.next_run ||
+                prevWf.last_run !== incoming.last_run ||
+                prevWf.is_running !== incoming.is_running ||
+                prevWf.enabled !== incoming.enabled ||
+                prevWf.total_runs !== incoming.total_runs
+              ) {
+                try { localStorage.setItem('careerops_workflow', JSON.stringify(incoming)); } catch {}
+                return incoming;
+              }
+              return prevWf;
+            });
           }
           if (syncRes.settings) {
             setSettings(syncRes.settings);
@@ -300,13 +376,13 @@ export function App() {
             try { localStorage.setItem('careerops_profile', JSON.stringify(syncRes.profile)); } catch {}
           }
         }
-      } catch (err) {
+      } catch {
         // silent background polling catch
       }
     };
 
-    // Fast 4-second interval for real-time synchronization across all devices
-    const pollInterval = setInterval(fetchLatest, 4000);
+    // Fast 3.5-second interval for real-time synchronization across all devices
+    const pollInterval = setInterval(fetchLatest, 3500);
 
     // Instant sync when user focuses back on window / tab
     const handleFocus = () => {
@@ -567,20 +643,21 @@ export function App() {
   // 6. Update Status
   const handleUpdateStatus = async (jobId: string, status: any) => {
     try {
-      setJobs((prev) => {
-        const updated = prev.map((j) => (j.id === jobId ? { ...j, status } : j));
+      const updated = jobs.map((j) => (j.id === jobId ? { ...j, status } : j));
+      setJobs(updated);
+      try {
+        localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+      } catch {}
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+          const ch = new BroadcastChannel('careerops_broadcast');
+          ch.postMessage({ type: 'SYNC_SNAPSHOT', payload: { jobs: updated } });
+          ch.close();
         } catch {}
-        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-          try {
-            const ch = new BroadcastChannel('careerops_broadcast');
-            ch.postMessage({ type: 'SYNC_SNAPSHOT', payload: { jobs: updated } });
-            ch.close();
-          } catch {}
-        }
-        return updated;
-      });
+      }
+
+      // Automatically sync to all cloud instances
+      syncStateToCloud({ jobs: updated, profile, settings, workflow }).catch(() => {});
 
       const res = await safeFetchJson<any>('/api/jobs/status', {
         method: 'POST',
@@ -590,11 +667,11 @@ export function App() {
 
       if (res?.job) {
         setJobs((prev) => {
-          const updated = prev.map((j) => (j.id === jobId ? res.job : j));
+          const fresh = prev.map((j) => (j.id === jobId ? res.job : j));
           try {
-            localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+            localStorage.setItem('careerops_jobs', JSON.stringify(fresh));
           } catch {}
-          return updated;
+          return fresh;
         });
       }
       await refreshState();
@@ -604,67 +681,22 @@ export function App() {
     }
   };
 
-  // Force two-way cloud sync across all devices
-  const handleForceSync = async () => {
-    try {
-      const res = await safeFetchJson<any>('/api/state/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jobs,
-          profile,
-          settings,
-          workflow,
-        }),
-      });
-      if (res && res.jobs) {
-        setJobs(res.jobs);
-        if (res.stats) setStats(res.stats);
-        if (res.workflow) setWorkflow(res.workflow);
-        if (res.settings) setSettings(res.settings);
-        if (res.profile) setProfile(res.profile);
-      }
-      setIsBackendConnected(true);
-    } catch (err) {
-      console.warn('Sync failed:', err);
-    }
-  };
-
-  // Import full state JSON
-  const handleImportState = (imported: any) => {
-    if (Array.isArray(imported.jobs)) {
-      setJobs(imported.jobs);
-      try { localStorage.setItem('careerops_jobs', JSON.stringify(imported.jobs)); } catch {}
-    }
-    if (imported.profile) {
-      setProfile(imported.profile);
-      try { localStorage.setItem('careerops_profile', JSON.stringify(imported.profile)); } catch {}
-    }
-    if (imported.settings) {
-      setSettings(imported.settings);
-      try { localStorage.setItem('careerops_settings', JSON.stringify(imported.settings)); } catch {}
-    }
-    if (imported.workflow) {
-      setWorkflow(imported.workflow);
-      try { localStorage.setItem('careerops_workflow', JSON.stringify(imported.workflow)); } catch {}
-    }
-    safeFetchJson('/api/state/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(imported),
-    }).catch(() => {});
-  };
-
   // Delete Job
   const handleDeleteJob = async (jobId: string) => {
     try {
-      setJobs((prev) => {
-        const updated = prev.filter((j) => j.id !== jobId);
+      const updated = jobs.filter((j) => j.id !== jobId);
+      setJobs(updated);
+      try {
+        localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+      } catch {}
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+          const ch = new BroadcastChannel('careerops_broadcast');
+          ch.postMessage({ type: 'SYNC_SNAPSHOT', payload: { jobs: updated } });
+          ch.close();
         } catch {}
-        return updated;
-      });
+      }
+      syncStateToCloud({ jobs: updated, profile, settings, workflow }).catch(() => {});
 
       const res = await safeFetchJson<any>(`/api/jobs/${jobId}`, { method: 'DELETE' });
       if (res?.jobs) {
@@ -1037,8 +1069,6 @@ export function App() {
         onRunPipeline={handleRunPipeline}
         isPipelineRunning={isPipelineRunning}
         candidateName={profile.full_name}
-        onOpenSyncModal={() => setIsSyncModalOpen(true)}
-        jobCount={jobs.length}
       />
 
       {/* Main Content Area */}
@@ -1176,21 +1206,6 @@ export function App() {
 
       {/* Mobile Bottom Navigation Bar (Phone Friendly, Zero-Jitter) */}
       <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-
-      {/* Sync Devices Modal */}
-      <SyncDevicesModal
-        isOpen={isSyncModalOpen}
-        onClose={() => setIsSyncModalOpen(false)}
-        jobs={jobs}
-        profile={profile}
-        settings={settings}
-        workflow={workflow}
-        stats={stats}
-        isBackendConnected={isBackendConnected}
-        onForceSync={handleForceSync}
-        onImportState={handleImportState}
-        showToast={showToast}
-      />
 
       {/* Add Job Modal */}
       <AddJobModal

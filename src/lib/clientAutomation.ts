@@ -1,5 +1,6 @@
 import { JobListing, UserProfile, AppSettings, WorkflowState, WorkflowRunLog } from '../types.js';
 import { dispatchJobNotification } from './telegramClient.js';
+import { getSynchronizedNextRunIso } from './syncClock.js';
 
 // Enterprise ATS verified portals with authentic direct application gateways
 const ENTERPRISE_JOB_TEMPLATES = [
@@ -307,7 +308,7 @@ export async function runClientWorkflowCycle(
     enabled: true,
     interval_hours: 4,
     last_run: now.toISOString(),
-    next_run: new Date(now.getTime() + 4 * 3600000).toISOString(),
+    next_run: getSynchronizedNextRunIso(4),
     is_running: false,
     total_runs: 1,
     auto_notify_telegram: !!settings.auto_notify_telegram,

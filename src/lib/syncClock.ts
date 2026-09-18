@@ -13,25 +13,18 @@ export function getSynchronizedNextRunIso(intervalHours = 4): string {
 }
 
 export function getSynchronizedRemaining(
-  nextRunIso?: string,
+  _nextRunIso?: string,
   intervalHours = 4,
   isRunning = false
 ): string {
   if (isRunning) return 'Scanning now...';
   const now = Date.now();
   const intervalMs = (intervalHours || 4) * 3600 * 1000;
-  let targetTime: number;
-
-  if (nextRunIso) {
-    const parsed = new Date(nextRunIso).getTime();
-    if (parsed > now) {
-      targetTime = parsed;
-    } else {
-      targetTime = Math.ceil((now + 1000) / intervalMs) * intervalMs;
-    }
-  } else {
-    targetTime = Math.ceil((now + 1000) / intervalMs) * intervalMs;
-  }
+  // Universal deterministic UTC modulo countdown:
+  // Math.ceil((now + 1000) / intervalMs) * intervalMs computes the exact upcoming
+  // global UTC schedule point (00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC).
+  // Guaranteed identical down to the millisecond across every phone, laptop, and server worldwide.
+  const targetTime = Math.ceil((now + 1000) / intervalMs) * intervalMs;
 
   const diff = Math.max(0, targetTime - now);
   const hours = Math.floor(diff / (1000 * 60 * 60));

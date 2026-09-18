@@ -55,11 +55,23 @@ const appSettings: AppSettings & { serpapi_key?: string } = {
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
+export function getCanonicalNextRun(intervalHours = 4): string {
+  const now = Date.now();
+  const intervalMs = (intervalHours || 4) * 3600 * 1000;
+  const nextTimestamp = Math.ceil((now + 1000) / intervalMs) * intervalMs;
+  return new Date(nextTimestamp).toISOString();
+}
+
+const PEER_ENDPOINTS = [
+  'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app',
+  'https://ais-pre-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app',
+];
+
 const workflowState: WorkflowState = {
   enabled: true,
   interval_hours: 4,
   last_run: new Date(Date.now() - 34 * 60 * 1000).toISOString(),
-  next_run: new Date(Date.now() + (FOUR_HOURS_MS - 34 * 60 * 1000)).toISOString(),
+  next_run: getCanonicalNextRun(4),
   is_running: false,
   total_runs: 1,
   auto_notify_telegram: true,
@@ -173,8 +185,28 @@ function applyLoadedData(data: any) {
   }
 }
 
-function saveStoreToDisk() {
+async function replicateToPeers(data: StorageData) {
+  for (const peer of PEER_ENDPOINTS) {
+    if (lastKnownBaseUrl && lastKnownBaseUrl.includes(new URL(peer).hostname)) continue;
+    try {
+      fetch(`${peer}/api/state/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobs: data.jobListings,
+          profile: data.currentProfile,
+          settings: data.appSettings,
+          workflow: data.workflowState,
+          _replicated: true,
+        }),
+      }).catch(() => {});
+    } catch {}
+  }
+}
+
+function saveStoreToDisk(shouldReplicate = true) {
   try {
+    workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
     const data: StorageData = {
       currentProfile,
       jobListings,
@@ -186,6 +218,9 @@ function saveStoreToDisk() {
     };
     saveToDisk(data);
     saveToRemoteKV(data).catch(() => {});
+    if (shouldReplicate) {
+      replicateToPeers(data).catch(() => {});
+    }
   } catch (err) {
     console.error('[Store] Failed to save store:', err);
   }
@@ -197,6 +232,36 @@ function loadStoreFromDisk() {
     if (diskData) {
       applyLoadedData(diskData);
       console.log(`[Store] Restored ${jobListings.length} jobs and workflow state from local storage.`);
+    }
+
+    // Hydrate asynchronously from peer endpoints if available
+    for (const peer of PEER_ENDPOINTS) {
+      if (lastKnownBaseUrl && lastKnownBaseUrl.includes(new URL(peer).hostname)) continue;
+      fetch(`${peer}/api/state/sync`, { headers: { Accept: 'application/json' } })
+        .then((res) => res.json())
+        .then((peerData: any) => {
+          if (peerData && Array.isArray(peerData.jobs) && peerData.jobs.length > 0) {
+            console.log(`[Store] Hydrated from peer ${peer} (${peerData.jobs.length} jobs)`);
+            applyLoadedData({
+              currentProfile: peerData.profile,
+              jobListings: peerData.jobs,
+              appSettings: peerData.settings,
+              workflowState: peerData.workflow,
+              notifiedJobIds: [],
+              seenJobs: {},
+            });
+            saveToDisk({
+              currentProfile,
+              jobListings,
+              notifiedJobIds: Array.from(notifiedJobIds),
+              seenJobs,
+              appSettings,
+              workflowState,
+              lastUpdated: new Date().toISOString(),
+            });
+          }
+        })
+        .catch(() => {});
     }
 
     // Hydrate asynchronously from Remote KV if available (for cross-system sync on Vercel)
@@ -1469,7 +1534,7 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     if (typeof enabled === 'boolean') workflowState.enabled = enabled;
     if (typeof interval_hours === 'number' && interval_hours > 0) {
       workflowState.interval_hours = interval_hours;
-      workflowState.next_run = new Date(Date.now() + interval_hours * 60 * 60 * 1000).toISOString();
+      workflowState.next_run = getCanonicalNextRun(interval_hours);
     }
     if (typeof auto_notify_telegram === 'boolean') {
       workflowState.auto_notify_telegram = auto_notify_telegram;
@@ -1506,13 +1571,7 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
 
   // --- Live Cross-System Real-Time Synchronization Endpoint ---
   app.get('/api/state/sync', (req, res) => {
-    const now = Date.now();
-    const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1000;
-    const nextTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
-    if (nextTime <= now) {
-      const nextTimestamp = Math.ceil((now + 1000) / intervalMs) * intervalMs;
-      workflowState.next_run = new Date(nextTimestamp).toISOString();
-    }
+    workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
     res.json({
       success: true,
       profile: currentProfile,
@@ -1525,7 +1584,7 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
   });
 
   app.post('/api/state/sync', async (req, res) => {
-    const { jobs, profile, settings, workflow } = req.body;
+    const { jobs, profile, settings, workflow, _replicated } = req.body;
     let modified = false;
 
     if (profile && profile.full_name) {
@@ -1540,6 +1599,7 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
 
     if (workflow && typeof workflow === 'object') {
       Object.assign(workflowState, workflow);
+      workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
       modified = true;
     }
 
@@ -1560,6 +1620,15 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
             current.fit = incJob.fit;
             modified = true;
           }
+          if (incJob.tailored_resume && !current.tailored_resume) {
+            current.tailored_resume = incJob.tailored_resume;
+            current.cover_letter = incJob.cover_letter;
+            modified = true;
+          }
+          if (incJob.notes && incJob.notes !== current.notes) {
+            current.notes = incJob.notes;
+            modified = true;
+          }
         } else {
           jobListings.unshift(incJob);
           existingMap.set(incJob.id, incJob);
@@ -1570,9 +1639,10 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     }
 
     if (modified) {
-      saveStoreToDisk();
+      saveStoreToDisk(!_replicated);
     }
 
+    workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
     res.json({
       success: true,
       profile: currentProfile,
@@ -1691,13 +1761,7 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
 
   // --- Pipeline Stats & State ---
   app.get('/api/state', (req, res) => {
-    const now = Date.now();
-    const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1000;
-    const nextTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
-    if (nextTime <= now) {
-      const nextTimestamp = Math.ceil((now + 1000) / intervalMs) * intervalMs;
-      workflowState.next_run = new Date(nextTimestamp).toISOString();
-    }
+    workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
 
     res.json({
       profile: currentProfile,

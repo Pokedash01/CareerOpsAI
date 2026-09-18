@@ -133,6 +133,9 @@ export interface JobListing {
   verified_at?: string;
   fit?: MatchResult;
   tailored?: TailoredContent;
+  tailored_resume?: string;
+  cover_letter?: string;
+  notes?: string;
   status: JobStatus;
 }
 
