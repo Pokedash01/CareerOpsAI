@@ -227,6 +227,17 @@ const DEFAULT_PUBLIC_URL =
 
 app.set('trust proxy', true);
 
+// Cross-Origin Resource Sharing (CORS) for multi-device synchronization
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
+
 let lastKnownBaseUrl = DEFAULT_PUBLIC_URL;
 
 app.use(express.json({ limit: '10mb' }));
@@ -1342,6 +1353,9 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
         }
       }
     }, 30 * 1000);
+    if (workflowIntervalTimer.unref) {
+      workflowIntervalTimer.unref();
+    }
   }
 
   // Initialize scheduler on server boot
@@ -1647,6 +1661,15 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
 
   // --- Pipeline Stats & State ---
   app.get('/api/state', (req, res) => {
+    const now = Date.now();
+    const nextTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
+    const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1000;
+    if (nextTime <= now) {
+      const elapsed = now - (workflowState.last_run ? new Date(workflowState.last_run).getTime() : (now - intervalMs));
+      const remainingInCycle = intervalMs - (elapsed % intervalMs);
+      workflowState.next_run = new Date(now + Math.max(remainingInCycle, 60000)).toISOString();
+    }
+
     res.json({
       profile: currentProfile,
       stats: computePipelineStats(),
@@ -1715,8 +1738,22 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     });
   }
 
-  // Only start listening when not executed as a Vercel Serverless Function
-  if (!process.env.VERCEL) {
+  // Only start listening when running standalone, not when imported as serverless function
+  const isServerless = Boolean(
+    process.env.VERCEL ||
+    process.env.NOW_REGION ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.LAMBDA_TASK_ROOT ||
+    process.env.VERCEL_ENV
+  );
+
+  const isDirectRun = process.argv[1] && (
+    process.argv[1].endsWith('server.ts') ||
+    process.argv[1].endsWith('server.cjs') ||
+    process.argv[1].endsWith('server.js')
+  );
+
+  if (!isServerless && isDirectRun) {
     startServer();
   }
 

@@ -152,9 +152,10 @@ export async function sendTelegramDirect(
 
 /**
  * Universal job alert dispatcher:
- * 1. Attempts the backend endpoint (/api/telegram/notify) with complete payload.
- * 2. If the backend fails, times out, or returns simulated/undelivered (common in serverless/Vercel),
- *    it directly contacts the Telegram Bot API to guarantee real-time delivery.
+ * 1. Sequentially attempts reachable backend endpoints with automatic cross-origin failover.
+ * 2. Directly passes backend error diagnostics without discarding them.
+ * 3. Falls back to direct Telegram API only if backends are completely inaccessible,
+ *    gracefully handling browser CORS / ISP restrictions.
  */
 export async function dispatchJobNotification(params: {
   job: JobListing;
@@ -169,43 +170,80 @@ export async function dispatchJobNotification(params: {
   const chatId = (customChatId || settings?.telegram_chat_id || '').trim() || DEFAULT_TELEGRAM_CHAT_ID;
   const currentOrigin = typeof window !== 'undefined' ? window.location.origin : undefined;
 
-  // 1. First attempt backend endpoint
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
+  const candidateEndpoints = [
+    '/api/telegram/notify',
+    'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app/api/telegram/notify',
+    'https://ais-pre-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app/api/telegram/notify',
+  ];
 
-    const res = await fetch('/api/telegram/notify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: job.id,
-        job,
-        custom_chat_id: chatId,
-        custom_bot_token: botToken,
-        settings,
-        baseUrl: currentOrigin,
-      }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    if (res.ok) {
-      const data = await res.json().catch(() => null);
-      if (data?.delivered || data?.success) {
-        return {
-          delivered: true,
-          simulated: !!data.simulated,
-          chat_id: chatId,
-          telegram_response: data.telegram_response || data.result,
-        };
-      }
+  // Filter endpoints so we don't redundantly call the same URL
+  const uniqueEndpoints: string[] = [];
+  for (const ep of candidateEndpoints) {
+    if (ep.startsWith('http')) {
+      if (currentOrigin && ep.startsWith(currentOrigin)) continue;
     }
-  } catch (backendErr) {
-    console.warn('[Telegram Dispatch] Backend notification failed or timed out, executing direct dispatch fallback:', backendErr);
+    if (!uniqueEndpoints.includes(ep)) uniqueEndpoints.push(ep);
   }
 
-  // 2. Direct browser dispatch fallback for Vercel / serverless deployments
+  let lastBackendError: string | null = null;
+
+  for (const endpoint of uniqueEndpoints) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 12000);
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: job.id,
+          job,
+          custom_chat_id: chatId,
+          custom_bot_token: botToken,
+          settings,
+          baseUrl: currentOrigin,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      const data = await res.json().catch(() => null);
+
+      if (res.ok) {
+        if (data?.delivered || data?.success) {
+          return {
+            delivered: true,
+            simulated: !!data.simulated,
+            chat_id: chatId,
+            telegram_response: data.telegram_response || data.result,
+          };
+        }
+        if (data?.error) {
+          return {
+            delivered: false,
+            error: data.error,
+            chat_id: chatId,
+          };
+        }
+      } else {
+        lastBackendError = data?.error || `HTTP ${res.status} from ${endpoint}`;
+      }
+    } catch (err: any) {
+      console.warn(`[Telegram Dispatch] Endpoint ${endpoint} unreachable:`, err?.message || err);
+      lastBackendError = err?.message || 'Connection failed';
+    }
+  }
+
+  // 2. Direct browser dispatch fallback for pure offline or standalone client environments
   const html = formatTelegramMessageHtml(job, candidateName, settings);
   const directResult = await sendTelegramDirect(botToken, chatId, html);
+
+  if (!directResult.delivered && lastBackendError && directResult.error?.toLowerCase().includes('failed to fetch')) {
+    return {
+      ...directResult,
+      error: `Dispatch failed: ${lastBackendError}. Browser direct fetch was also blocked by network/CORS.`,
+    };
+  }
+
   return directResult;
 }

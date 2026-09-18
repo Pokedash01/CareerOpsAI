@@ -14,19 +14,37 @@ import { INITIAL_PROFILE, INITIAL_JOBS, INITIAL_SETTINGS, INITIAL_WORKFLOW, INIT
 import { dispatchJobNotification } from './lib/telegramClient.js';
 import { runClientWorkflowCycle } from './lib/clientAutomation.js';
 
-async function safeFetchJson<T>(url: string, init?: RequestInit, timeoutMs = 50000): Promise<T | null> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    const res = await fetch(url, { ...init, signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (!res.ok) return null;
-    const contentType = res.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) return null;
-    return await res.json();
-  } catch {
-    return null;
+const LIVE_PRIMARY_ORIGIN = 'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app';
+const LIVE_PREVIEW_ORIGIN = 'https://ais-pre-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app';
+
+async function safeFetchJson<T>(url: string, init?: RequestInit, timeoutMs = 20000): Promise<T | null> {
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  const candidateUrls: string[] = [url];
+
+  if (url.startsWith('/api/')) {
+    if (!currentOrigin.includes('ais-dev-w2ikgh4niy7jalbtjcsxj4')) {
+      candidateUrls.push(`${LIVE_PRIMARY_ORIGIN}${url}`);
+    }
+    if (!currentOrigin.includes('ais-pre-w2ikgh4niy7jalbtjcsxj4')) {
+      candidateUrls.push(`${LIVE_PREVIEW_ORIGIN}${url}`);
+    }
   }
+
+  for (const candidate of candidateUrls) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(candidate, { ...init, signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!res.ok) continue;
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) continue;
+      return await res.json();
+    } catch {
+      // Continue to next failover URL
+    }
+  }
+  return null;
 }
 
 function generateFallbackTailored(job: JobListing, candidate: UserProfile) {

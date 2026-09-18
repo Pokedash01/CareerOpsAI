@@ -272,7 +272,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T16:12:29.711Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 88,
@@ -453,7 +453,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T16:02:48.003Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 88,
@@ -556,7 +556,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:13:52.652Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -663,7 +663,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:13:53.224Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -882,7 +882,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:00.843Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 94,
@@ -988,7 +988,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:01.812Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 82,
@@ -1096,7 +1096,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:02.723Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 88,
@@ -1239,7 +1239,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:03.505Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 74,
@@ -1282,7 +1282,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:03.986Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 76,
@@ -1384,7 +1384,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:05.760Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 88,
@@ -1427,7 +1427,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:08.614Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 88,
@@ -1470,7 +1470,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:10.080Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 82,
@@ -1513,7 +1513,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:10.080Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -1559,7 +1559,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:11.126Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -1649,7 +1649,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:12.260Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -1689,7 +1689,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:12.752Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -1742,7 +1742,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:14.100Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -1784,7 +1784,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:14.864Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -1835,7 +1835,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:15.442Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 86,
@@ -1879,7 +1879,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:16.661Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -1920,7 +1920,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:17.337Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 90,
@@ -1965,7 +1965,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:19.253Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -2010,7 +2010,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:21.502Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 88,
@@ -2053,7 +2053,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:21.976Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -2098,7 +2098,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:24.036Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -2205,7 +2205,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:24.592Z",
-      "status": "viable",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -2555,7 +2555,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:32.672Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 95,
@@ -2664,7 +2664,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:35.216Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 77,
@@ -2715,7 +2715,7 @@
       "verification_status": "verified_active",
       "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
       "verified_at": "2026-09-15T15:14:35.216Z",
-      "status": "discovered",
+      "status": "rejected",
       "fit": {
         "is_viable": true,
         "match_score": 91,
@@ -2828,9 +2828,9 @@
     "9d2fa173be361ff4"
   ],
   "seenJobs": {
-    "9dfe6112a2137e75": "2026-09-18T05:19:11.490Z",
-    "https://soti.careers/jobs/bi-solutions-analyst-gurugram": "2026-09-18T05:19:11.490Z",
-    "soti_business intelligence & solutions analyst": "2026-09-18T05:19:11.490Z",
+    "9dfe6112a2137e75": "2026-09-18T07:27:49.184Z",
+    "https://soti.careers/jobs/bi-solutions-analyst-gurugram": "2026-09-18T07:27:49.184Z",
+    "soti_business intelligence & solutions analyst": "2026-09-18T07:27:49.184Z",
     "gtn-prod-ba-01": "2026-09-05T05:39:51.735Z",
     "gartner_senior product business analyst": "2026-09-05T05:39:51.735Z",
     "https://gartner.wd5.myworkdayjobs.com/en-us/gartner_careers/job/gurugram/senior-product-business-analyst_jr10928": "2026-09-05T05:39:51.735Z",
@@ -2987,9 +2987,9 @@
     "3b18b89dfeaea21f": "2026-09-15T15:15:02.569Z",
     "https://in.linkedin.com/jobs/view/deployment-analyst-power-platform-solutions-at-wtilth-technologies-4424065666": "2026-09-15T15:15:02.569Z",
     "wtilth technologies_deployment analyst": "2026-09-15T15:15:02.569Z",
-    "9d2fa173be361ff4": "2026-09-18T06:16:40.745Z",
-    "https://fil.wd3.myworkdayjobs.com/en-US/001/job/Gurgaon-Office/Lead-Business-Analyst_J69759-1": "2026-09-18T06:16:40.745Z",
-    "fil_lead business analyst": "2026-09-18T06:16:40.745Z"
+    "9d2fa173be361ff4": "2026-09-18T07:28:06.945Z",
+    "https://fil.wd3.myworkdayjobs.com/en-US/001/job/Gurgaon-Office/Lead-Business-Analyst_J69759-1": "2026-09-18T07:28:06.945Z",
+    "fil_lead business analyst": "2026-09-18T07:28:06.945Z"
   },
   "appSettings": {
     "min_match_score": 75,
@@ -3125,5 +3125,6 @@
         "summary": "Automated 4-hour cycle: Scanned Workday, Greenhouse & Ashby portals. Evaluated 6 roles, 4 high-fit (≥75%), 2 dispatched to Telegram."
       }
     ]
-  }
+  },
+  "lastUpdated": "2026-09-18T07:28:06.945Z"
 }
