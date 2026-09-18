@@ -15,6 +15,9 @@ import {
   History,
   Eye,
   EyeOff,
+  Copy,
+  Globe,
+  Info,
 } from 'lucide-react';
 import { AppSettings, JobListing, UserProfile, WorkflowState } from '../types.js';
 
@@ -62,6 +65,21 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   const [sendResult, setSendResult] = useState<any>(null);
   const [savedSettings, setSavedSettings] = useState(false);
   const [remainingTime, setRemainingTime] = useState<string>('03h 48m 22s');
+  const [copiedWebhook, setCopiedWebhook] = useState(false);
+
+  const getWebhookUrl = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${origin}/api/cron/trigger?wait=true`;
+  };
+
+  const copyWebhookUrl = () => {
+    const url = getWebhookUrl();
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(url);
+    }
+    setCopiedWebhook(true);
+    setTimeout(() => setCopiedWebhook(false), 2500);
+  };
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -272,6 +290,43 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   )}
                 </button>
               )}
+
+              {/* Vercel Hobby & Cloud Webhook Notice */}
+              <div className="pt-3 border-t border-white/[0.07] space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-zinc-200 text-xs flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Vercel & Cloud Cron Setup</span>
+                  </span>
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                    Vercel Hobby Ready (Daily)
+                  </span>
+                </div>
+
+                <p className="text-zinc-400 text-[11px] leading-relaxed">
+                  Vercel Hobby accounts allow <strong>1 cron execution per day</strong> (configured as <code className="text-zinc-300 bg-white/[0.06] px-1 py-0.5 rounded font-mono">0 4 * * *</code> / 09:30 AM IST).
+                </p>
+
+                <div className="p-2.5 bg-black/40 rounded-xl border border-white/[0.06] space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-zinc-300 font-medium">Free 4-Hour Webhook URL:</span>
+                    <button
+                      type="button"
+                      onClick={copyWebhookUrl}
+                      className="text-[11px] text-blue-400 hover:text-blue-300 font-medium inline-flex items-center gap-1 cursor-pointer transition-colors"
+                    >
+                      {copiedWebhook ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedWebhook ? 'Copied' : 'Copy URL'}</span>
+                    </button>
+                  </div>
+                  <div className="font-mono text-[10px] text-zinc-400 truncate bg-white/[0.02] p-1.5 rounded border border-white/[0.04]">
+                    {getWebhookUrl()}
+                  </div>
+                  <p className="text-[10px] text-zinc-500 leading-normal">
+                    💡 <strong>Run every 4h or 1h for free:</strong> Set up a free schedule on <a href="https://cron-job.org" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">cron-job.org</a> or BetterStack pointing to this URL (GET or POST) to scan without upgrading to Vercel Pro!
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
