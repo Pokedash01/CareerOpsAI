@@ -1,7 +1,50 @@
-import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
 import { getGeminiClient, cleanJsonResponse } from './gemini.js';
 import { UserProfile, ScrapedLinkSource, CandidateProject } from '../src/types.js';
+
+// Polyfill canvas/DOM matrix primitives for headless serverless environments (e.g. Vercel)
+function ensureCanvasPolyfills() {
+  if (typeof (globalThis as any).DOMMatrix === 'undefined') {
+    (globalThis as any).DOMMatrix = class DOMMatrix {
+      a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
+      m11 = 1; m12 = 0; m13 = 0; m14 = 0;
+      m21 = 0; m22 = 1; m23 = 0; m24 = 0;
+      m31 = 0; m32 = 0; m33 = 1; m34 = 0;
+      m41 = 0; m42 = 0; m43 = 0; m44 = 1;
+      is2D = true;
+      isIdentity = true;
+      constructor(_init?: any) {}
+      multiply() { return this; }
+      translate() { return this; }
+      scale() { return this; }
+      rotate() { return this; }
+      inverse() { return this; }
+      transformPoint(p: any) { return p; }
+      toFloat32Array() { return new Float32Array(16); }
+      toFloat64Array() { return new Float64Array(16); }
+    };
+  }
+  if (typeof (globalThis as any).ImageData === 'undefined') {
+    (globalThis as any).ImageData = class ImageData {
+      width = 0;
+      height = 0;
+      data = new Uint8ClampedArray(0);
+      constructor(w: number, h: number) { this.width = w; this.height = h; }
+    };
+  }
+  if (typeof (globalThis as any).Path2D === 'undefined') {
+    (globalThis as any).Path2D = class Path2D {
+      addPath() {}
+      closePath() {}
+      moveTo() {}
+      lineTo() {}
+      bezierCurveTo() {}
+      quadraticCurveTo() {}
+      arc() {}
+      rect() {}
+    };
+  }
+}
 
 // Clean regex to extract URLs from text
 const URL_REGEX = /https?:\/\/[^\s<>"'{}|\\^`[\]()]+/gi;
@@ -190,6 +233,8 @@ export async function extractDocumentContent(
 
   if (isPdf) {
     try {
+      ensureCanvasPolyfills();
+      const { PDFParse } = await import('pdf-parse');
       const parser = new PDFParse({ data: new Uint8Array(buffer) });
       const textResult = await parser.getText();
       const rawText = textResult?.text || '';
@@ -205,7 +250,7 @@ export async function extractDocumentContent(
             }
           }
         }
-      } catch (linkErr) {
+      } catch {
         // Fallback to text link extraction
       }
 
@@ -213,15 +258,51 @@ export async function extractDocumentContent(
       const textLinks = extractLinksFromText(rawText);
       const combinedLinks = Array.from(new Set([...foundLinks, ...textLinks]));
 
-      return {
-        text: rawText,
-        links: combinedLinks,
-        fileType: 'pdf',
-      };
+      if (rawText && rawText.trim().length > 20) {
+        return {
+          text: rawText,
+          links: combinedLinks,
+          fileType: 'pdf',
+        };
+      }
     } catch (pdfErr: any) {
-      console.error('[ResumeScraper] PDFParse failed:', pdfErr);
-      throw new Error(`Failed to parse PDF document: ${pdfErr.message}`);
+      console.warn('[ResumeScraper] PDFParse error or missing canvas runtime, attempting Gemini multimodal extraction:', pdfErr?.message || pdfErr);
     }
+
+    // High-fidelity fallback: Gemini 3.8 Flash multimodal natively parses PDF documents
+    try {
+      const ai = getGeminiClient();
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: [
+          {
+            inlineData: {
+              data: buffer.toString('base64'),
+              mimeType: 'application/pdf',
+            },
+          },
+          'Extract and output the full text of this resume document accurately, preserving sections, skills, work experience, education, email, phone, location, and URLs.',
+        ],
+      });
+      const geminiText = response.text || '';
+      if (geminiText.trim().length > 20) {
+        return {
+          text: geminiText,
+          links: extractLinksFromText(geminiText),
+          fileType: 'pdf',
+        };
+      }
+    } catch (geminiErr: any) {
+      console.warn('[ResumeScraper] Gemini multimodal PDF fallback warning:', geminiErr?.message || geminiErr);
+    }
+
+    // Heuristic stream extraction fallback
+    const rawBufferStr = buffer.toString('utf-8').replace(/[^\x20-\x7E\n\r\t]/g, ' ');
+    return {
+      text: rawBufferStr,
+      links: extractLinksFromText(rawBufferStr),
+      fileType: 'pdf',
+    };
   }
 
   if (isDocx) {
