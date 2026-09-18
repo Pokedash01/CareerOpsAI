@@ -203,37 +203,80 @@ export function App() {
     loadData();
   }, []);
 
-  // Simultaneous Real-Time Dashboard Updates & Polling
+  // Simultaneous Real-Time Dashboard Updates & Polling Across Multiple Devices/Systems
   useEffect(() => {
-    if (isBackendConnected === false) return;
-
-    const pollInterval = setInterval(async () => {
+    const fetchLatest = async () => {
       try {
         const [jobsRes, stateRes] = await Promise.all([
-          safeFetchJson<JobListing[]>('/api/jobs'),
-          safeFetchJson<{ stats?: PipelineStats; workflow?: WorkflowState }>('/api/state'),
+          safeFetchJson<JobListing[]>('/api/jobs', undefined, 15000),
+          safeFetchJson<{ stats?: PipelineStats; workflow?: WorkflowState; settings?: AppSettings; profile?: UserProfile }>('/api/state', undefined, 15000),
         ]);
         if (Array.isArray(jobsRes) && jobsRes.length > 0) {
           setJobs(jobsRes);
+          setIsBackendConnected(true);
           try {
             localStorage.setItem('careerops_jobs', JSON.stringify(jobsRes));
           } catch {}
         }
         if (stateRes) {
-          if (stateRes.stats) setStats(stateRes.stats);
-          if (stateRes.workflow) setWorkflow(stateRes.workflow);
+          setIsBackendConnected(true);
+          if (stateRes.stats) {
+            setStats(stateRes.stats);
+            try {
+              localStorage.setItem('careerops_stats', JSON.stringify(stateRes.stats));
+            } catch {}
+          }
+          if (stateRes.workflow) {
+            setWorkflow(stateRes.workflow);
+            try {
+              localStorage.setItem('careerops_workflow', JSON.stringify(stateRes.workflow));
+            } catch {}
+          }
+          if (stateRes.settings) {
+            setSettings(stateRes.settings);
+            try {
+              localStorage.setItem('careerops_settings', JSON.stringify(stateRes.settings));
+            } catch {}
+          }
+          if (stateRes.profile) {
+            setProfile(stateRes.profile);
+            try {
+              localStorage.setItem('careerops_profile', JSON.stringify(stateRes.profile));
+            } catch {}
+          }
         }
       } catch (err) {
         // silent background polling catch
       }
-    }, 10000);
+    };
 
-    return () => clearInterval(pollInterval);
-  }, [isBackendConnected]);
+    // Fast 5-second interval for real-time synchronization
+    const pollInterval = setInterval(fetchLatest, 5000);
+
+    // Instant sync when user focuses back on window / tab
+    const handleFocus = () => {
+      fetchLatest();
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') fetchLatest();
+    });
+
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   const refreshState = async () => {
     try {
-      const res = await safeFetchJson<{ stats?: PipelineStats; workflow?: WorkflowState }>('/api/state');
+      const [jobsRes, res] = await Promise.all([
+        safeFetchJson<JobListing[]>('/api/jobs'),
+        safeFetchJson<{ stats?: PipelineStats; workflow?: WorkflowState }>('/api/state'),
+      ]);
+      if (Array.isArray(jobsRes) && jobsRes.length > 0) {
+        setJobs(jobsRes);
+      }
       if (res?.stats) setStats(res.stats);
       if (res?.workflow) setWorkflow(res.workflow);
     } catch (e) {

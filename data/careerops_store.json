@@ -143,6 +143,67 @@
         "skills_gap": "Seniority gap",
         "rejection_reason": "Role requires 7+ years, candidate profile has 3.2 years.",
         "evaluated_at": "2026-09-15T16:03:12.595Z"
+      },
+      "tailored": {
+        "job_title": "Lead Business Analyst",
+        "company": "Fil",
+        "jd_keywords": [
+          "Power Platform",
+          "Automation",
+          "Power BI",
+          "Copilot",
+          "SQL"
+        ],
+        "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
+        "skills_ordered": [
+          "MS Excel",
+          "Copilot GenAI (Agents)",
+          "Power Automate",
+          "Power BI",
+          "SharePoint Online",
+          "Power Apps",
+          "Copilot Studio",
+          "SQL",
+          "Python",
+          "Process Automation",
+          "VBA Macros",
+          "Lean Six Sigma"
+        ],
+        "experience": [
+          {
+            "company": "KPMG",
+            "bullets": [
+              "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
+              "Built end-to-end solution to facilitate migration of old Excel‑based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
+              "Built and managed multiple VBA‑macros‑based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
+              "Built a multi‑modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
+              "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
+            ]
+          },
+          {
+            "company": "GlobalLogic Technologies Private Limited",
+            "bullets": [
+              "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
+              "Piloted a project to extract relevant answers from multi‑level documents to build an AI training dataset.",
+              "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
+              "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
+              "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
+            ]
+          }
+        ],
+        "cover_letter_paragraphs": [
+          "I am writing to express my strong enthusiasm for the Lead Business Analyst position at Fil. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
+          "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
+          "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Fil.",
+          "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Fil."
+        ],
+        "generated_at": "2026-09-18T06:16:40.745Z",
+        "grounding_stats": {
+          "total_bullets": 10,
+          "grounded_count": 10,
+          "hallucinations_blocked": 0,
+          "metrics_verified": true
+        }
       }
     },
     {
@@ -2763,12 +2824,13 @@
     "1451db036cd51e0f",
     "810ab4223ca8ee8c",
     "347c7b14d7484894",
-    "8d82f497f6dbb3c4"
+    "8d82f497f6dbb3c4",
+    "9d2fa173be361ff4"
   ],
   "seenJobs": {
-    "9dfe6112a2137e75": "2026-09-15T16:12:21.947Z",
-    "https://soti.careers/jobs/bi-solutions-analyst-gurugram": "2026-09-15T16:12:21.947Z",
-    "soti_business intelligence & solutions analyst": "2026-09-15T16:12:21.947Z",
+    "9dfe6112a2137e75": "2026-09-18T05:19:11.490Z",
+    "https://soti.careers/jobs/bi-solutions-analyst-gurugram": "2026-09-18T05:19:11.490Z",
+    "soti_business intelligence & solutions analyst": "2026-09-18T05:19:11.490Z",
     "gtn-prod-ba-01": "2026-09-05T05:39:51.735Z",
     "gartner_senior product business analyst": "2026-09-05T05:39:51.735Z",
     "https://gartner.wd5.myworkdayjobs.com/en-us/gartner_careers/job/gurugram/senior-product-business-analyst_jr10928": "2026-09-05T05:39:51.735Z",
@@ -2925,9 +2987,9 @@
     "3b18b89dfeaea21f": "2026-09-15T15:15:02.569Z",
     "https://in.linkedin.com/jobs/view/deployment-analyst-power-platform-solutions-at-wtilth-technologies-4424065666": "2026-09-15T15:15:02.569Z",
     "wtilth technologies_deployment analyst": "2026-09-15T15:15:02.569Z",
-    "9d2fa173be361ff4": "2026-09-15T16:03:03.574Z",
-    "https://fil.wd3.myworkdayjobs.com/en-US/001/job/Gurgaon-Office/Lead-Business-Analyst_J69759-1": "2026-09-15T16:03:03.574Z",
-    "fil_lead business analyst": "2026-09-15T16:03:03.574Z"
+    "9d2fa173be361ff4": "2026-09-18T06:16:40.745Z",
+    "https://fil.wd3.myworkdayjobs.com/en-US/001/job/Gurgaon-Office/Lead-Business-Analyst_J69759-1": "2026-09-18T06:16:40.745Z",
+    "fil_lead business analyst": "2026-09-18T06:16:40.745Z"
   },
   "appSettings": {
     "min_match_score": 75,
@@ -2949,7 +3011,7 @@
     "enabled": true,
     "interval_hours": 4,
     "last_run": "2026-09-15T16:12:51.083Z",
-    "next_run": "2026-09-15T20:12:51.083Z",
+    "next_run": "2026-09-18T08:12:51.083Z",
     "is_running": false,
     "total_runs": 9,
     "auto_notify_telegram": true,

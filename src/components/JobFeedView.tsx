@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Briefcase,
   Search,
@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { JobListing, UserProfile, JobStatus } from '../types.js';
+import { calculateIstRecency } from '../lib/dateUtils.js';
 
 interface JobFeedViewProps {
   jobs: JobListing[];
@@ -69,6 +70,15 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
+  const [, setTick] = useState(0);
+
+  // Live real-time IST clock ticker (ensures recency tags roll over at midnight IST)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTick((t) => t + 1);
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   const expiredCount = jobs.filter(
     (j) => j.status === 'expired' || j.verification_status === 'expired_or_invalid' || j.company_name.toLowerCase().includes('state street')
@@ -517,8 +527,8 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
             const isExpanded = expandedJdId === job.id;
             const isExpired = job.status === 'expired' || job.verification_status === 'expired_or_invalid';
 
-            const daysAgo = job.posted_days_ago ?? 0;
-            const recencyLabel = daysAgo === 0 ? 'Today' : `${daysAgo}d ago`;
+            // Real-Time IST Recency calculation based on when the job was discovered
+            const recency = calculateIstRecency(job.discovered_at);
 
             const currentStatus =
               job.status === 'applied'
@@ -575,10 +585,22 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
                         {job.ats_source}
                       </span>
 
-                      {/* Recency Tag */}
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md bg-white/[0.03] text-zinc-400 border border-white/[0.06]">
-                        <Clock className="w-2.5 h-2.5 text-zinc-500" />
-                        <span>{recencyLabel}</span>
+                      {/* Recency Tag (Real-Time Indian Standard Time) */}
+                      <span
+                        title={`Discovered on ${recency.istDateStr}`}
+                        className={`inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-md border transition-all ${
+                          recency.isToday
+                            ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 shadow-sm shadow-emerald-500/10'
+                            : recency.isYesterday
+                            ? 'bg-blue-500/15 text-blue-300 border-blue-500/25'
+                            : 'bg-white/[0.04] text-zinc-300 border-white/[0.08]'
+                        }`}
+                      >
+                        <Clock className={`w-2.5 h-2.5 ${recency.isToday ? 'text-emerald-400' : 'text-zinc-400'}`} />
+                        <span>{recency.label}</span>
+                        {recency.isToday && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        )}
                       </span>
 
                       {/* Expired Tag */}

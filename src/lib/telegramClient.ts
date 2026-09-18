@@ -172,7 +172,7 @@ export async function dispatchJobNotification(params: {
   // 1. First attempt backend endpoint
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
+    const timeout = setTimeout(() => controller.abort(), 20000);
 
     const res = await fetch('/api/telegram/notify', {
       method: 'POST',
@@ -191,10 +191,10 @@ export async function dispatchJobNotification(params: {
 
     if (res.ok) {
       const data = await res.json().catch(() => null);
-      if (data?.delivered) {
+      if (data?.delivered || data?.success) {
         return {
           delivered: true,
-          simulated: false,
+          simulated: !!data.simulated,
           chat_id: chatId,
           telegram_response: data.telegram_response || data.result,
         };

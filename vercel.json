@@ -3,9 +3,16 @@
   "functions": {
     "api/index.ts": {
       "maxDuration": 60,
-      "memory": 1024
+      "memory": 1024,
+      "includeFiles": "data/**"
     }
   },
+  "crons": [
+    {
+      "path": "/api/cron/trigger?wait=true",
+      "schedule": "0 */4 * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
