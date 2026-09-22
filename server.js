@@ -111,6 +111,715 @@ var INITIAL_PROFILE = {
 };
 var INITIAL_JOBS = [
   {
+    "id": "90f943841b863e7f",
+    "title": "Power BI Specialist/Data analyst",
+    "company_name": "Hitachi",
+    "location": "Chennai",
+    "salary_range_lpa": [
+      9,
+      16
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      2,
+      4
+    ],
+    "experience_is_inferred": true,
+    "experience_inferred_reason": "Inferred from Role Title ('Mid-Level Professional' standard: 2-4 Years)",
+    "description": "... power Apps, Power Automate using SharePoint / Dataverse or SQL as ... Proven hands-on experience with Power BI Desktop and Power BI Service in ...\n\nRequisition posted on Hitachi career portal. Direct application link verified active.",
+    "apply_link": "https://hitachi.wd1.myworkdayjobs.com/en-US/hitachi/job/Power-BI-Specialist-Data-analyst_R0144246",
+    "ats_source": "Workday",
+    "discovered_at": "2026-09-18T08:13:35.538Z",
+    "posted_date": "2026-09-15T08:13:35.538Z",
+    "posted_days_ago": 3,
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
+    "verified_at": "2026-09-18T08:13:35.538Z",
+    "status": "rejected",
+    "fit": {
+      "is_viable": false,
+      "match_score": 0,
+      "detected_experience": "Not evaluated",
+      "salary_range": "Not evaluated",
+      "location": "Chennai",
+      "skills_gap": "Location mismatch",
+      "rejection_reason": "Location 'Chennai' not in preferred list [Gurgaon, Gurugram, Noida, Delhi, Remote, Bangalore, Bengaluru]",
+      "evaluated_at": "2026-09-18T08:13:36.798Z"
+    }
+  },
+  {
+    "id": "0b8112e0e79c3309",
+    "title": "Business Analyst",
+    "company_name": "Worldwide",
+    "location": "Not specified",
+    "salary_range_lpa": [
+      22,
+      35
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      5,
+      8
+    ],
+    "experience_is_inferred": false,
+    "experience_inferred_reason": "Exact requirement extracted from Job Description: 5+ years experience",
+    "description": "SUMMARY: The Business Analyst (BA) will work with other stakeholders within the organization to deliver the solutions by translating business ...\n\nRequisition posted on Worldwide career portal. Direct application link verified active.",
+    "apply_link": "https://worldwide.wd1.myworkdayjobs.com/en-US/External/job/Trivandrum/Business-Analyst---India_JR102991",
+    "ats_source": "Workday",
+    "discovered_at": "2026-09-18T08:13:32.302Z",
+    "posted_date": "2026-09-16T08:13:32.302Z",
+    "posted_days_ago": 2,
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
+    "verified_at": "2026-09-18T08:13:32.302Z",
+    "status": "discovered",
+    "fit": {
+      "is_viable": true,
+      "match_score": 82,
+      "detected_experience": "5-8 Years",
+      "salary_range": "\u20B922 - \u20B935 LPA",
+      "location": "Not specified",
+      "skills_gap": "None",
+      "summary_reasoning": "Direct target role match for Business Analyst. Strong alignment with  in Not specified.",
+      "strengths": [
+        "Direct match with candidate target role: Business Analyst"
+      ],
+      "weaknesses": [],
+      "evaluated_at": "2026-09-18T08:13:53.835Z"
+    },
+    "tailored": {
+      "job_title": "Business Analyst",
+      "company": "Worldwide",
+      "jd_keywords": [
+        "Power Platform",
+        "Automation",
+        "Power BI",
+        "Copilot",
+        "SQL"
+      ],
+      "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
+      "skills_ordered": [
+        "MS Excel",
+        "Copilot GenAI (Agents)",
+        "Power Automate",
+        "Power BI",
+        "SharePoint Online",
+        "Power Apps",
+        "Copilot Studio",
+        "SQL",
+        "Python",
+        "Process Automation",
+        "VBA Macros",
+        "Lean Six Sigma"
+      ],
+      "experience": [
+        {
+          "company": "KPMG",
+          "bullets": [
+            "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
+            "Built end-to-end solution to facilitate migration of old Excel\u2011based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
+            "Built and managed multiple VBA\u2011macros\u2011based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
+            "Built a multi\u2011modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
+            "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
+          ]
+        },
+        {
+          "company": "GlobalLogic Technologies Private Limited",
+          "bullets": [
+            "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
+            "Piloted a project to extract relevant answers from multi\u2011level documents to build an AI training dataset.",
+            "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
+            "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
+            "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
+          ]
+        }
+      ],
+      "cover_letter_paragraphs": [
+        "I am writing to express my strong enthusiasm for the Business Analyst position at Worldwide. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
+        "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
+        "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Worldwide.",
+        "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Worldwide."
+      ],
+      "generated_at": "2026-09-18T08:14:02.161Z",
+      "grounding_stats": {
+        "total_bullets": 10,
+        "grounded_count": 10,
+        "hallucinations_blocked": 0,
+        "metrics_verified": true
+      }
+    }
+  },
+  {
+    "id": "5816b194c70faf0c",
+    "title": "Power BI Developer (Active Secret clearance required)",
+    "company_name": "Truetandem",
+    "location": "Remote",
+    "salary_range_lpa": [
+      102,
+      125
+    ],
+    "salary_is_estimated": false,
+    "salary_source": "Stated in Job Description",
+    "experience_range_years": [
+      2,
+      4
+    ],
+    "experience_is_inferred": true,
+    "experience_inferred_reason": "Inferred from Role Title ('Mid-Level Professional' standard: 2-4 Years)",
+    "description": "True Tandem - Power BI Developer (Active Secret clearance required) Power BI Developer (Active Secret clearance required) Remote All / Full time / Remote apply for this job Company Description TrueTandem's mission is to be a trusted information technology solutions provider, committed to the success of our customers, communities and employees. To enable this mission, we listen to our customers\u2019 needs, empower our dedicated and talented employees, envision success together, and deliver innovative cost-effective solutions. For our customers, we aim to deliver more power to meet their business outcomes through technology implementation, integration, optimization and customization. We enable some of the most well-known companies, nonprofits and federal agencies in the United States to intelligently plan and develop their applications, modernize their infrastructure and manage their data. As a Power BI Developer on our solutions delivery team, you will have the unique opportunity to support the technical development for projects advancing the digital transformation of critical government systems with true mission impact. &nbsp; &nbsp;Our delivery teams are driven to explore new ideas and technology, and care deeply about collaboration, feedback, and iteration. We follow agile practices, and use modern tech stacks, and constantly challenge each other to grow and improve. Technical members of our solutions teams require little guidance, but love to learn, collaborate, and solve problems. This position requires experience and passion for coding, and a strong desire to solve our customers\u2019 unique technology challenges. Role and Responsibilities: Design, develop, test, deploy, and maintain Power BI dashboards, reports, dataflows and semantic models. Engineer and optimize data connections with Dataverse. Work with stakeholders to gather and translate business and reporting requirements into technical solutions. Develop complex calculations and business logic using DAX (Data Analysis Expressions). Use Power Query/M to connect, transform, cleanse, and prepare data for reporting. Implement Security and other appropriate data-access controls. Implement BI governance, version control, report lifecycle management and workspace organization Required Skills Active Secret Clearance or higher is required&nbsp; Minimum of 4 years designing and developing Power BI reports, dashboards, and integrations with complex datasets Minimum of 4 years of experience scripting in data engineering languages such as SQL, Power Query M, DAX Strong hands-on experience with Microsoft Power BI Desktop and Power BI Service. Ability to be self-driven and proactive with planning, development, and customer engagement. Excellent communication, collaboration, and customer management skills Ability to train data analysts on how to create reports Preferred Skills Experience with Microsoft Power Apps, Power Automate Experience with Dataverse, Azure Data, Databrick or other data sources &nbsp; $120,000 - $147,000 a year The above salary range represents a general guideline; however, TrueTandem considers several factors when determining base salary offers such as the scope and responsibilities of the position and the candidate's experience, education, skills and current market conditions. &nbsp; In addition, TrueTandem provides a variety of benefits including health insurance coverage, dental and vision plans, life and disability insurance, company paid holidays and paid time off (PTO). Our retirement plan offers a variety of investment options to build toward your retirement. &nbsp; &nbsp; U.S. Citizenship is required for all positions with a government clearance and certain other restricted positions. Additional Information TrueTandem is an equal opportunity employer, committed to diversity and inclusion in the workplace and affords equal opportunity to all qualified applicants for all positions without regard to protected veteran status, qualified individuals with disabilities and all individuals without regard to race, color, religion, sex, sexual orientation, gender identity, national origin, age or any other status protected under local, state or federal laws. Equal Opportunity Employer - Minorities/Females/Disabled/Veterans We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. apply for this job True Tandem Home Page Jobs powered by",
+    "apply_link": "https://jobs.lever.co/truetandem/f9e53ae9-6126-49e0-be40-c59aef46ddd3",
+    "ats_source": "Lever",
+    "discovered_at": "2026-09-18T08:13:31.663Z",
+    "posted_date": "2026-09-17T08:13:31.663Z",
+    "posted_days_ago": 1,
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-18T08:13:31.663Z",
+    "status": "discovered",
+    "fit": {
+      "is_viable": true,
+      "match_score": 95,
+      "detected_experience": "2-4 Years",
+      "salary_range": "\u20B9102 - \u20B9125 LPA",
+      "location": "Remote",
+      "skills_gap": "None",
+      "summary_reasoning": "Direct target role match for Power BI Developer (Active Secret clearance required). Strong alignment with MS Excel, Power Automate, Power BI in Remote.",
+      "strengths": [
+        "Direct match with candidate target role: Power BI Developer (Active Secret clearance required)",
+        "Demonstrated competency in MS Excel",
+        "Demonstrated competency in Power Automate",
+        "Demonstrated competency in Power BI",
+        "Demonstrated competency in Power Apps",
+        "Demonstrated competency in SQL"
+      ],
+      "weaknesses": [],
+      "evaluated_at": "2026-09-18T08:13:40.754Z"
+    },
+    "tailored": {
+      "job_title": "Power BI Developer (Active Secret clearance required)",
+      "company": "Truetandem",
+      "jd_keywords": [
+        "Power Platform",
+        "Automation",
+        "Power BI",
+        "Copilot",
+        "SQL"
+      ],
+      "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
+      "skills_ordered": [
+        "MS Excel",
+        "Copilot GenAI (Agents)",
+        "Power Automate",
+        "Power BI",
+        "SharePoint Online",
+        "Power Apps",
+        "Copilot Studio",
+        "SQL",
+        "Python",
+        "Process Automation",
+        "VBA Macros",
+        "Lean Six Sigma"
+      ],
+      "experience": [
+        {
+          "company": "KPMG",
+          "bullets": [
+            "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
+            "Built end-to-end solution to facilitate migration of old Excel\u2011based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
+            "Built and managed multiple VBA\u2011macros\u2011based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
+            "Built a multi\u2011modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
+            "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
+          ]
+        },
+        {
+          "company": "GlobalLogic Technologies Private Limited",
+          "bullets": [
+            "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
+            "Piloted a project to extract relevant answers from multi\u2011level documents to build an AI training dataset.",
+            "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
+            "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
+            "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
+          ]
+        }
+      ],
+      "cover_letter_paragraphs": [
+        "I am writing to express my strong enthusiasm for the Power BI Developer (Active Secret clearance required) position at Truetandem. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
+        "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
+        "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Truetandem.",
+        "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Truetandem."
+      ],
+      "generated_at": "2026-09-18T08:13:48.352Z",
+      "grounding_stats": {
+        "total_bullets": 10,
+        "grounded_count": 10,
+        "hallucinations_blocked": 0,
+        "metrics_verified": true
+      }
+    }
+  },
+  {
+    "id": "e7f2e7da0ac13125",
+    "title": "Beghou Consulting - Power BI Developer (318)",
+    "company_name": "Beghouconsulting",
+    "location": "Bangalore",
+    "salary_range_lpa": [
+      11,
+      19
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      2,
+      4
+    ],
+    "experience_is_inferred": false,
+    "experience_inferred_reason": "Exact requirement extracted from Job Description: Experience : 2 to 4 years",
+    "description": "Beghou Consulting - Consultant - Power BI Developer (318) Consultant - Power BI Developer (318) Pune / Bangalore Consulting \u2013 Consulting / Hybrid apply for this job Beghou brings over three decades of experience helping life sciences companies optimize their commercialization through strategic insight, advanced analytics, and technology. From developing go-to-market strategies and building foundational data analytics infrastructures to leveraging artificial intelligence to improve customer insights and engagement, Beghou helps life sciences companies maximize performance across their portfolios. Beghou also deploys proprietary and third-party technology solutions to help companies forecast performance, design territories, manage customer data, organize, and report on medical and commercial data, and more. Headquartered in Evanston, Illinois, we have 10 global offices. Our mission is to bring together analytical minds and innovative technology to help life sciences companies navigate the complexity of health care and improve patient outcomes. We are seeking a motivated Power BI Developer to join our data analytics team. The ideal candidate will assist in developing interactive dashboards, reports, and data visualizations to help business users make informed decisions. You will work closely with data analysts, business stakeholders, and senior developers to transform raw data into meaningful insights We'll trust you to Develop and maintain Power BI reports, dashboards, and visualizations. Connect, transform, and model data from various sources in Power BI. Assist in data analysis and provide actionable insights. Optimize Power BI reports for performance and usability. Collaborate with stakeholders to understand reporting needs and business objectives. Ensure data accuracy and integrity in reporting solutions. Stay up to date with Power BI best practices and new features. Troubleshoot and resolve Power BI-related issues. Additional Responsibilities : Perform other project-related tasks as needed. You'll need to have Education : Bachelor\u2019s or Master\u2019s degree in Computer Science, Data Science, Information Technology, or a related field. Experience : 2 to 4 years of experience in Power BI and other Visualization tools Like Tableau is added advantage. Proficiency in creating interactive dashboards and visualizations. Solid experience in Power BI, including DAX and Power Query. Strong SQL skills, including complex queries and calculated fields. Experience working with large datasets, patient data, or market access analytics Technical Skills : Familiarity with data warehousing concepts and ETL processes. Experience with Power BI Service. Knowledge of cloud platforms (AWS, Azure, Google Cloud) is a plus. Soft Skills : Strong analytical and problem-solving abilities. Excellent verbal and written communication skills. Ability to work in a collaborative, team-oriented environment. At Beghou Consulting, you'll join a highly collaborative, values-driven team where technical excellence, analytical rigor, and personal growth converge. Whether you're passionate about AI innovation, building commercialization strategies, or shaping the next generation of data-first solutions in life sciences, this is a place to make an impact! We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. apply for this job Beghou Consulting Home Page Jobs powered by",
+    "apply_link": "https://jobs.lever.co/beghouconsulting/b26af326-54b6-4028-8fd2-efd092408909",
+    "ats_source": "Lever",
+    "discovered_at": "2026-09-18T08:13:31.699Z",
+    "posted_date": "2026-09-17T08:13:31.699Z",
+    "posted_days_ago": 1,
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-18T08:13:31.699Z",
+    "status": "discovered",
+    "fit": {
+      "is_viable": true,
+      "match_score": 95,
+      "detected_experience": "2-4 Years",
+      "salary_range": "\u20B911 - \u20B919 LPA",
+      "location": "Bangalore",
+      "skills_gap": "None",
+      "summary_reasoning": "Direct target role match for Beghou Consulting - Power BI Developer (318). Strong alignment with MS Excel, Power BI, SQL in Bangalore.",
+      "strengths": [
+        "Direct match with candidate target role: Beghou Consulting - Power BI Developer (318)",
+        "Demonstrated competency in MS Excel",
+        "Demonstrated competency in Power BI",
+        "Demonstrated competency in SQL"
+      ],
+      "weaknesses": [],
+      "evaluated_at": "2026-09-18T08:13:58.909Z"
+    },
+    "tailored": {
+      "job_title": "Beghou Consulting - Power BI Developer (318)",
+      "company": "Beghouconsulting",
+      "jd_keywords": [
+        "Power Platform",
+        "Automation",
+        "Power BI",
+        "Copilot",
+        "SQL"
+      ],
+      "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
+      "skills_ordered": [
+        "MS Excel",
+        "Copilot GenAI (Agents)",
+        "Power Automate",
+        "Power BI",
+        "SharePoint Online",
+        "Power Apps",
+        "Copilot Studio",
+        "SQL",
+        "Python",
+        "Process Automation",
+        "VBA Macros",
+        "Lean Six Sigma"
+      ],
+      "experience": [
+        {
+          "company": "KPMG",
+          "bullets": [
+            "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
+            "Built end-to-end solution to facilitate migration of old Excel\u2011based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
+            "Built and managed multiple VBA\u2011macros\u2011based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
+            "Built a multi\u2011modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
+            "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
+          ]
+        },
+        {
+          "company": "GlobalLogic Technologies Private Limited",
+          "bullets": [
+            "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
+            "Piloted a project to extract relevant answers from multi\u2011level documents to build an AI training dataset.",
+            "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
+            "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
+            "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
+          ]
+        }
+      ],
+      "cover_letter_paragraphs": [
+        "I am writing to express my strong enthusiasm for the Beghou Consulting - Power BI Developer (318) position at Beghouconsulting. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
+        "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
+        "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Beghouconsulting.",
+        "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Beghouconsulting."
+      ],
+      "generated_at": "2026-09-18T08:14:06.236Z",
+      "grounding_stats": {
+        "total_bullets": 10,
+        "grounded_count": 10,
+        "hallucinations_blocked": 0,
+        "metrics_verified": true
+      }
+    }
+  },
+  {
+    "id": "f4004405d9c00c39",
+    "title": "Business Intelligence Data Analyst",
+    "company_name": "Openx",
+    "location": "Remote",
+    "salary_range_lpa": [
+      79,
+      94
+    ],
+    "salary_is_estimated": false,
+    "salary_source": "Stated in Job Description",
+    "experience_range_years": [
+      1,
+      3
+    ],
+    "experience_is_inferred": false,
+    "experience_inferred_reason": "Exact requirement extracted from Job Description: 1-3 years",
+    "description": `OpenX - Business Intelligence Data Analyst Business Intelligence Data Analyst US - Remote Finance \u2013 Finance / Full-Time / Remote apply for this job Company at a Glance OpenX is focused on unleashing the full economic potential of digital media companies. We do this by making digital advertising markets and technologies that are designed to deliver optimal value to publishers and advertisers on every ad served across all screens. At OpenX, we have built a team that is uniquely experienced in designing and operating high-scale ad marketplaces, and we are constantly on the lookout for thoughtful, creative executors who are as fascinated as we are about finding new ways to apply a blend of market design, technical innovation, operational excellence, and empathetic partner service to the frontiers of digital advertising. Data Analyst \u2013 Business Intelligence Location: Remote Position Summary: OpenX Technologies, Inc. is looking for a Data Analyst to join our dynamic and high-performing Business Intelligence team within the Finance organization. Our organization\u2019s mission is to steer the financial growth of OpenX through the delivery of world-class financial intelligence, guidance and services. &nbsp;In this mission we value reliability, integrity and fearless stewardship of OpenX\u2019s business. We strive to operate with objectivity, rigor and strategic insight.&nbsp; The ideal candidate will be a highly engaged and intellectually curious data analyst with one to three years of experience in an analytic role. You will be responsible for developing in-depth business analyses, providing ad hoc analytic support to the entire business, and driving the scaling and automation of reporting processes. &nbsp;You will have the opportunity to design and execute quantitative analyses using large and complex data sets, and learn about the dynamic ad tech industry from within one of its leading companies. Responsibilities: Build performance and revenue reporting tools for internal customers Help build and automate data and reporting processes for the Finance organization Ad-hoc analysis and reporting, serving teams across the company Execute deep dive quantitative analyses that translates data into actionable insights Provide analytical and decision-making support for key company initiatives Present analysis and share findings with both technical and non-technical stakeholders Key Qualifications: 1-3 years of analytical work experience, preferably within a business intelligence, corporate finance or strategic planning role. &nbsp;Experience working with large data sets is preferred. Bachelor\u2019s degree in a quantitative field (such as Mathematics, Statistics, Finance, Economics, Physics), Master\u2019s degree in a quantitative field is preferred. Strong analytical abilities and the ability to form key, succinct insights and recommendations from analyses involving large amounts of complex data. Curiosity to identify and ability to solve difficult problems. Prior experience with relational database systems; strong SQL skills are required. &nbsp;Previous experience with Google BigQuery is a definite plus. Strong quantitative skills and proficiency with MS Office and Google suite of applications, and prior experience with scripting languages (such as Python) preferred. Outstanding written and verbal communication skills.&nbsp; Ability to interface with and effectively present to multiple levels of management. Extremely proactive with a strong bias for action; naturally inquisitive; desire to continuously improve current business practices/processes. Organized, detail-oriented, and ability to multi-task.&nbsp; $93,500 - $110,000 a year Pursuant to any state, local ordinance, or local hiring regulations, we will consider for employment any qualified applicant, including those with arrest and conviction records, in a manner consistent with the applicable regulation.&nbsp; OpenX is committed to fair and equitable compensation practices. For all applicants, the base salary range is noted above, per year + bonus + equity + benefits. A candidate\u2019s salary is determined by various factors including, but not limited to, relevant work experience, skills, and certifications.&nbsp; A summary of our benefits, which include medical, dental, vision, 401k, equity and more, can be viewed here:&nbsp; https://www.openx.com/company/careers/ &nbsp;A candidate\u2019s salary is determined by various factors including, but not limited to, relevant work experience, skills, and certifications.&nbsp;&nbsp; OpenX VALUES Our five company values form a solid bedrock serving to define us as a group and guide the company. Our values remind us that how we do things often matters as much as what we do. WE ARE ONE We are one team. There are no exceptions. We are a group of strong and diverse individuals unified by a shared mission. We embrace challenges and win together as a team. We respect and care about our colleagues and cultivate an inclusive culture WE ARE CUSTOMER CENTRIC We innovate on behalf of our customers. We understand, respect, and listen carefully to our customers. We build great products to solve our customers\u2019 problems. We manage our customers\u2019 expectations clearly and honestly. We are a trusted partner to all of our customers - we act with integrity at all times. We care. OPENX IS OURS We are all owners of OpenX We all have a voice to improve OpenX We stake our personal and professional reputations on the excellence of our work We are not interested in just "doing our jobs"; we take ownership to drive results WE ARE AN OPEN BOOK We understand and respect what each of us does.&nbsp;We are eager to teach and share what we know with others, both internally and externally. We are eager to learn from others and we ask questions internally and externally.&nbsp; WE EVOLVE FAST We take responsible risks and own and learn from our mistakes. We recognize and repeat success.&nbsp;We actively seek out and provide constructive feedback. We adapt quickly and embrace change. We tackle growth and learning with real urgency. We are endlessly curious. OpenX TRAITS Our three traits capture what makes a great team member at OpenX. HUMBLE Ideal team players are humble and demonstrate integrity. They put the team's success above their own, share credit generously, and value collective achievements. They are self-assured, open to coaching, and committed to continuous learning. DRIVEN Ideal team players are results-driven and motivated. They are curious, always seeking more to do, learn, and take on. As proactive problem-solvers, they take initiative without needing external motivation. They continuously think about the next steps and opportunities for improvement. SMART Ideal team players are smart and possess the intellectual acumen to understand the complexities of our organization and industry. They are interpersonally intelligent, good communicators, and exemplify sound judgment in their interactions across the company to foster a collaborative environment. OpenX is committed to equal employment opportunities. It is a fundamental principle at OpenX not to discriminate against employees or applicants for employment on any legally-recognized basis including, but not limited to: age, race, creed, color, religion, national origin, sexual orientation, sex, disability, predisposing genetic characteristics, genetic information, military or veteran status, marital status, gender identity/transgender status, pregnancy, childbirth or related medical condition, and other protected characteristic as established by law. OpenX Applicant Privacy Policy Applicants can review our Applicant Privacy Policy at any time by visiting the following link:&nbsp; https://www.openx.com/privacy-center/applicant-privacy-policy/ . Effective Date: November 21, 2024 apply for this job OpenX Home Page Jobs powered by`,
+    "apply_link": "https://jobs.lever.co/openx/df23b30a-21b5-4055-9698-5b5c2767df3c",
+    "ats_source": "Lever",
+    "discovered_at": "2026-09-18T08:13:31.925Z",
+    "posted_date": "2026-09-17T08:13:31.925Z",
+    "posted_days_ago": 1,
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-18T08:13:31.925Z",
+    "status": "discovered",
+    "fit": {
+      "is_viable": true,
+      "match_score": 95,
+      "detected_experience": "1-3 Years",
+      "salary_range": "\u20B979 - \u20B994 LPA",
+      "location": "Remote",
+      "skills_gap": "None",
+      "summary_reasoning": "Direct target role match for Business Intelligence Data Analyst. Strong alignment with MS Excel, SQL, Python in Remote.",
+      "strengths": [
+        "Direct match with candidate target role: Business Intelligence Data Analyst",
+        "Demonstrated competency in MS Excel",
+        "Demonstrated competency in SQL",
+        "Demonstrated competency in Python"
+      ],
+      "weaknesses": [],
+      "evaluated_at": "2026-09-18T08:14:00.239Z"
+    },
+    "tailored": {
+      "job_title": "Business Intelligence Data Analyst",
+      "company": "Openx",
+      "jd_keywords": [
+        "Power Platform",
+        "Automation",
+        "Power BI",
+        "Copilot",
+        "SQL"
+      ],
+      "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
+      "skills_ordered": [
+        "MS Excel",
+        "Copilot GenAI (Agents)",
+        "Power Automate",
+        "Power BI",
+        "SharePoint Online",
+        "Power Apps",
+        "Copilot Studio",
+        "SQL",
+        "Python",
+        "Process Automation",
+        "VBA Macros",
+        "Lean Six Sigma"
+      ],
+      "experience": [
+        {
+          "company": "KPMG",
+          "bullets": [
+            "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
+            "Built end-to-end solution to facilitate migration of old Excel\u2011based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
+            "Built and managed multiple VBA\u2011macros\u2011based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
+            "Built a multi\u2011modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
+            "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
+          ]
+        },
+        {
+          "company": "GlobalLogic Technologies Private Limited",
+          "bullets": [
+            "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
+            "Piloted a project to extract relevant answers from multi\u2011level documents to build an AI training dataset.",
+            "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
+            "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
+            "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
+          ]
+        }
+      ],
+      "cover_letter_paragraphs": [
+        "I am writing to express my strong enthusiasm for the Business Intelligence Data Analyst position at Openx. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
+        "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
+        "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Openx.",
+        "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Openx."
+      ],
+      "generated_at": "2026-09-18T08:14:00.512Z",
+      "grounding_stats": {
+        "total_bullets": 10,
+        "grounded_count": 10,
+        "hallucinations_blocked": 0,
+        "metrics_verified": true
+      }
+    }
+  },
+  {
+    "id": "9d2fa173be361ff4",
+    "title": "Lead Business Analyst",
+    "company_name": "Fil",
+    "location": "Gurgaon",
+    "salary_range_lpa": [
+      24,
+      38
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      7,
+      11
+    ],
+    "experience_is_inferred": false,
+    "experience_inferred_reason": "Exact requirement extracted from Job Description: 7+ years of experience",
+    "description": "The Lead Business Analyst will play a pivotal role in driving enterprise-wide finance transformation initiatives across Finance Data platform, Workstreams like ...\n\nRequisition posted on Fil career portal. Direct application link verified active.",
+    "apply_link": "https://fil.wd3.myworkdayjobs.com/en-US/001/job/Gurgaon-Office/Lead-Business-Analyst_J69759-1",
+    "ats_source": "Workday",
+    "discovered_at": "2026-09-15T16:03:03.574Z",
+    "posted_date": "2026-09-14T16:03:03.574Z",
+    "posted_days_ago": 1,
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
+    "verified_at": "2026-09-18T08:13:09.494Z",
+    "status": "rejected",
+    "fit": {
+      "is_viable": false,
+      "match_score": 0,
+      "detected_experience": "7-11 Years",
+      "salary_range": "\u20B924 - \u20B938 LPA",
+      "location": "Gurgaon",
+      "skills_gap": "Seniority gap",
+      "rejection_reason": "Role requires 7+ years, candidate profile has 3.2 years.",
+      "evaluated_at": "2026-09-15T16:03:12.595Z"
+    },
+    "tailored": {
+      "job_title": "Lead Business Analyst",
+      "company": "Fil",
+      "jd_keywords": [
+        "Power Platform",
+        "Automation",
+        "Power BI",
+        "Copilot",
+        "SQL"
+      ],
+      "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
+      "skills_ordered": [
+        "MS Excel",
+        "Copilot GenAI (Agents)",
+        "Power Automate",
+        "Power BI",
+        "SharePoint Online",
+        "Power Apps",
+        "Copilot Studio",
+        "SQL",
+        "Python",
+        "Process Automation",
+        "VBA Macros",
+        "Lean Six Sigma"
+      ],
+      "experience": [
+        {
+          "company": "KPMG",
+          "bullets": [
+            "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
+            "Built end-to-end solution to facilitate migration of old Excel\u2011based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
+            "Built and managed multiple VBA\u2011macros\u2011based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
+            "Built a multi\u2011modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
+            "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
+          ]
+        },
+        {
+          "company": "GlobalLogic Technologies Private Limited",
+          "bullets": [
+            "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
+            "Piloted a project to extract relevant answers from multi\u2011level documents to build an AI training dataset.",
+            "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
+            "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
+            "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
+          ]
+        }
+      ],
+      "cover_letter_paragraphs": [
+        "I am writing to express my strong enthusiasm for the Lead Business Analyst position at Fil. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
+        "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
+        "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Fil.",
+        "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Fil."
+      ],
+      "generated_at": "2026-09-18T06:16:40.745Z",
+      "grounding_stats": {
+        "total_bullets": 10,
+        "grounded_count": 10,
+        "hallucinations_blocked": 0,
+        "metrics_verified": true
+      }
+    }
+  },
+  {
+    "id": "3b18b89dfeaea21f",
+    "title": "Deployment Analyst",
+    "company_name": "Wtilth Technologies",
+    "location": "Gurugram",
+    "salary_range_lpa": [
+      24,
+      38
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Market Benchmark (salary for Deployment Analyst in Wtilth Technologies for Gurugram)",
+    "experience_range_years": [
+      6,
+      8
+    ],
+    "experience_is_inferred": false,
+    "experience_inferred_reason": "Exact requirement extracted from Job Description: Experience: 6-8 years",
+    "description": "Key Responsibilities: Coordinate and execute deployments of Power Platform solutions across environments (Dev, Test, Prod). Ensure adherence to SDLC and DevOps practices for smooth releases. Utilize Power Platform Build Tools and pipelines for CI/CD. Maintain deployment guides and release notes. Work closely with developers, testers, and business teams to ensure successful deployments. Required Skills &amp; Qualifications: Hands-on experience with Power Platform environments and ALM (Application Lifecycle Management). Knowledge of Azure DevOps or similar CI/CD tools. Familiarity with environment strategy, solution packaging, and version control. Strong attention to detail and ability to work in Agile teams. Experience: 6-8 years",
+    "apply_link": "https://in.linkedin.com/jobs/view/deployment-analyst-power-platform-solutions-at-wtilth-technologies-4424065666",
+    "ats_source": "LinkedIn",
+    "discovered_at": "2026-09-15T15:15:02.569Z",
+    "posted_date": "2026-09-14T15:15:02.569Z",
+    "posted_days_ago": 1,
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-18T08:13:08.483Z",
+    "status": "rejected",
+    "fit": {
+      "is_viable": false,
+      "match_score": 0,
+      "detected_experience": "6-8 Years",
+      "salary_range": "\u20B924 - \u20B938 LPA",
+      "location": "Gurugram",
+      "skills_gap": "Seniority gap",
+      "rejection_reason": "Role requires 6+ years, candidate profile has 3.2 years.",
+      "evaluated_at": "2026-09-15T15:15:09.945Z"
+    }
+  },
+  {
+    "id": "8d82f497f6dbb3c4",
+    "title": "Luxury Presence - Senior Data Analyst, GTM Analytics",
+    "company_name": "Luxurypresence",
+    "location": "Remote",
+    "salary_range_lpa": [
+      16,
+      24
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Market Benchmark (salary for Luxury Presence - Senior Data Analyst, GTM Analytics in Luxurypresence for Remote (India))",
+    "experience_range_years": [
+      3,
+      6
+    ],
+    "experience_is_inferred": true,
+    "experience_inferred_reason": "Inferred from Seniority ('Senior / Specialist' standard: 3-6 Years)",
+    "description": "Senior Data Analyst, GTM Analytics - US (Remote) ... Luxury Presence is building the AI growth platform for real estate. Backed by Bessemer Venture Partners and ...\n\nRequisition posted on Luxurypresence career portal. Direct application link verified active.",
+    "apply_link": "https://jobs.lever.co/luxurypresence/0a6fd9f4-a606-460e-b65e-5b31de56331a",
+    "ats_source": "Lever",
+    "discovered_at": "2026-09-15T15:14:58.415Z",
+    "posted_date": "2026-09-14T15:14:58.415Z",
+    "posted_days_ago": 1,
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-18T08:13:08.483Z",
+    "status": "rejected",
+    "fit": {
+      "is_viable": true,
+      "match_score": 88,
+      "detected_experience": "3-6 Years",
+      "salary_range": "\u20B916 - \u20B924 LPA",
+      "location": "Remote",
+      "skills_gap": "None",
+      "summary_reasoning": "Direct target role match for Luxury Presence - Senior Data Analyst, GTM Analytics. Strong alignment with  in Remote.",
+      "strengths": [
+        "Direct match with candidate target role: Luxury Presence - Senior Data Analyst, GTM Analytics"
+      ],
+      "weaknesses": [],
+      "evaluated_at": "2026-09-15T15:15:10.609Z"
+    },
+    "tailored": {
+      "job_title": "Luxury Presence - Senior Data Analyst, GTM Analytics",
+      "company": "Luxurypresence",
+      "jd_keywords": [
+        "Power Platform",
+        "Automation",
+        "Power BI",
+        "Copilot",
+        "SQL"
+      ],
+      "summary": "Kartik Bhatt is a results-driven professional with 3.2 years of hands-on experience specializing in MS Excel, Copilot GenAI (Agents), Power Automate, Power BI. Demonstrated success delivering high-impact automation and cross-functional solutions.",
+      "skills_ordered": [
+        "MS Excel",
+        "Copilot GenAI (Agents)",
+        "Power Automate",
+        "Power BI",
+        "SharePoint Online",
+        "Power Apps",
+        "Copilot Studio",
+        "SQL",
+        "Python",
+        "Process Automation",
+        "VBA Macros",
+        "Lean Six Sigma"
+      ],
+      "experience": [
+        {
+          "company": "KPMG",
+          "bullets": [
+            "Built complete Power Platform solution to facilitate 20,000 reach outs annually to more than 30 member firms across 13 sectors including Power Automate flows, SharePoint lists, Power Apps, Power BI dashboards saving 1,200 hrs. annually.",
+            "Built end-to-end solution to facilitate migration of old Excel\u2011based data collection for more than 45 pillars to automated SPO list integration, including 3 Power Automate flows for alerts, change management, data migration and permission governance.",
+            "Built and managed multiple VBA\u2011macros\u2011based solutions for refreshing a repository of more than 30,000 assets globally, saving more than 485 hrs. annually.",
+            "Built a multi\u2011modal Copilot agent to assist with messy data, draft fields, and apply metadata tags based on source and guidelines, saving 325 hrs. annually.",
+            "Saved more than 2,000 hrs. annually using Power Platform, Copilot Studio and VBA macros (Business Development)."
+          ]
+        },
+        {
+          "company": "GlobalLogic Technologies Private Limited",
+          "bullets": [
+            "Created best practices, process documentation, and QA processes for a Google project to build test and main datasets for GenAI training used to search content on Android screens.",
+            "Piloted a project to extract relevant answers from multi\u2011level documents to build an AI training dataset.",
+            "Designed and implemented QA processes for data entry, reducing errors by 25% and improving data accuracy.",
+            "Managed process documentation for 10+ projects, ensuring compliance and stakeholder accessibility.",
+            "Collaborated with onshore stakeholders, improving project quality from 74% to a steady 95%."
+          ]
+        }
+      ],
+      "cover_letter_paragraphs": [
+        "I am writing to express my strong enthusiasm for the Luxury Presence - Senior Data Analyst, GTM Analytics position at Luxurypresence. With over 3.2 years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.",
+        "During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.",
+        "My technical foundation spans MS Excel, Copilot GenAI (Agents), Power Automate, Power BI, SharePoint Online, Power Apps, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at Luxurypresence.",
+        "Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for Luxurypresence."
+      ],
+      "generated_at": "2026-09-15T15:15:11.366Z",
+      "grounding_stats": {
+        "total_bullets": 10,
+        "grounded_count": 10,
+        "hallucinations_blocked": 0,
+        "metrics_verified": true
+      }
+    }
+  },
+  {
     "id": "e955cd2af9cdd9c4",
     "title": "Business Analyst - NEC Software Solutions (India)",
     "company_name": "NECSWS",
@@ -134,15 +843,15 @@ var INITIAL_JOBS = [
     "posted_date": "2026-09-13T08:41:13.525Z",
     "posted_days_ago": 1,
     "is_direct_posting": true,
-    "verification_status": "active_portal",
-    "verification_notes": "Direct enterprise ATS posting verified (protected career gateway).",
-    "verified_at": "2026-09-14T08:41:15.168Z",
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-18T08:13:08.483Z",
     "status": "rejected",
     "fit": {
       "is_viable": false,
       "match_score": 0,
-      "detected_experience": "Not evaluated",
-      "salary_range": "Not evaluated",
+      "detected_experience": "2-4 Years (Inferred)",
+      "salary_range": "\u20B910 - \u20B918 LPA",
       "location": "Mumbai",
       "skills_gap": "Location mismatch",
       "rejection_reason": "Location 'Mumbai' not in preferred list [Gurgaon, Gurugram, Noida, Delhi, Remote, Bangalore, Bengaluru]",
@@ -175,7 +884,7 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:30.583Z",
+    "verified_at": "2026-09-18T08:13:08.484Z",
     "status": "rejected",
     "fit": {
       "is_viable": false,
@@ -213,8 +922,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:31.496Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T16:02:48.003Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 88,
@@ -316,8 +1025,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:31.551Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:13:52.652Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -423,8 +1132,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:31.808Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:13:53.224Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -525,7 +1234,7 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:32.103Z",
+    "verified_at": "2026-09-15T15:13:53.851Z",
     "status": "rejected",
     "fit": {
       "is_viable": false,
@@ -564,7 +1273,7 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:33.532Z",
+    "verified_at": "2026-09-15T15:13:56.394Z",
     "status": "rejected",
     "fit": {
       "is_viable": false,
@@ -603,7 +1312,7 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:34.346Z",
+    "verified_at": "2026-09-15T15:13:58.240Z",
     "status": "rejected",
     "fit": {
       "is_viable": false,
@@ -642,8 +1351,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:36.162Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:00.843Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 94,
@@ -748,8 +1457,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:37.137Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:01.812Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 82,
@@ -856,8 +1565,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:37.993Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:02.723Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 88,
@@ -960,7 +1669,7 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:37.993Z",
+    "verified_at": "2026-09-15T15:14:02.723Z",
     "status": "rejected",
     "fit": {
       "is_viable": false,
@@ -999,8 +1708,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:38.849Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:03.505Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 74,
@@ -1042,8 +1751,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:39.086Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:03.986Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 76,
@@ -1144,8 +1853,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:39.316Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:05.760Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 88,
@@ -1187,8 +1896,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:40.838Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:08.614Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 88,
@@ -1230,8 +1939,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:41.781Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:10.080Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 82,
@@ -1273,8 +1982,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:41.781Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:10.080Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -1319,8 +2028,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:42.017Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:11.126Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -1365,7 +2074,7 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:42.284Z",
+    "verified_at": "2026-09-15T15:14:11.728Z",
     "status": "rejected",
     "fit": {
       "is_viable": false,
@@ -1409,8 +2118,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:42.604Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:12.260Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -1449,8 +2158,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:42.867Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:12.752Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -1502,8 +2211,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:43.104Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:14.100Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -1544,8 +2253,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:43.376Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:14.864Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -1595,8 +2304,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:43.627Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:15.442Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 86,
@@ -1639,8 +2348,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:43.993Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:16.661Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -1680,8 +2389,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:44.274Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:17.337Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 90,
@@ -1725,8 +2434,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:46.279Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:19.253Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -1770,8 +2479,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:46.545Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:21.502Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 88,
@@ -1813,8 +2522,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:46.789Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:21.976Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -1839,52 +2548,6 @@ var INITIAL_JOBS = [
     "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)"
   },
   {
-    "id": "8fbf3b47b9161064",
-    "title": "Data Analyst",
-    "company_name": "Bluesight",
-    "location": "Remote",
-    "salary_range_lpa": [
-      60,
-      70
-    ],
-    "salary_is_estimated": false,
-    "salary_source": "Stated in Job Description",
-    "experience_range_years": [
-      2,
-      4
-    ],
-    "experience_is_inferred": false,
-    "description": "Bluesight - Data Analyst Data Analyst United States - Remote Operations \u2013 Data Analyst / Full Time - Remote - In-person meeting attendance required / Remote apply for this job At Bluesight, our mission is to create groundbreaking solutions that increase efficiency, safety and visibility for health systems, hospital pharmacy, and pharmaceutical manufacturers.&nbsp; We empower our customers to deliver the right medicine to the right patient at the right time, every time.&nbsp; We are a high growth healthcare information technology company with a start-up 'vibe' but over 3,000 customers using our proven solutions. &nbsp; We\u2019re looking for a Data Analyst to support the implementation of Bluesight SaaS products for our hospital customers. This person collects data, synthesizes and interprets results from a variety of disparate systems. The role will be responsible for finding and interpreting pertinent data points from both internal and external healthcare database source systems and developing analytical solutions using various business intelligence tools. &nbsp; Typical work breakdown:&nbsp; Validating and analyzing data in Excel: &nbsp;60% Customer-facing interactions: 30% Writing or updating SQL, Python, and various other tasks: 10% Candidates should be passionate about Excel, comfortable working directly with customers, and capable of leveraging SQL/Python/Ruby when needed to support file ingestion and automation. Duties &amp; Responsibilities Validate, reconcile, provide quality assurance, and analyze data input from disparate systems to ensure data integrity using Excel Communicate data findings and serve as a point person for troubleshooting and resolving technical issues. Partner with the implementation project lead and the customer to track progress, provide timely updates, and review data points with customers Perform data extraction tasks using multiple databases through SQL Develop solutions to support the SFTP automation of ongoing reporting needs Acquire and retrieve data as necessary and assist in troubleshooting of data issues to ease end-user use of application Other duties as assigned Required Qualifications &amp; Skills Bachelor\u2019s degree, or equivalent experience 2+ years of experience in data analysis, experience in the healthcare industry a plus Deep expertise and enthusiasm for Microsoft Excel and for using it to solve complex problems and trend data Moderate experience with SQL for data extraction and transformation Communicates promptly and effectively with both customers and internal teams, which includes both non-technical and technical audiences Strong problem-solving and troubleshooting skills with high attention to detail Proven ability to manage multiple projects, balance competing priorities, and meet goals and deadlines Self-starter with a demonstrated history of success, multiple examples of taking initiative, and the ability to thrive in a fast-paced, high-pressure environment Strong interpersonal and customer service skills, with the ability to collaborate effectively in teams and consistently meet or exceed customer expectations Strong verbal and written communications skills Preferred Qualifications Experience working on an Operations team, especially in an implementation-focused role Familiarity with installing or implementing SaaS products in a client environment Knowledge of hospital EHR systems (e.g. Epic, Oracle (Cerner), MEDITECH, etc.) Knowledge of hospital ADC systems (e.g. PyxisES, Omnicell, etc.) Experience coding with Python or Ruby or other scripting language Experience working with PHI, understanding of HIPAA $70,000 - $82,000 a year Bluesight offers a variety of health and wellness benefits to employees. The pay range for this position is $70,000 - $82,000 and includes eligibility for an annual discretionary bonus in addition to base salary. The actual wage offered may be lower or higher depending on candidate's experience, knowledge, skills, qualifications and premium geographic location. This position is open to applicants in the continental United States. &nbsp; Why Bluesight? Bluesight\u2019s culture is built on innovation and teamwork. There\u2019s room to grow and opportunities to take initiative. You will partner with sharp, motivated teammates looking to disrupt a massive industry\u2014and have fun doing it.&nbsp; We truly believe that where you work and what you do matters.&nbsp; Join us as we revolutionize the hospital pharmacy landscape! -Competitive salary -Time off when you need it \u2013 unlimited vacation days! -Generous insurance coverage -401k program with a company match -Fun, collaborative culture! &nbsp; EOE AA M/F/VET/Disability &nbsp; All qualified applicants will receive consideration for employment and will not be discriminated against on the basis of race, religion, color, national origin, sex, protected veteran status, disability, or any other basis protected by federal, state or local laws. We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. apply for this job Bluesight Home Page Jobs powered by",
-    "apply_link": "https://jobs.lever.co/bluesight/371dd108-f884-48cb-8791-43643bdb5cf4",
-    "ats_source": "Lever",
-    "discovered_at": "2026-09-13T07:25:03.182Z",
-    "posted_date": "2026-09-12T07:25:03.182Z",
-    "posted_days_ago": 1,
-    "is_direct_posting": true,
-    "verification_status": "verified_active",
-    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:47.033Z",
-    "status": "discovered",
-    "fit": {
-      "is_viable": true,
-      "match_score": 95,
-      "detected_experience": "2-4 Years",
-      "salary_range": "\u20B960 - \u20B970 LPA",
-      "location": "Remote",
-      "skills_gap": "None",
-      "summary_reasoning": "Direct target role match for Data Analyst. Strong alignment with MS Excel, SQL, Python in Remote.",
-      "strengths": [
-        "Direct match with candidate target role: Data Analyst",
-        "Demonstrated competency in MS Excel",
-        "Demonstrated competency in SQL",
-        "Demonstrated competency in Python"
-      ],
-      "weaknesses": [],
-      "evaluated_at": "2026-09-13T07:25:58.496Z"
-    },
-    "experience_inferred_reason": "Exact requirement extracted from Job Description: experience 2+ years"
-  },
-  {
     "id": "9c75946b010609ac",
     "title": "JumpCloud - Financial Data Analyst",
     "company_name": "Jumpcloud",
@@ -1904,8 +2567,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:47.296Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:24.036Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -2011,8 +2674,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:47.566Z",
-    "status": "viable",
+    "verified_at": "2026-09-15T15:14:24.592Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -2113,7 +2776,7 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:48.531Z",
+    "verified_at": "2026-09-15T15:14:26.143Z",
     "status": "rejected",
     "fit": {
       "is_viable": false,
@@ -2154,7 +2817,7 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:48.927Z",
+    "verified_at": "2026-09-15T15:14:26.707Z",
     "status": "rejected",
     "fit": {
       "is_viable": false,
@@ -2195,7 +2858,7 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:48.927Z",
+    "verified_at": "2026-09-15T15:14:26.707Z",
     "status": "rejected",
     "fit": {
       "is_viable": false,
@@ -2238,7 +2901,7 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:50.558Z",
+    "verified_at": "2026-09-15T15:14:30.747Z",
     "status": "rejected",
     "fit": {
       "is_viable": false,
@@ -2283,7 +2946,7 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:50.558Z",
+    "verified_at": "2026-09-15T15:14:30.747Z",
     "status": "rejected",
     "fit": {
       "is_viable": false,
@@ -2318,7 +2981,7 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:51.687Z",
+    "verified_at": "2026-09-15T15:14:32.672Z",
     "status": "rejected",
     "fit": {
       "is_viable": false,
@@ -2361,8 +3024,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:51.687Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:32.672Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 95,
@@ -2470,8 +3133,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:52.850Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:35.216Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 77,
@@ -2521,8 +3184,8 @@ var INITIAL_JOBS = [
     "is_direct_posting": true,
     "verification_status": "verified_active",
     "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
-    "verified_at": "2026-09-14T08:40:52.850Z",
-    "status": "discovered",
+    "verified_at": "2026-09-15T15:14:35.216Z",
+    "status": "rejected",
     "fit": {
       "is_viable": true,
       "match_score": 91,
@@ -2602,110 +3265,6 @@ var INITIAL_JOBS = [
     "experience_inferred_reason": "Exact requirement extracted from Job Description: 2+ years of hands-on experience"
   }
 ];
-var INITIAL_WORKFLOW = {
-  "enabled": true,
-  "interval_hours": 4,
-  "last_run": (/* @__PURE__ */ new Date()).toISOString(),
-  "next_run": new Date(Date.now() + 4 * 60 * 60 * 1e3).toISOString(),
-  "is_running": false,
-  "total_runs": 7,
-  "auto_notify_telegram": true,
-  "runs": [
-    {
-      "id": "run-1789375230583",
-      "started_at": "2026-09-14T08:40:30.583Z",
-      "completed_at": "2026-09-14T08:41:15.455Z",
-      "trigger": "scheduled_4h",
-      "new_jobs_found": 1,
-      "evaluated_count": 1,
-      "high_fit_count": 31,
-      "notified_count": 0,
-      "status": "completed",
-      "summary": "Automated cycle: Scanned existing links (0 expired identified), discovered 1 fresh jobs. Evaluated 1 listings, 31 high-fit matches, 0 Telegram alerts dispatched."
-    },
-    {
-      "id": "run-1789375060209",
-      "started_at": "2026-09-14T08:37:40.209Z",
-      "completed_at": "2026-09-14T08:38:18.536Z",
-      "trigger": "scheduled_4h",
-      "new_jobs_found": 0,
-      "evaluated_count": 0,
-      "high_fit_count": 31,
-      "notified_count": 0,
-      "status": "completed",
-      "summary": "Automated cycle: Scanned existing links (0 expired identified), discovered 0 fresh jobs. Evaluated 0 listings, 31 high-fit matches, 0 Telegram alerts dispatched."
-    },
-    {
-      "id": "run-1789375006470",
-      "started_at": "2026-09-14T08:36:46.470Z",
-      "completed_at": "2026-09-14T08:37:26.199Z",
-      "trigger": "scheduled_4h",
-      "new_jobs_found": 1,
-      "evaluated_count": 1,
-      "high_fit_count": 31,
-      "notified_count": 0,
-      "status": "completed",
-      "summary": "Automated cycle: Scanned existing links (0 expired identified), discovered 1 fresh jobs. Evaluated 1 listings, 31 high-fit matches, 0 Telegram alerts dispatched."
-    },
-    {
-      "id": "run-1789374935467",
-      "started_at": "2026-09-14T08:35:35.467Z",
-      "completed_at": "2026-09-14T08:36:28.125Z",
-      "trigger": "scheduled_4h",
-      "new_jobs_found": 0,
-      "evaluated_count": 0,
-      "high_fit_count": 31,
-      "notified_count": 0,
-      "status": "completed",
-      "summary": "Automated cycle: Scanned existing links (0 expired identified), discovered 0 fresh jobs. Evaluated 0 listings, 31 high-fit matches, 0 Telegram alerts dispatched."
-    },
-    {
-      "id": "run-1788603288633",
-      "started_at": "2026-09-05T10:14:48.633Z",
-      "completed_at": "2026-09-05T10:15:14.447Z",
-      "trigger": "manual",
-      "new_jobs_found": 0,
-      "evaluated_count": 0,
-      "high_fit_count": 3,
-      "notified_count": 0,
-      "status": "completed",
-      "summary": "Automation cycle: Scanned links (0 expired identified), discovered 0 fresh jobs. Evaluated 0 listings, 3 high-fit matches, 0 Telegram alerts dispatched."
-    },
-    {
-      "id": "run-1788603258244",
-      "started_at": "2026-09-05T10:14:18.244Z",
-      "completed_at": "2026-09-05T10:14:41.669Z",
-      "trigger": "manual",
-      "new_jobs_found": 1,
-      "evaluated_count": 1,
-      "high_fit_count": 3,
-      "notified_count": 0,
-      "status": "completed",
-      "summary": "Automation cycle: Scanned links (0 expired identified), discovered 1 fresh jobs. Evaluated 1 listings, 3 high-fit matches, 0 Telegram alerts dispatched."
-    },
-    {
-      "id": "run-init-01",
-      "started_at": "2026-09-05T07:04:52.321Z",
-      "completed_at": "2026-09-05T07:05:52.321Z",
-      "trigger": "scheduled_4h",
-      "new_jobs_found": 6,
-      "evaluated_count": 6,
-      "high_fit_count": 4,
-      "notified_count": 2,
-      "status": "completed",
-      "summary": "Automated 4-hour cycle: Scanned Workday, Greenhouse & Ashby portals. Evaluated 6 roles, 4 high-fit (\u226575%), 2 dispatched to Telegram."
-    }
-  ]
-};
-var INITIAL_STATS = {
-  total_jobs: 42,
-  seen_count: 42,
-  viable_count: 29,
-  high_fit_count: 28,
-  notified_count: 0,
-  applied_count: 0,
-  last_run: (/* @__PURE__ */ new Date()).toISOString()
-};
 
 // server/gemini.ts
 import { GoogleGenAI } from "@google/genai";
@@ -4392,7 +4951,7 @@ async function searchGoogle(query, apiKey, page = 0) {
     return [];
   }
 }
-async function discoverJobsForProfile(profile, queryTerm, existingListings = [], seenStore = {}, serpApiKey) {
+async function discoverJobsForProfile(profile, queryTerm, existingListings = [], seenStore = {}, serpApiKey, searchedRegistry2 = {}) {
   const apiKey = serpApiKey || process.env.SERPAPI_KEY || "GNLQpQWpHAMcEL9MguEkrxq1";
   if (!apiKey) {
     console.warn("[JobSearch] SERPAPI_KEY is not configured.");
@@ -4400,7 +4959,16 @@ async function discoverJobsForProfile(profile, queryTerm, existingListings = [],
   }
   const seenSet = /* @__PURE__ */ new Set();
   for (const [key] of Object.entries(seenStore)) {
-    seenSet.add(key.toLowerCase());
+    if (key) seenSet.add(key.toLowerCase());
+  }
+  for (const [key, item] of Object.entries(searchedRegistry2)) {
+    if (key) seenSet.add(key.toLowerCase());
+    if (item) {
+      if (item.id) seenSet.add(item.id.toLowerCase());
+      if (item.signature) seenSet.add(item.signature.toLowerCase());
+      if (item.normalized_url) seenSet.add(item.normalized_url.toLowerCase());
+      if (item.apply_link) seenSet.add(normalizeJobUrl(item.apply_link).toLowerCase());
+    }
   }
   for (const job of existingListings) {
     seenSet.add(job.id.toLowerCase());
@@ -4627,8 +5195,94 @@ Requisition posted on ${cand.cleanedCompany} career portal. Direct application l
 }
 
 // server/resumeScraper.ts
-import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
+function ensureCanvasPolyfills() {
+  if (typeof globalThis.DOMMatrix === "undefined") {
+    globalThis.DOMMatrix = class DOMMatrix {
+      constructor(_init) {
+        this.a = 1;
+        this.b = 0;
+        this.c = 0;
+        this.d = 1;
+        this.e = 0;
+        this.f = 0;
+        this.m11 = 1;
+        this.m12 = 0;
+        this.m13 = 0;
+        this.m14 = 0;
+        this.m21 = 0;
+        this.m22 = 1;
+        this.m23 = 0;
+        this.m24 = 0;
+        this.m31 = 0;
+        this.m32 = 0;
+        this.m33 = 1;
+        this.m34 = 0;
+        this.m41 = 0;
+        this.m42 = 0;
+        this.m43 = 0;
+        this.m44 = 1;
+        this.is2D = true;
+        this.isIdentity = true;
+      }
+      multiply() {
+        return this;
+      }
+      translate() {
+        return this;
+      }
+      scale() {
+        return this;
+      }
+      rotate() {
+        return this;
+      }
+      inverse() {
+        return this;
+      }
+      transformPoint(p) {
+        return p;
+      }
+      toFloat32Array() {
+        return new Float32Array(16);
+      }
+      toFloat64Array() {
+        return new Float64Array(16);
+      }
+    };
+  }
+  if (typeof globalThis.ImageData === "undefined") {
+    globalThis.ImageData = class ImageData {
+      constructor(w, h) {
+        this.width = 0;
+        this.height = 0;
+        this.data = new Uint8ClampedArray(0);
+        this.width = w;
+        this.height = h;
+      }
+    };
+  }
+  if (typeof globalThis.Path2D === "undefined") {
+    globalThis.Path2D = class Path2D {
+      addPath() {
+      }
+      closePath() {
+      }
+      moveTo() {
+      }
+      lineTo() {
+      }
+      bezierCurveTo() {
+      }
+      quadraticCurveTo() {
+      }
+      arc() {
+      }
+      rect() {
+      }
+    };
+  }
+}
 var URL_REGEX = /https?:\/\/[^\s<>"'{}|\\^`[\]()]+/gi;
 function extractLinksFromText(text) {
   if (!text) return [];
@@ -4754,6 +5408,8 @@ async function extractDocumentContent(buffer, fileName, mimeType) {
   const isDocx = fileName.toLowerCase().endsWith(".docx") || fileName.toLowerCase().endsWith(".doc") || mimeType?.includes("word");
   if (isPdf) {
     try {
+      ensureCanvasPolyfills();
+      const { PDFParse } = await import("pdf-parse");
       const parser = new PDFParse({ data: new Uint8Array(buffer) });
       const textResult = await parser.getText();
       const rawText = textResult?.text || "";
@@ -4767,19 +5423,51 @@ async function extractDocumentContent(buffer, fileName, mimeType) {
             }
           }
         }
-      } catch (linkErr) {
+      } catch {
       }
       const textLinks = extractLinksFromText(rawText);
       const combinedLinks = Array.from(/* @__PURE__ */ new Set([...foundLinks, ...textLinks]));
-      return {
-        text: rawText,
-        links: combinedLinks,
-        fileType: "pdf"
-      };
+      if (rawText && rawText.trim().length > 20) {
+        return {
+          text: rawText,
+          links: combinedLinks,
+          fileType: "pdf"
+        };
+      }
     } catch (pdfErr) {
-      console.error("[ResumeScraper] PDFParse failed:", pdfErr);
-      throw new Error(`Failed to parse PDF document: ${pdfErr.message}`);
+      console.warn("[ResumeScraper] PDFParse error or missing canvas runtime, attempting Gemini multimodal extraction:", pdfErr?.message || pdfErr);
     }
+    try {
+      const ai = getGeminiClient();
+      const response = await ai.models.generateContent({
+        model: "gemini-3.8-flash",
+        contents: [
+          {
+            inlineData: {
+              data: buffer.toString("base64"),
+              mimeType: "application/pdf"
+            }
+          },
+          "Extract and output the full text of this resume document accurately, preserving sections, skills, work experience, education, email, phone, location, and URLs."
+        ]
+      });
+      const geminiText = response.text || "";
+      if (geminiText.trim().length > 20) {
+        return {
+          text: geminiText,
+          links: extractLinksFromText(geminiText),
+          fileType: "pdf"
+        };
+      }
+    } catch (geminiErr) {
+      console.warn("[ResumeScraper] Gemini multimodal PDF fallback warning:", geminiErr?.message || geminiErr);
+    }
+    const rawBufferStr = buffer.toString("utf-8").replace(/[^\x20-\x7E\n\r\t]/g, " ");
+    return {
+      text: rawBufferStr,
+      links: extractLinksFromText(rawBufferStr),
+      fileType: "pdf"
+    };
   }
   if (isDocx) {
     try {
@@ -5060,15 +5748,34 @@ async function saveToRemoteKV(data) {
     return false;
   }
 }
+var candidatePaths = [
+  STORE_FILE,
+  BUNDLED_STORE_FILE,
+  path.join(process.cwd(), "careerops_store.json"),
+  path.join("/tmp", "careerops_store.json")
+];
 function loadFromDisk() {
   try {
-    const fileToLoad = fs.existsSync(STORE_FILE) ? STORE_FILE : fs.existsSync(BUNDLED_STORE_FILE) ? BUNDLED_STORE_FILE : null;
-    if (fileToLoad) {
-      const raw = fs.readFileSync(fileToLoad, "utf-8");
-      const data = JSON.parse(raw);
-      if (data && Array.isArray(data.jobListings)) {
-        return data;
+    let bestData = null;
+    let latestTime = -1;
+    for (const filePath of candidatePaths) {
+      if (fs.existsSync(filePath)) {
+        try {
+          const raw = fs.readFileSync(filePath, "utf-8");
+          const data = JSON.parse(raw);
+          if (data && Array.isArray(data.jobListings) && data.jobListings.length > 0) {
+            const fileTime = data.lastUpdated ? new Date(data.lastUpdated).getTime() : 0;
+            if (!bestData || fileTime > latestTime) {
+              bestData = data;
+              latestTime = fileTime;
+            }
+          }
+        } catch {
+        }
       }
+    }
+    if (bestData) {
+      return bestData;
     }
   } catch (err) {
     console.error("[Storage] Error reading disk store:", err);
@@ -5084,9 +5791,100 @@ function saveToDisk(data) {
   } catch (err) {
     console.error("[Storage] Failed to save store to disk:", err);
   }
+  try {
+    if (STORE_FILE !== BUNDLED_STORE_FILE && fs.existsSync(path.dirname(BUNDLED_STORE_FILE))) {
+      fs.writeFileSync(BUNDLED_STORE_FILE, JSON.stringify(data, null, 2), "utf-8");
+    }
+  } catch {
+  }
 }
 
 // server.ts
+if (typeof globalThis.DOMMatrix === "undefined") {
+  globalThis.DOMMatrix = class DOMMatrix {
+    constructor(_init) {
+      this.a = 1;
+      this.b = 0;
+      this.c = 0;
+      this.d = 1;
+      this.e = 0;
+      this.f = 0;
+      this.m11 = 1;
+      this.m12 = 0;
+      this.m13 = 0;
+      this.m14 = 0;
+      this.m21 = 0;
+      this.m22 = 1;
+      this.m23 = 0;
+      this.m24 = 0;
+      this.m31 = 0;
+      this.m32 = 0;
+      this.m33 = 1;
+      this.m34 = 0;
+      this.m41 = 0;
+      this.m42 = 0;
+      this.m43 = 0;
+      this.m44 = 1;
+      this.is2D = true;
+      this.isIdentity = true;
+    }
+    multiply() {
+      return this;
+    }
+    translate() {
+      return this;
+    }
+    scale() {
+      return this;
+    }
+    rotate() {
+      return this;
+    }
+    inverse() {
+      return this;
+    }
+    transformPoint(p) {
+      return p;
+    }
+    toFloat32Array() {
+      return new Float32Array(16);
+    }
+    toFloat64Array() {
+      return new Float64Array(16);
+    }
+  };
+}
+if (typeof globalThis.ImageData === "undefined") {
+  globalThis.ImageData = class ImageData {
+    constructor(w, h) {
+      this.width = 0;
+      this.height = 0;
+      this.data = new Uint8ClampedArray(0);
+      this.width = w;
+      this.height = h;
+    }
+  };
+}
+if (typeof globalThis.Path2D === "undefined") {
+  globalThis.Path2D = class Path2D {
+    addPath() {
+    }
+    closePath() {
+    }
+    moveTo() {
+    }
+    lineTo() {
+    }
+    bezierCurveTo() {
+    }
+    quadraticCurveTo() {
+    }
+    arc() {
+    }
+    rect() {
+    }
+  };
+}
 var DATA_DIR2 = process.env.VERCEL ? "/tmp" : path2.join(process.cwd(), "data");
 var STORE_FILE2 = path2.join(DATA_DIR2, "careerops_store.json");
 var BUNDLED_STORE_FILE2 = path2.join(process.cwd(), "data", "careerops_store.json");
@@ -5095,10 +5893,63 @@ var jobListings = INITIAL_JOBS.filter(
   (j) => j.status !== "expired" && j.verification_status !== "expired_or_invalid" && !j.company_name.toLowerCase().includes("state street") && !j.company_name.toLowerCase().includes("soti") && !j.apply_link.toLowerCase().includes("soti.careers") && j.id !== "9dfe6112a2137e75"
 );
 var notifiedJobIds = /* @__PURE__ */ new Set();
+var deletedJobIds = /* @__PURE__ */ new Set();
 var seenJobs = {};
+var searchedRegistry = {};
+var storeLastUpdated = (/* @__PURE__ */ new Date()).toISOString();
 seenJobs["9dfe6112a2137e75"] = (/* @__PURE__ */ new Date()).toISOString();
 seenJobs["https://soti.careers/jobs/bi-solutions-analyst-gurugram"] = (/* @__PURE__ */ new Date()).toISOString();
 seenJobs["soti_business intelligence & solutions analyst"] = (/* @__PURE__ */ new Date()).toISOString();
+for (const j of jobListings) {
+  const sig = `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`;
+  const normLink = normalizeJobUrl(j.apply_link);
+  searchedRegistry[j.id] = {
+    id: j.id,
+    signature: sig,
+    normalized_url: normLink,
+    company_name: j.company_name,
+    title: j.title,
+    status: j.status || "discovered",
+    discovered_at: j.discovered_at || (/* @__PURE__ */ new Date()).toISOString(),
+    last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
+  };
+}
+function truncateSearchedRegistry(ttlDays = 30, maxCapacity = 5e3) {
+  const now = Date.now();
+  const cutoffMs = ttlDays * 24 * 3600 * 1e3;
+  let prunedCount = 0;
+  const entries = Object.entries(searchedRegistry);
+  for (const [key, item] of entries) {
+    if (!item) continue;
+    const isRejected = item.status === "rejected" || item.status === "deleted";
+    const retentionMs = isRejected ? cutoffMs * 2 : cutoffMs;
+    const itemTime = item.last_seen_at ? new Date(item.last_seen_at).getTime() : 0;
+    if (now - itemTime > retentionMs) {
+      delete searchedRegistry[key];
+      delete seenJobs[key];
+      prunedCount++;
+    }
+  }
+  const remainingKeys = Object.keys(searchedRegistry);
+  if (remainingKeys.length > maxCapacity) {
+    const sorted = remainingKeys.map((k) => ({ key: k, item: searchedRegistry[k] })).sort((a, b) => {
+      const aIsRejected = a.item?.status === "rejected" || a.item?.status === "deleted";
+      const bIsRejected = b.item?.status === "rejected" || b.item?.status === "deleted";
+      if (aIsRejected && !bIsRejected) return 1;
+      if (bIsRejected && !aIsRejected) return -1;
+      const aTime = a.item?.last_seen_at ? new Date(a.item.last_seen_at).getTime() : 0;
+      const bTime = b.item?.last_seen_at ? new Date(b.item.last_seen_at).getTime() : 0;
+      return aTime - bTime;
+    });
+    const toRemove = sorted.slice(0, remainingKeys.length - maxCapacity);
+    for (const { key } of toRemove) {
+      delete searchedRegistry[key];
+      delete seenJobs[key];
+      prunedCount++;
+    }
+  }
+  return { prunedCount, remainingCount: Object.keys(searchedRegistry).length };
+}
 var appSettings = {
   min_match_score: 75,
   telegram_configured: true,
@@ -5116,11 +5967,21 @@ var appSettings = {
   serpapi_key: process.env.SERPAPI_KEY || "GNLQpQWpHAMcEL9MguEkrxq1"
 };
 var FOUR_HOURS_MS = 4 * 60 * 60 * 1e3;
+function getCanonicalNextRun(intervalHours = 4) {
+  const now = Date.now();
+  const intervalMs = (intervalHours || 4) * 3600 * 1e3;
+  const nextTimestamp = Math.ceil((now + 1e3) / intervalMs) * intervalMs;
+  return new Date(nextTimestamp).toISOString();
+}
+var PEER_ENDPOINTS = [
+  "https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app",
+  "https://ais-pre-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app"
+];
 var workflowState = {
   enabled: true,
   interval_hours: 4,
   last_run: new Date(Date.now() - 34 * 60 * 1e3).toISOString(),
-  next_run: new Date(Date.now() + (FOUR_HOURS_MS - 34 * 60 * 1e3)).toISOString(),
+  next_run: getCanonicalNextRun(4),
   is_running: false,
   total_runs: 1,
   auto_notify_telegram: true,
@@ -5147,12 +6008,16 @@ function applyLoadedData(data) {
     Object.assign(workflowState, data.workflowState);
     workflowState.is_running = false;
     const now = Date.now();
-    const nextTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
     const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1e3;
+    const nextTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
     if (nextTime <= now) {
-      const elapsed = now - (workflowState.last_run ? new Date(workflowState.last_run).getTime() : now - intervalMs);
-      const remainingInCycle = intervalMs - elapsed % intervalMs;
-      workflowState.next_run = new Date(now + Math.max(remainingInCycle, 6e4)).toISOString();
+      const nextTimestamp = Math.ceil((now + 1e3) / intervalMs) * intervalMs;
+      workflowState.next_run = new Date(nextTimestamp).toISOString();
+    }
+  }
+  if (Array.isArray(data.deletedJobIds)) {
+    for (const id of data.deletedJobIds) {
+      if (id) deletedJobIds.add(id);
     }
   }
   if (Array.isArray(data.notifiedJobIds)) {
@@ -5161,12 +6026,26 @@ function applyLoadedData(data) {
   if (data.seenJobs && typeof data.seenJobs === "object") {
     Object.assign(seenJobs, data.seenJobs);
   }
+  if (data.searchedRegistry && typeof data.searchedRegistry === "object") {
+    Object.assign(searchedRegistry, data.searchedRegistry);
+    for (const [key, item] of Object.entries(data.searchedRegistry)) {
+      if (item && typeof item === "object") {
+        const anyItem = item;
+        if (anyItem.id) seenJobs[anyItem.id] = anyItem.last_seen_at || (/* @__PURE__ */ new Date()).toISOString();
+        if (anyItem.signature) seenJobs[anyItem.signature] = anyItem.last_seen_at || (/* @__PURE__ */ new Date()).toISOString();
+        if (anyItem.normalized_url) seenJobs[anyItem.normalized_url] = anyItem.last_seen_at || (/* @__PURE__ */ new Date()).toISOString();
+      }
+    }
+  }
+  if (data.lastUpdated) {
+    storeLastUpdated = data.lastUpdated;
+  }
   seenJobs["9dfe6112a2137e75"] = (/* @__PURE__ */ new Date()).toISOString();
   seenJobs["https://soti.careers/jobs/bi-solutions-analyst-gurugram"] = (/* @__PURE__ */ new Date()).toISOString();
   seenJobs["soti_business intelligence & solutions analyst"] = (/* @__PURE__ */ new Date()).toISOString();
   if (Array.isArray(data.jobListings)) {
     jobListings = data.jobListings.filter(
-      (j) => j.status !== "expired" && j.verification_status !== "expired_or_invalid" && !j.company_name.toLowerCase().includes("state street") && !j.company_name.toLowerCase().includes("soti") && !j.apply_link.toLowerCase().includes("soti.careers") && !j.apply_link.toLowerCase().includes("expjd=true") && j.id !== "9dfe6112a2137e75" && isStrictAtsUrl(j.apply_link) && !isInvalidBogusTitle(j.title, j.company_name)
+      (j) => !deletedJobIds.has(j.id) && j.status !== "expired" && j.verification_status !== "expired_or_invalid" && !j.company_name.toLowerCase().includes("state street") && !j.company_name.toLowerCase().includes("soti") && !j.apply_link.toLowerCase().includes("soti.careers") && !j.apply_link.toLowerCase().includes("expjd=true") && j.id !== "9dfe6112a2137e75" && isStrictAtsUrl(j.apply_link) && !isInvalidBogusTitle(j.title, j.company_name)
     );
     for (const j of jobListings) {
       const expRes = resolveExperienceYears(j.description, j.title, j.apply_link);
@@ -5213,20 +6092,53 @@ function applyLoadedData(data) {
     }
   }
 }
-function saveStoreToDisk() {
+async function replicateToPeers(data) {
+  for (const peer of PEER_ENDPOINTS) {
+    if (lastKnownBaseUrl && lastKnownBaseUrl.includes(new URL(peer).hostname)) continue;
+    try {
+      fetch(`${peer}/api/state/sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobs: data.jobListings,
+          profile: data.currentProfile,
+          settings: data.appSettings,
+          workflow: data.workflowState,
+          deleted_ids: data.deletedJobIds,
+          searched_registry: data.searchedRegistry,
+          last_updated: data.lastUpdated,
+          _replicated: true
+        })
+      }).catch(() => {
+      });
+    } catch {
+    }
+  }
+}
+function saveStoreToDisk(shouldReplicate = true) {
   try {
+    workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
+    storeLastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+    workflowState.last_updated = storeLastUpdated;
+    appSettings.last_updated = storeLastUpdated;
     const data = {
       currentProfile,
-      jobListings,
+      jobListings: jobListings.filter((j) => !deletedJobIds.has(j.id)),
       notifiedJobIds: Array.from(notifiedJobIds),
       seenJobs,
+      searchedRegistry,
       appSettings,
       workflowState,
-      lastUpdated: (/* @__PURE__ */ new Date()).toISOString()
+      deletedJobIds: Array.from(deletedJobIds),
+      lastUpdated: storeLastUpdated
     };
     saveToDisk(data);
     saveToRemoteKV(data).catch(() => {
     });
+    if (shouldReplicate) {
+      replicateToPeers(data).catch(() => {
+      });
+    }
   } catch (err) {
     console.error("[Store] Failed to save store:", err);
   }
@@ -5237,6 +6149,58 @@ function loadStoreFromDisk() {
     if (diskData) {
       applyLoadedData(diskData);
       console.log(`[Store] Restored ${jobListings.length} jobs and workflow state from local storage.`);
+    }
+    for (const peer of PEER_ENDPOINTS) {
+      if (lastKnownBaseUrl && lastKnownBaseUrl.includes(new URL(peer).hostname)) continue;
+      fetch(`${peer}/api/state/sync`, { headers: { Accept: "application/json" } }).then((res) => res.json()).then((peerData) => {
+        if (peerData && Array.isArray(peerData.jobs) && peerData.jobs.length > 0) {
+          const peerTime = peerData.last_updated ? new Date(peerData.last_updated).getTime() : 0;
+          const localTime = storeLastUpdated ? new Date(storeLastUpdated).getTime() : 0;
+          if (peerTime < localTime && jobListings.length >= 40) {
+            console.log(`[Store] Local store (${localTime}) is fresher than peer ${peer} (${peerTime}). Pushing local state to peer.`);
+            replicateToPeers({
+              currentProfile,
+              jobListings,
+              notifiedJobIds: Array.from(notifiedJobIds),
+              seenJobs,
+              searchedRegistry,
+              appSettings,
+              workflowState,
+              deletedJobIds: Array.from(deletedJobIds),
+              lastUpdated: storeLastUpdated
+            });
+            return;
+          }
+          if (Array.isArray(peerData.deleted_ids)) {
+            for (const id of peerData.deleted_ids) {
+              if (id) deletedJobIds.add(id);
+            }
+          }
+          if (peerData.searched_registry && typeof peerData.searched_registry === "object") {
+            Object.assign(searchedRegistry, peerData.searched_registry);
+          }
+          const existingMap = new Map(jobListings.map((j) => [j.id, j]));
+          const peerNonDeleted = peerData.jobs.filter((j) => !deletedJobIds.has(j.id));
+          let newAdded = 0;
+          for (const pj of peerNonDeleted) {
+            if (!existingMap.has(pj.id)) {
+              jobListings.push(pj);
+              existingMap.set(pj.id, pj);
+              newAdded++;
+            }
+          }
+          if (peerData.workflow && peerTime >= localTime) {
+            Object.assign(workflowState, peerData.workflow);
+          }
+          if (peerData.settings && peerTime >= localTime) {
+            Object.assign(appSettings, peerData.settings);
+          }
+          storeLastUpdated = peerData.last_updated || (/* @__PURE__ */ new Date()).toISOString();
+          console.log(`[Store] Merged with peer ${peer} (${newAdded} new jobs, total: ${jobListings.length})`);
+          saveStoreToDisk(false);
+        }
+      }).catch(() => {
+      });
     }
     loadFromRemoteKV().then((remoteData) => {
       if (remoteData) {
@@ -5265,6 +6229,12 @@ app.use((req, res, next) => {
   next();
 });
 var lastKnownBaseUrl = DEFAULT_PUBLIC_URL;
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === "object" && Object.keys(req.body).length > 0) {
+    req._body = true;
+  }
+  next();
+});
 app.use(express.json({ limit: "10mb" }));
 app.use((req, res, next) => {
   const host = req.headers["x-forwarded-host"] || req.headers.host || "";
@@ -5366,7 +6336,8 @@ app.post("/api/jobs/search", async (req, res) => {
       query,
       jobListings,
       seenJobs,
-      appSettings.serpapi_key || process.env.SERPAPI_KEY
+      appSettings.serpapi_key || process.env.SERPAPI_KEY,
+      searchedRegistry
     );
     const existingIds = new Set(jobListings.map((j) => j.id));
     const existingSignatures = new Set(
@@ -5379,6 +6350,16 @@ app.post("/api/jobs/search", async (req, res) => {
       seenJobs[nj.id] = (/* @__PURE__ */ new Date()).toISOString();
       if (normLink) seenJobs[normLink] = (/* @__PURE__ */ new Date()).toISOString();
       seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
+      searchedRegistry[nj.id] = {
+        id: nj.id,
+        signature: sig,
+        normalized_url: normLink,
+        company_name: nj.company_name,
+        title: nj.title,
+        status: nj.status || "discovered",
+        discovered_at: nj.discovered_at || (/* @__PURE__ */ new Date()).toISOString(),
+        last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
+      };
       if (!existingIds.has(nj.id) && !existingSignatures.has(sig)) {
         jobListings.unshift(nj);
         existingIds.add(nj.id);
@@ -5387,7 +6368,7 @@ app.post("/api/jobs/search", async (req, res) => {
       }
     }
     saveStoreToDisk();
-    res.json({ success: true, added_count: added.length, jobs: jobListings });
+    res.json({ success: true, added_count: added.length, jobs: jobListings, searched_registry: searchedRegistry });
   } catch (err) {
     console.error("[Jobs Search] Error:", err);
     res.status(500).json({ error: err.message });
@@ -5517,20 +6498,46 @@ app.post("/api/jobs/verify-all", async (req, res) => {
 });
 app.post("/api/jobs/remove-expired", (req, res) => {
   const initialCount = jobListings.length;
-  jobListings = jobListings.filter(
-    (j) => j.status !== "expired" && j.verification_status !== "expired_or_invalid" && !j.company_name.toLowerCase().includes("state street")
+  const expired = jobListings.filter(
+    (j) => j.status === "expired" || j.verification_status === "expired_or_invalid" || j.company_name.toLowerCase().includes("state street")
   );
+  for (const j of expired) {
+    deletedJobIds.add(j.id);
+  }
+  jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
   const removedCount = initialCount - jobListings.length;
   saveStoreToDisk();
   console.log(`[Remove Expired] Purged ${removedCount} expired/invalid jobs. ${jobListings.length} remain.`);
-  res.json({ success: true, removedCount, remainingCount: jobListings.length, jobs: jobListings });
+  res.json({ success: true, removedCount, remainingCount: jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds) });
 });
 app.delete("/api/jobs/:id", (req, res) => {
   const { id } = req.params;
+  if (id) {
+    deletedJobIds.add(id);
+    const target = jobListings.find((j) => j.id === id);
+    if (target) {
+      const sig = `${target.company_name.toLowerCase()}_${target.title.toLowerCase()}`;
+      const norm = normalizeJobUrl(target.apply_link);
+      searchedRegistry[id] = {
+        id,
+        signature: sig,
+        normalized_url: norm,
+        company_name: target.company_name,
+        title: target.title,
+        status: "deleted",
+        discovered_at: target.discovered_at || (/* @__PURE__ */ new Date()).toISOString(),
+        rejected_at: (/* @__PURE__ */ new Date()).toISOString(),
+        last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      seenJobs[id] = (/* @__PURE__ */ new Date()).toISOString();
+      if (norm) seenJobs[norm] = (/* @__PURE__ */ new Date()).toISOString();
+      seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
+    }
+  }
   const initialCount = jobListings.length;
-  jobListings = jobListings.filter((j) => j.id !== id);
+  jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
   saveStoreToDisk();
-  res.json({ success: true, deleted: initialCount > jobListings.length, jobs: jobListings });
+  res.json({ success: true, deleted: initialCount > jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds), searched_registry: searchedRegistry });
 });
 app.get("/api/download-cover-letter", async (req, res) => {
   const id = req.query.id;
@@ -5709,8 +6716,26 @@ app.post("/api/jobs/status", (req, res) => {
   const target = jobListings.find((j) => j.id === id);
   if (!target) return res.status(404).json({ error: "Job listing not found." });
   target.status = status;
+  if (status === "rejected") {
+    const sig = `${target.company_name.toLowerCase()}_${target.title.toLowerCase()}`;
+    const norm = normalizeJobUrl(target.apply_link);
+    searchedRegistry[id] = {
+      id,
+      signature: sig,
+      normalized_url: norm,
+      company_name: target.company_name,
+      title: target.title,
+      status: "rejected",
+      discovered_at: target.discovered_at || (/* @__PURE__ */ new Date()).toISOString(),
+      rejected_at: (/* @__PURE__ */ new Date()).toISOString(),
+      last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    seenJobs[id] = (/* @__PURE__ */ new Date()).toISOString();
+    if (norm) seenJobs[norm] = (/* @__PURE__ */ new Date()).toISOString();
+    seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
+  }
   saveStoreToDisk();
-  res.json({ success: true, job: target, jobs: jobListings });
+  res.json({ success: true, job: target, jobs: jobListings, searched_registry: searchedRegistry });
 });
 app.post("/api/jobs/batch-status", (req, res) => {
   const { ids, status } = req.body;
@@ -5723,21 +6748,62 @@ app.post("/api/jobs/batch-status", (req, res) => {
     if (idSet.has(j.id)) {
       j.status = status;
       updatedCount++;
+      if (status === "rejected") {
+        const sig = `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`;
+        const norm = normalizeJobUrl(j.apply_link);
+        searchedRegistry[j.id] = {
+          id: j.id,
+          signature: sig,
+          normalized_url: norm,
+          company_name: j.company_name,
+          title: j.title,
+          status: "rejected",
+          discovered_at: j.discovered_at || (/* @__PURE__ */ new Date()).toISOString(),
+          rejected_at: (/* @__PURE__ */ new Date()).toISOString(),
+          last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
+        };
+        seenJobs[j.id] = (/* @__PURE__ */ new Date()).toISOString();
+        if (norm) seenJobs[norm] = (/* @__PURE__ */ new Date()).toISOString();
+        seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
+      }
     }
   });
   saveStoreToDisk();
-  res.json({ success: true, updatedCount, jobs: jobListings });
+  res.json({ success: true, updatedCount, jobs: jobListings, searched_registry: searchedRegistry });
 });
 app.post("/api/jobs/batch-delete", (req, res) => {
   const { ids } = req.body;
   if (!Array.isArray(ids)) {
     return res.status(400).json({ error: "ids array required" });
   }
-  const idSet = new Set(ids);
+  for (const id of ids) {
+    if (id) {
+      deletedJobIds.add(id);
+      const target = jobListings.find((j) => j.id === id);
+      if (target) {
+        const sig = `${target.company_name.toLowerCase()}_${target.title.toLowerCase()}`;
+        const norm = normalizeJobUrl(target.apply_link);
+        searchedRegistry[id] = {
+          id,
+          signature: sig,
+          normalized_url: norm,
+          company_name: target.company_name,
+          title: target.title,
+          status: "deleted",
+          discovered_at: target.discovered_at || (/* @__PURE__ */ new Date()).toISOString(),
+          rejected_at: (/* @__PURE__ */ new Date()).toISOString(),
+          last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
+        };
+        seenJobs[id] = (/* @__PURE__ */ new Date()).toISOString();
+        if (norm) seenJobs[norm] = (/* @__PURE__ */ new Date()).toISOString();
+        seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
+      }
+    }
+  }
   const initialCount = jobListings.length;
-  jobListings = jobListings.filter((j) => !idSet.has(j.id));
+  jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
   saveStoreToDisk();
-  res.json({ success: true, deletedCount: initialCount - jobListings.length, jobs: jobListings });
+  res.json({ success: true, deletedCount: initialCount - jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds), searched_registry: searchedRegistry });
 });
 app.post("/api/match", async (req, res) => {
   const { id } = req.body;
@@ -5898,6 +6964,10 @@ async function sendTelegramAlertForJob(target, custom_chat_id, custom_bot_token)
         };
       }
       console.log(`[Telegram] Successfully dispatched alert for ${target.title} to chat ${chatId}`);
+      if (target.status !== "applied") {
+        target.status = "notified";
+      }
+      saveStoreToDisk();
       return { delivered: true, simulated: false, message_html: htmlMessage, telegram_response: tgData, chat_id: chatId };
     } catch (err) {
       console.error("[Telegram] Network fetch exception:", err);
@@ -6053,7 +7123,7 @@ async function executeWorkflowCycle(trigger = "scheduled_4h") {
     const completedAt = (/* @__PURE__ */ new Date()).toISOString();
     workflowState.last_run = completedAt;
     const intervalMs = workflowState.interval_hours * 60 * 60 * 1e3;
-    workflowState.next_run = new Date(Date.now() + intervalMs).toISOString();
+    workflowState.next_run = new Date(Math.ceil((Date.now() + 1e3) / intervalMs) * intervalMs).toISOString();
     workflowState.total_runs++;
     setupWorkflowScheduler();
     const runSummary = trigger === "scheduled_4h" ? `Automated cycle: Scanned existing links (${expiredCount} expired identified), discovered ${newlyAdded.length} fresh jobs. Evaluated ${evaluatedCount} listings, ${highFitCount} high-fit matches, ${notifiedCount} Telegram alerts dispatched.` : `Automation cycle: Scanned links (${expiredCount} expired identified), discovered ${newlyAdded.length} fresh jobs. Evaluated ${evaluatedCount} listings, ${highFitCount} high-fit matches, ${notifiedCount} Telegram alerts dispatched.`;
@@ -6094,7 +7164,7 @@ async function executeWorkflowCycle(trigger = "scheduled_4h") {
       summary: `Workflow execution issue: ${err.message}`
     };
     const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1e3;
-    workflowState.next_run = new Date(Date.now() + intervalMs).toISOString();
+    workflowState.next_run = new Date(Math.ceil((Date.now() + 1e3) / intervalMs) * intervalMs).toISOString();
     workflowState.runs.unshift(failedLog);
     return { success: false, error: err.message, jobs: jobListings };
   } finally {
@@ -6202,11 +7272,12 @@ app.post("/api/workflow/config", (req, res) => {
   if (typeof enabled === "boolean") workflowState.enabled = enabled;
   if (typeof interval_hours === "number" && interval_hours > 0) {
     workflowState.interval_hours = interval_hours;
-    workflowState.next_run = new Date(Date.now() + interval_hours * 60 * 60 * 1e3).toISOString();
+    workflowState.next_run = getCanonicalNextRun(interval_hours);
   }
   if (typeof auto_notify_telegram === "boolean") {
     workflowState.auto_notify_telegram = auto_notify_telegram;
   }
+  workflowState.last_updated = (/* @__PURE__ */ new Date()).toISOString();
   setupWorkflowScheduler();
   saveStoreToDisk();
   res.json({ success: true, workflow: workflowState });
@@ -6233,9 +7304,88 @@ app.post("/api/telegram/notify", async (req, res) => {
     chat_id: custom_chat_id || appSettings.telegram_chat_id || "1368681854"
   });
 });
+app.get("/api/registry/stats", (req, res) => {
+  const values = Object.values(searchedRegistry);
+  const rejectedCount = values.filter((v) => v && (v.status === "rejected" || v.status === "deleted")).length;
+  res.json({
+    success: true,
+    stats: {
+      total_tracked: values.length,
+      rejected_count: rejectedCount,
+      retention_days: appSettings.seen_ttl_days || 30,
+      last_truncated_at: storeLastUpdated
+    }
+  });
+});
+app.post("/api/registry/truncate", (req, res) => {
+  const { ttl_days, max_capacity } = req.body || {};
+  const ttl = typeof ttl_days === "number" ? ttl_days : appSettings.seen_ttl_days || 30;
+  const maxCap = typeof max_capacity === "number" ? max_capacity : 5e3;
+  const result = truncateSearchedRegistry(ttl, maxCap);
+  saveStoreToDisk();
+  console.log(`[Registry] Truncated searched registry: pruned ${result.prunedCount}, remaining ${result.remainingCount}`);
+  res.json({
+    success: true,
+    pruned_count: result.prunedCount,
+    remaining_count: result.remainingCount,
+    registry: searchedRegistry
+  });
+});
+app.post("/api/registry/reset", (req, res) => {
+  const activeJobs = jobListings.filter((j) => !deletedJobIds.has(j.id));
+  for (const key of Object.keys(searchedRegistry)) {
+    delete searchedRegistry[key];
+  }
+  for (const j of activeJobs) {
+    const sig = `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`;
+    const normLink = normalizeJobUrl(j.apply_link);
+    searchedRegistry[j.id] = {
+      id: j.id,
+      signature: sig,
+      normalized_url: normLink,
+      company_name: j.company_name,
+      title: j.title,
+      status: j.status || "discovered",
+      discovered_at: j.discovered_at || (/* @__PURE__ */ new Date()).toISOString(),
+      last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
+    };
+  }
+  saveStoreToDisk();
+  res.json({ success: true, remaining_count: Object.keys(searchedRegistry).length });
+});
+app.get("/api/state/sync", (req, res) => {
+  workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
+  const activeJobs = jobListings.filter((j) => !deletedJobIds.has(j.id));
+  res.json({
+    success: true,
+    profile: currentProfile,
+    jobs: activeJobs,
+    stats: computePipelineStats(),
+    workflow: workflowState,
+    settings: appSettings,
+    searched_registry: searchedRegistry,
+    deleted_ids: Array.from(deletedJobIds),
+    last_updated: storeLastUpdated || (/* @__PURE__ */ new Date()).toISOString()
+  });
+});
 app.post("/api/state/sync", async (req, res) => {
-  const { jobs, profile, settings, workflow } = req.body;
+  const { jobs, profile, settings, workflow, deleted_ids, searched_registry, _replicated } = req.body;
   let modified = false;
+  if (Array.isArray(deleted_ids)) {
+    for (const id of deleted_ids) {
+      if (id && !deletedJobIds.has(id)) {
+        deletedJobIds.add(id);
+        modified = true;
+      }
+    }
+    if (deletedJobIds.size > 0) {
+      const prevCount = jobListings.length;
+      jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
+      if (jobListings.length !== prevCount) {
+        modified = true;
+      }
+    }
+  }
   if (profile && profile.full_name) {
     currentProfile = { ...currentProfile, ...profile };
     modified = true;
@@ -6246,14 +7396,28 @@ app.post("/api/state/sync", async (req, res) => {
   }
   if (workflow && typeof workflow === "object") {
     Object.assign(workflowState, workflow);
+    workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
+    modified = true;
+  }
+  if (searched_registry && typeof searched_registry === "object") {
+    Object.assign(searchedRegistry, searched_registry);
+    for (const [k, v] of Object.entries(searched_registry)) {
+      if (v && typeof v === "object") {
+        const item = v;
+        if (item.id) seenJobs[item.id] = item.last_seen_at || (/* @__PURE__ */ new Date()).toISOString();
+        if (item.signature) seenJobs[item.signature] = item.last_seen_at || (/* @__PURE__ */ new Date()).toISOString();
+        if (item.normalized_url) seenJobs[item.normalized_url] = item.last_seen_at || (/* @__PURE__ */ new Date()).toISOString();
+      }
+    }
     modified = true;
   }
   if (Array.isArray(jobs) && jobs.length > 0) {
+    const validJobs = jobs.filter((j) => j && j.id && !deletedJobIds.has(j.id));
     const existingMap = /* @__PURE__ */ new Map();
     for (const j of jobListings) {
       existingMap.set(j.id, j);
     }
-    for (const incJob of jobs) {
+    for (const incJob of validJobs) {
       if (!incJob || !incJob.id) continue;
       if (existingMap.has(incJob.id)) {
         const current = existingMap.get(incJob.id);
@@ -6265,25 +7429,50 @@ app.post("/api/state/sync", async (req, res) => {
           current.fit = incJob.fit;
           modified = true;
         }
+        if (incJob.tailored_resume && !current.tailored_resume) {
+          current.tailored_resume = incJob.tailored_resume;
+          current.cover_letter = incJob.cover_letter;
+          modified = true;
+        }
+        if (incJob.notes && incJob.notes !== current.notes) {
+          current.notes = incJob.notes;
+          modified = true;
+        }
       } else {
         jobListings.unshift(incJob);
         existingMap.set(incJob.id, incJob);
         seenJobs[incJob.id] = (/* @__PURE__ */ new Date()).toISOString();
+        const sig = `${incJob.company_name.toLowerCase()}_${incJob.title.toLowerCase()}`;
+        const normLink = normalizeJobUrl(incJob.apply_link);
+        searchedRegistry[incJob.id] = {
+          id: incJob.id,
+          signature: sig,
+          normalized_url: normLink,
+          company_name: incJob.company_name,
+          title: incJob.title,
+          status: incJob.status || "discovered",
+          discovered_at: incJob.discovered_at || (/* @__PURE__ */ new Date()).toISOString(),
+          last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
+        };
         modified = true;
       }
     }
   }
   if (modified) {
-    saveStoreToDisk();
+    saveStoreToDisk(!_replicated);
   }
+  workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
+  const activeJobs = jobListings.filter((j) => !deletedJobIds.has(j.id));
   res.json({
     success: true,
     profile: currentProfile,
-    jobs: jobListings,
+    jobs: activeJobs,
     stats: computePipelineStats(),
     workflow: workflowState,
     settings: appSettings,
-    last_updated: (/* @__PURE__ */ new Date()).toISOString()
+    searched_registry: searchedRegistry,
+    deleted_ids: Array.from(deletedJobIds),
+    last_updated: storeLastUpdated || (/* @__PURE__ */ new Date()).toISOString()
   });
 });
 app.post("/api/telegram/webhook", async (req, res) => {
@@ -6374,14 +7563,7 @@ app.post("/api/telegram/webhook", async (req, res) => {
   res.json({ ok: true });
 });
 app.get("/api/state", (req, res) => {
-  const now = Date.now();
-  const nextTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
-  const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1e3;
-  if (nextTime <= now) {
-    const elapsed = now - (workflowState.last_run ? new Date(workflowState.last_run).getTime() : now - intervalMs);
-    const remainingInCycle = intervalMs - elapsed % intervalMs;
-    workflowState.next_run = new Date(now + Math.max(remainingInCycle, 6e4)).toISOString();
-  }
+  workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
   res.json({
     profile: currentProfile,
     stats: computePipelineStats(),
@@ -6422,6 +7604,8 @@ app.post("/api/settings", (req, res) => {
   const effectiveToken = appSettings.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN;
   const effectiveChat = appSettings.telegram_chat_id || process.env.TELEGRAM_CHAT_ID;
   appSettings.telegram_configured = Boolean(effectiveToken && effectiveChat);
+  appSettings.last_updated = (/* @__PURE__ */ new Date()).toISOString();
+  saveStoreToDisk();
   res.json({ success: true, settings: appSettings });
 });
 async function startServer() {
@@ -6453,6 +7637,7 @@ if (!isServerless && isDirectRun) {
 var server_default = app;
 export {
   app,
-  server_default as default
+  server_default as default,
+  getCanonicalNextRun
 };
 //# sourceMappingURL=server.js.map

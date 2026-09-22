@@ -7,48 +7,141 @@ on:
   workflow_dispatch:
     inputs:
       app_url:
-        description: 'Optional custom CareerOps App URL to trigger'
+        description: 'Custom CareerOps App URL to trigger (optional)'
         required: false
         default: ''
+      wait_for_completion:
+        description: 'Wait for synchronous execution completion (true/false)'
+        required: false
+        default: 'true'
 
 jobs:
   trigger-pipeline:
+    name: Trigger CareerOps Workflow
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger CareerOps Webhook
+      - name: Dispatch Webhook Trigger
         env:
           INPUT_APP_URL: ${{ github.event.inputs.app_url }}
+          INPUT_WAIT: ${{ github.event.inputs.wait_for_completion }}
           SECRET_APP_URL: ${{ secrets.CAREEROPS_APP_URL }}
           VAR_APP_URL: ${{ vars.CAREEROPS_APP_URL }}
-          DEFAULT_APP_URL: 'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app'
+          PRIMARY_APP_URL: 'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app'
+          SECONDARY_APP_URL: 'https://ais-pre-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app'
         run: |
-          # Priority: Manual input > Secret > Variable > Default Deployed Cloud Run URL
-          APP_URL="${INPUT_APP_URL:-${SECRET_APP_URL:-${VAR_APP_URL:-$DEFAULT_APP_URL}}}"
-          
-          # Trim whitespace and remove trailing slashes
-          APP_URL="$(echo "$APP_URL" | xargs | sed 's:/*$::')"
+          set -e
 
-          if [ -z "$APP_URL" ]; then
-            echo "::error::No App URL found to trigger. Please set CAREEROPS_APP_URL in GitHub Repository Secrets or Variables."
+          # Determine target URLs with intelligent failover
+          CANDIDATE_URL="${INPUT_APP_URL:-${SECRET_APP_URL:-${VAR_APP_URL:-$PRIMARY_APP_URL}}}"
+          CANDIDATE_URL="$(echo "$CANDIDATE_URL" | xargs | sed 's:/*$::')"
+          
+          # List of target URLs to try in order
+          TARGETS=("$CANDIDATE_URL")
+          if [ "$CANDIDATE_URL" != "$SECONDARY_APP_URL" ] && [ -z "$INPUT_APP_URL" ]; then
+            TARGETS+=("$SECONDARY_APP_URL")
+          fi
+
+          WAIT_PARAM="${INPUT_WAIT:-true}"
+          QUERY_STRING=""
+          if [ "$WAIT_PARAM" = "true" ]; then
+            QUERY_STRING="?wait=true"
+          fi
+
+          SUCCESS=0
+          FINAL_URL=""
+          FINAL_RESPONSE=""
+          FINAL_STATUS=""
+
+          for URL in "${TARGETS[@]}"; do
+            ENDPOINT="$URL/api/cron/trigger$QUERY_STRING"
+            echo "----------------------------------------------------"
+            echo "Attempting trigger on: $ENDPOINT"
+
+            # Execute curl with timeout, retries, capturing HTTP status and response body
+            HTTP_OUTPUT=$(curl -s -S \
+              --connect-timeout 20 \
+              --max-time 90 \
+              --retry 2 \
+              --retry-delay 3 \
+              --retry-connrefused \
+              -X POST \
+              -H "User-Agent: CareerOps-GitHub-Cron/2.0" \
+              -H "Accept: application/json" \
+              -w "\n%{http_code}" \
+              "$ENDPOINT" 2>&1 || true)
+
+            # Separate response body and HTTP status code
+            HTTP_STATUS=$(echo "$HTTP_OUTPUT" | tail -n1)
+            BODY=$(echo "$HTTP_OUTPUT" | sed '$d')
+
+            echo "HTTP Status: $HTTP_STATUS"
+
+            if [[ "$HTTP_STATUS" =~ ^2[0-9][0-9]$ ]]; then
+              SUCCESS=1
+              FINAL_URL="$URL"
+              FINAL_RESPONSE="$BODY"
+              FINAL_STATUS="$HTTP_STATUS"
+              echo "Successfully reached CareerOps server ($HTTP_STATUS OK)"
+              break
+            else
+              echo "Server responded with non-2xx status ($HTTP_STATUS): $BODY"
+              # Fallback try GET method on same URL
+              echo "Retrying via GET request..."
+              GET_OUTPUT=$(curl -s -S \
+                --connect-timeout 20 \
+                --max-time 90 \
+                -X GET \
+                -H "User-Agent: CareerOps-GitHub-Cron/2.0" \
+                -H "Accept: application/json" \
+                -w "\n%{http_code}" \
+                "$ENDPOINT" 2>&1 || true)
+              
+              GET_STATUS=$(echo "$GET_OUTPUT" | tail -n1)
+              GET_BODY=$(echo "$GET_OUTPUT" | sed '$d')
+
+              if [[ "$GET_STATUS" =~ ^2[0-9][0-9]$ ]]; then
+                SUCCESS=1
+                FINAL_URL="$URL"
+                FINAL_RESPONSE="$GET_BODY"
+                FINAL_STATUS="$GET_STATUS"
+                echo "GET fallback succeeded ($GET_STATUS OK)"
+                break
+              fi
+            fi
+          done
+
+          echo "----------------------------------------------------"
+
+          # Write Markdown Summary to GitHub Step Summary
+          if [ -n "$GITHUB_STEP_SUMMARY" ]; then
+            {
+              echo "### 🚀 CareerOps Autonomous Workflow Trigger"
+              echo ""
+              if [ $SUCCESS -eq 1 ]; then
+                echo "- **Status**: ✅ **Trigger Succeeded** (HTTP $FINAL_STATUS)"
+                echo "- **Target URL**: \`$FINAL_URL\`"
+                echo "- **Trigger Timestamp**: \`$(date -u +"%Y-%m-%d %H:%M:%S UTC")\`"
+                echo ""
+                echo "#### 📋 Server Response"
+                echo "\`\`\`json"
+                echo "$FINAL_RESPONSE"
+                echo "\`\`\`"
+              else
+                echo "- **Status**: ❌ **Trigger Failed**"
+                echo "- **Tested Targets**: \`${TARGETS[*]}\`"
+                echo "- **Last Status Code**: \`$HTTP_STATUS\`"
+                echo ""
+                echo "#### ⚠️ Error Details"
+                echo "\`\`\`"
+                echo "$BODY"
+                echo "\`\`\`"
+              fi
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ $SUCCESS -ne 1 ]; then
+            echo "::error::Could not successfully trigger CareerOps webhook on any available endpoints."
             exit 1
           fi
 
-          if [ -z "$SECRET_APP_URL" ] && [ -z "$VAR_APP_URL" ] && [ -z "$INPUT_APP_URL" ]; then
-            echo "Notice: CAREEROPS_APP_URL secret/variable is not configured in Repository Settings."
-            echo "Using default live deployment URL: $APP_URL"
-            echo "To configure a custom URL, navigate to: Repository Settings -> Secrets and variables -> Actions -> New repository secret -> Name: CAREEROPS_APP_URL"
-          else
-            echo "Using configured App URL: $APP_URL"
-          fi
-
-          echo "Dispatching webhook to $APP_URL/api/cron/trigger..."
-          RESPONSE=$(curl -s -S --max-time 30 -X GET "$APP_URL/api/cron/trigger" 2>&1 || curl -s -S --max-time 30 -X POST "$APP_URL/api/cron/trigger" 2>&1)
-          CURL_EXIT=$?
-
-          if [ $CURL_EXIT -ne 0 ]; then
-            echo "::error::Failed to reach webhook at $APP_URL/api/cron/trigger (Exit code $CURL_EXIT): $RESPONSE"
-            exit $CURL_EXIT
-          fi
-
-          echo "Server Response: $RESPONSE"
-          echo "CareerOps autonomous workflow cycle triggered successfully!"
+          echo "CareerOps autonomous workflow triggered and executed successfully!"
