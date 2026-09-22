@@ -196,7 +196,10 @@ function evaluateCandidateFit(job: typeof ENTERPRISE_JOB_TEMPLATES[0], profile: 
 export async function runClientWorkflowCycle(
   currentJobs: JobListing[],
   profile: UserProfile,
-  settings: AppSettings
+  settings: AppSettings,
+  currentWorkflow?: WorkflowState,
+  deletedJobIds?: Set<string>,
+  searchedRegistry: Record<string, any> = {}
 ): Promise<{
   newly_added_count: number;
   high_fit_count: number;
@@ -204,20 +207,42 @@ export async function runClientWorkflowCycle(
   expired_count: number;
   jobs: JobListing[];
   workflow: WorkflowState;
+  new_searched_records?: Record<string, any>;
 }> {
   const existingUrls = new Set(currentJobs.map((j) => j.apply_link.toLowerCase()));
-  const existingIds = new Set(currentJobs.map((j) => j.id));
+  const existingIds = new Set(currentJobs.map((j) => j.id.toLowerCase()));
   const existingTitles = new Set(currentJobs.map((j) => `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`));
 
-  // Find candidate templates not yet in current state
+  // Add deleted IDs and searched/rejected registry entries
+  const deletedSet = deletedJobIds || new Set<string>();
+  const seenRegistryKeys = new Set<string>();
+  for (const [key, item] of Object.entries(searchedRegistry)) {
+    if (key) seenRegistryKeys.add(key.toLowerCase());
+    if (item) {
+      if (item.id) seenRegistryKeys.add(item.id.toLowerCase());
+      if (item.signature) seenRegistryKeys.add(item.signature.toLowerCase());
+      if (item.normalized_url) seenRegistryKeys.add(item.normalized_url.toLowerCase());
+      if (item.apply_link) seenRegistryKeys.add(item.apply_link.toLowerCase());
+    }
+  }
+
+  // Find candidate templates not yet in current state and not rejected/deleted
   const availableTemplates = ENTERPRISE_JOB_TEMPLATES.filter((tpl) => {
     const sig = `${tpl.company_name.toLowerCase()}_${tpl.title.toLowerCase()}`;
-    return !existingUrls.has(tpl.apply_link.toLowerCase()) && !existingTitles.has(sig);
+    const url = tpl.apply_link.toLowerCase();
+    return (
+      !existingUrls.has(url) &&
+      !existingTitles.has(sig) &&
+      !deletedSet.has(tpl.title) &&
+      !seenRegistryKeys.has(sig) &&
+      !seenRegistryKeys.has(url)
+    );
   });
 
   // Pick up to 3 fresh opportunities to add this cycle
   const toAdd = availableTemplates.slice(0, 3);
   const now = new Date();
+  const newSearchedRecords: Record<string, any> = {};
 
   const newlyDiscoveredJobs: JobListing[] = toAdd.map((tpl, index) => {
     const daysAgo = index === 0 ? 0 : 1;
@@ -225,6 +250,18 @@ export async function runClientWorkflowCycle(
     const safeId = 'job_' + Math.random().toString(36).substring(2, 11);
 
     const fitEvaluation = evaluateCandidateFit(tpl, profile);
+    const sig = `${tpl.company_name.toLowerCase()}_${tpl.title.toLowerCase()}`;
+
+    newSearchedRecords[safeId] = {
+      id: safeId,
+      signature: sig,
+      normalized_url: tpl.apply_link.toLowerCase(),
+      company_name: tpl.company_name,
+      title: tpl.title,
+      status: 'discovered',
+      discovered_at: now.toISOString(),
+      last_seen_at: now.toISOString(),
+    };
 
     return {
       id: safeId,
@@ -304,15 +341,17 @@ export async function runClientWorkflowCycle(
     summary: `Autonomous automation completed. Discovered ${newlyDiscoveredJobs.length} verified jobs, evaluated ${highFitCount} high-fit matches, sent ${notifiedCount} Telegram notification(s).`,
   };
 
+  const cadenceHours = currentWorkflow?.interval_hours || settings.workflow_interval_hours || 4;
   const workflow: WorkflowState = {
-    enabled: true,
-    interval_hours: 4,
+    enabled: currentWorkflow?.enabled ?? true,
+    interval_hours: cadenceHours,
     last_run: now.toISOString(),
-    next_run: getSynchronizedNextRunIso(4),
+    next_run: getSynchronizedNextRunIso(cadenceHours),
     is_running: false,
-    total_runs: 1,
-    auto_notify_telegram: !!settings.auto_notify_telegram,
-    runs: [runLog],
+    total_runs: (currentWorkflow?.total_runs || 0) + 1,
+    auto_notify_telegram: currentWorkflow?.auto_notify_telegram ?? !!settings.auto_notify_telegram,
+    runs: [runLog, ...(currentWorkflow?.runs || []).slice(0, 19)],
+    last_updated: now.toISOString(),
   };
 
   return {
@@ -322,5 +361,6 @@ export async function runClientWorkflowCycle(
     expired_count: 0,
     jobs: updatedJobs,
     workflow,
+    new_searched_records: newSearchedRecords,
   };
 }

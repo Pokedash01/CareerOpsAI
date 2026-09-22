@@ -786,7 +786,8 @@ export async function discoverJobsForProfile(
   queryTerm?: string,
   existingListings: JobListing[] = [],
   seenStore: Record<string, string> = {},
-  serpApiKey?: string
+  serpApiKey?: string,
+  searchedRegistry: Record<string, any> = {}
 ): Promise<JobListing[]> {
   const apiKey = serpApiKey || process.env.SERPAPI_KEY || 'GNLQpQWpHAMcEL9MguEkrxq1';
 
@@ -800,10 +801,21 @@ export async function discoverJobsForProfile(
 
   // 1. All records in persistent seenStore (safe_id, normalized link, company_title signature)
   for (const [key] of Object.entries(seenStore)) {
-    seenSet.add(key.toLowerCase());
+    if (key) seenSet.add(key.toLowerCase());
   }
 
-  // 2. All existing listings already in state
+  // 2. All records from searched & rejected jobs registry
+  for (const [key, item] of Object.entries(searchedRegistry)) {
+    if (key) seenSet.add(key.toLowerCase());
+    if (item) {
+      if (item.id) seenSet.add(item.id.toLowerCase());
+      if (item.signature) seenSet.add(item.signature.toLowerCase());
+      if (item.normalized_url) seenSet.add(item.normalized_url.toLowerCase());
+      if (item.apply_link) seenSet.add(normalizeJobUrl(item.apply_link).toLowerCase());
+    }
+  }
+
+  // 3. All existing listings already in state
   for (const job of existingListings) {
     seenSet.add(job.id.toLowerCase());
     if (job.apply_link) {

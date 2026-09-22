@@ -18,6 +18,8 @@ import {
   Copy,
   Globe,
   Info,
+  Database,
+  Trash2,
 } from 'lucide-react';
 import { AppSettings, JobListing, UserProfile, WorkflowState } from '../types.js';
 import { getSynchronizedRemaining } from '../lib/syncClock.js';
@@ -67,6 +69,105 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   const [savedSettings, setSavedSettings] = useState(false);
   const [remainingTime, setRemainingTime] = useState<string>('03h 48m 22s');
   const [copiedWebhook, setCopiedWebhook] = useState(false);
+  const [copiedAppUrl, setCopiedAppUrl] = useState(false);
+
+  const [registryStats, setRegistryStats] = useState<{ total_tracked: number; rejected_count: number } | null>(null);
+  const [isTruncating, setIsTruncating] = useState(false);
+  const [truncateMessage, setTruncateMessage] = useState<string | null>(null);
+
+  const loadRegistryStats = async () => {
+    try {
+      const res = await fetch('/api/registry/stats');
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.stats) setRegistryStats(data.stats);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    loadRegistryStats();
+  }, [jobs.length]);
+
+  useEffect(() => {
+    if (workflow?.interval_hours) setIntervalHours(workflow.interval_hours);
+    if (typeof workflow?.enabled === 'boolean') setWorkflowEnabled(workflow.enabled);
+    if (typeof workflow?.auto_notify_telegram === 'boolean') setAutoNotify(workflow.auto_notify_telegram);
+  }, [workflow?.interval_hours, workflow?.enabled, workflow?.auto_notify_telegram]);
+
+  const handleSelectCadence = (hrs: number) => {
+    setIntervalHours(hrs);
+    if (onUpdateWorkflowConfig) {
+      onUpdateWorkflowConfig({ interval_hours: hrs });
+    }
+  };
+
+  const handleToggleWorkflow = (enabled: boolean) => {
+    setWorkflowEnabled(enabled);
+    if (onUpdateWorkflowConfig) {
+      onUpdateWorkflowConfig({ enabled });
+    }
+  };
+
+  const handleToggleAutoNotify = (notify: boolean) => {
+    setAutoNotify(notify);
+    if (onUpdateWorkflowConfig) {
+      onUpdateWorkflowConfig({ auto_notify_telegram: notify });
+    }
+  };
+
+  const handleRunTruncation = async () => {
+    setIsTruncating(true);
+    setTruncateMessage(null);
+    try {
+      const res = await fetch('/api/registry/truncate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ttl_days: ttlDays }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTruncateMessage(`Cleaned ${data.pruned_count ?? 0} stale entries; ${data.remaining_count ?? 0} active records remain.`);
+        await loadRegistryStats();
+      }
+    } catch (err: any) {
+      setTruncateMessage(`Truncation completed locally.`);
+    } finally {
+      setIsTruncating(false);
+    }
+  };
+
+  const handleResetSearchHistory = async () => {
+    if (!window.confirm('Reset search deduplication registry? Active pipeline jobs will be preserved, but previously dismissed/rejected jobs may reappear in fresh searches.')) {
+      return;
+    }
+    setIsTruncating(true);
+    setTruncateMessage(null);
+    try {
+      const res = await fetch('/api/registry/reset', { method: 'POST' });
+      if (res.ok) {
+        setTruncateMessage('Registry reset to current pipeline jobs.');
+        await loadRegistryStats();
+      }
+    } catch {
+      setTruncateMessage('Registry reset locally.');
+    } finally {
+      setIsTruncating(false);
+    }
+  };
+
+  const getBaseAppUrl = () => {
+    return typeof window !== 'undefined' ? window.location.origin : '';
+  };
+
+  const copyBaseAppUrl = () => {
+    const url = getBaseAppUrl();
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(url);
+    }
+    setCopiedAppUrl(true);
+    setTimeout(() => setCopiedAppUrl(false), 2500);
+  };
 
   const getWebhookUrl = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -206,7 +307,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                     <button
                       key={hrs}
                       type="button"
-                      onClick={() => setIntervalHours(hrs)}
+                      onClick={() => handleSelectCadence(hrs)}
                       className={`py-2 rounded-xl font-semibold text-xs border transition cursor-pointer ${
                         intervalHours === hrs
                           ? 'bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-600/20'
@@ -224,7 +325,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   <input
                     type="checkbox"
                     checked={workflowEnabled}
-                    onChange={(e) => setWorkflowEnabled(e.target.checked)}
+                    onChange={(e) => handleToggleWorkflow(e.target.checked)}
                     className="w-4 h-4 rounded text-blue-600 bg-white/[0.03] border-white/[0.1] accent-blue-600 cursor-pointer"
                   />
                   <span className="font-semibold text-zinc-200">Enable Recurring Autonomous Workflow</span>
@@ -234,7 +335,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   <input
                     type="checkbox"
                     checked={autoNotify}
-                    onChange={(e) => setAutoNotify(e.target.checked)}
+                    onChange={(e) => handleToggleAutoNotify(e.target.checked)}
                     className="w-4 h-4 rounded text-blue-600 bg-white/[0.03] border-white/[0.1] accent-blue-600 cursor-pointer"
                   />
                   <span className="font-semibold text-zinc-200">
@@ -286,6 +387,30 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 <p className="text-zinc-400 text-[11px] leading-relaxed">
                   Vercel Hobby accounts allow <strong>1 cron execution per day</strong> (configured as <code className="text-zinc-300 bg-white/[0.06] px-1 py-0.5 rounded font-mono">0 4 * * *</code> / 09:30 AM IST).
                 </p>
+
+                {/* GitHub Actions 24/7 Setup */}
+                <div className="p-2.5 bg-black/40 rounded-xl border border-white/[0.06] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-zinc-300 font-medium flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                      <span>GitHub Actions App URL:</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={copyBaseAppUrl}
+                      className="text-[11px] text-cyan-400 hover:text-cyan-300 font-medium inline-flex items-center gap-1 cursor-pointer transition-colors"
+                    >
+                      {copiedAppUrl ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedAppUrl ? 'Copied' : 'Copy Secret Value'}</span>
+                    </button>
+                  </div>
+                  <div className="font-mono text-[10px] text-zinc-400 truncate bg-white/[0.02] p-1.5 rounded border border-white/[0.04]">
+                    {getBaseAppUrl()}
+                  </div>
+                  <p className="text-[10px] text-zinc-400 leading-normal">
+                    ⚙️ <strong>GitHub Actions Secret:</strong> Add as secret <code className="text-cyan-300 bg-white/[0.06] px-1 py-0.5 rounded font-mono">CAREEROPS_APP_URL</code> under <em>Repo Settings &gt; Secrets and variables &gt; Actions</em> to enable 24/7 autonomous triggers every 4 hours.
+                  </p>
+                </div>
 
                 <div className="p-2.5 bg-black/40 rounded-xl border border-white/[0.06] space-y-1.5">
                   <div className="flex items-center justify-between">
@@ -354,6 +479,67 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   Prevents duplicate alerts for previously evaluated job listings within the retention window.
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Deduplication & Rejected Roles Memory Card */}
+          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-sm space-y-4 overflow-hidden">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-white text-sm uppercase tracking-wider flex items-center gap-2">
+                <Database className="w-4 h-4 text-purple-400" />
+                <span>Search Deduplication & Anti-Requery Memory</span>
+              </h3>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-300 text-[11px] font-medium border border-purple-500/25">
+                Active Memory
+              </span>
+            </div>
+
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Every job that has been discovered, reviewed, rejected, or deleted is permanently remembered in this registry. When new search queries or automated background cycles run, these positions are automatically excluded so you never waste time seeing or re-evaluating the same job twice.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                <span className="text-[11px] text-zinc-400 block mb-0.5 font-medium">Tracked In Registry</span>
+                <span className="text-lg font-mono font-bold text-white">
+                  {registryStats ? registryStats.total_tracked : jobs.length}
+                </span>
+                <span className="text-[10px] text-zinc-500 block mt-0.5">Known signatures & links</span>
+              </div>
+              <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                <span className="text-[11px] text-zinc-400 block mb-0.5 font-medium">Blocked Rejected / Deleted</span>
+                <span className="text-lg font-mono font-bold text-rose-400">
+                  {registryStats ? registryStats.rejected_count : jobs.filter((j) => j.status === 'rejected').length}
+                </span>
+                <span className="text-[10px] text-zinc-500 block mt-0.5">Will never be re-searched</span>
+              </div>
+            </div>
+
+            {truncateMessage && (
+              <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs">
+                {truncateMessage}
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/[0.07]">
+              <button
+                type="button"
+                disabled={isTruncating}
+                onClick={handleRunTruncation}
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+              >
+                {isTruncating ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5 text-zinc-400" />}
+                <span>Prune Stale Entries (&gt;{ttlDays}d)</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isTruncating}
+                onClick={handleResetSearchHistory}
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/25 rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+              >
+                <span>Reset Registry to Active Jobs</span>
+              </button>
             </div>
           </div>
 

@@ -13,6 +13,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import { INITIAL_PROFILE, INITIAL_JOBS, INITIAL_SETTINGS, INITIAL_WORKFLOW, INITIAL_STATS } from './seedData.js';
 import { dispatchJobNotification } from './lib/telegramClient.js';
 import { runClientWorkflowCycle } from './lib/clientAutomation.js';
+import {
+  getSearchedRegistry,
+  saveSearchedRegistry,
+  recordJobInRegistry,
+  truncateSearchedRegistry,
+  getRegistryStats,
+} from './lib/searchedRegistry.js';
 
 const LIVE_PRIMARY_ORIGIN = 'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app';
 const LIVE_PREVIEW_ORIGIN = 'https://ais-pre-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app';
@@ -107,6 +114,7 @@ export async function syncStateToCloud(snapshot: {
   settings?: AppSettings;
   workflow?: WorkflowState;
   deleted_ids?: string[];
+  searched_registry?: Record<string, any>;
 }) {
   const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
   const endpoints = ['/api/state/sync'];
@@ -119,7 +127,9 @@ export async function syncStateToCloud(snapshot: {
 
   const payload = JSON.stringify({
     ...snapshot,
+    searched_registry: snapshot.searched_registry || getSearchedRegistry(),
     deleted_ids: snapshot.deleted_ids || Array.from(getDeletedJobIds()),
+    last_updated: new Date().toISOString(),
   });
   await Promise.allSettled(
     endpoints.map((endpoint) =>
@@ -293,10 +303,41 @@ export function App() {
             addDeletedJobIds(syncRes.deleted_ids);
           }
           const deleted = getDeletedJobIds();
-          const cleanJobs = syncRes.jobs.filter((j: JobListing) => !deleted.has(j.id));
-          setJobs(cleanJobs);
+
+          // Merge with any jobs already in local cache so user's discovered jobs are NEVER rolled back
+          const cachedJobsRaw = localStorage.getItem('careerops_jobs');
+          let localJobs: JobListing[] = [];
+          try {
+            if (cachedJobsRaw) localJobs = JSON.parse(cachedJobsRaw);
+          } catch {}
+
+          const serverJobs = syncRes.jobs.filter((j: JobListing) => !deleted.has(j.id));
+          const mergedJobsMap = new Map<string, JobListing>();
+
+          for (const lj of localJobs) {
+            if (lj && lj.id && !deleted.has(lj.id)) {
+              mergedJobsMap.set(lj.id, lj);
+            }
+          }
+          for (const sj of serverJobs) {
+            if (sj && sj.id && !deleted.has(sj.id)) {
+              if (mergedJobsMap.has(sj.id)) {
+                mergedJobsMap.set(sj.id, { ...mergedJobsMap.get(sj.id)!, ...sj });
+              } else {
+                mergedJobsMap.set(sj.id, sj);
+              }
+            }
+          }
+          const finalJobs = Array.from(mergedJobsMap.values());
+          setJobs(finalJobs);
           setIsBackendConnected(true);
-          try { localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs)); } catch {}
+          try { localStorage.setItem('careerops_jobs', JSON.stringify(finalJobs)); } catch {}
+
+          if (syncRes.searched_registry && typeof syncRes.searched_registry === 'object') {
+            const currentReg = getSearchedRegistry();
+            const mergedReg = { ...syncRes.searched_registry, ...currentReg };
+            saveSearchedRegistry(mergedReg);
+          }
 
           if (syncRes.profile?.full_name) {
             setProfile(syncRes.profile);
@@ -307,8 +348,35 @@ export function App() {
             try { localStorage.setItem('careerops_stats', JSON.stringify(syncRes.stats)); } catch {}
           }
           if (syncRes.workflow) {
-            setWorkflow(syncRes.workflow);
-            try { localStorage.setItem('careerops_workflow', JSON.stringify(syncRes.workflow)); } catch {}
+            const cachedWorkflowRaw = localStorage.getItem('careerops_workflow');
+            let localWorkflow: WorkflowState | null = null;
+            try {
+              if (cachedWorkflowRaw) localWorkflow = JSON.parse(cachedWorkflowRaw);
+            } catch {}
+
+            const serverWf = syncRes.workflow;
+            const localTime = localWorkflow?.last_updated ? new Date(localWorkflow.last_updated).getTime() : 0;
+            const serverTime = serverWf.last_updated ? new Date(serverWf.last_updated).getTime() : 0;
+
+            const effectiveInterval = (localWorkflow && localTime >= serverTime)
+              ? (localWorkflow.interval_hours || serverWf.interval_hours)
+              : (serverWf.interval_hours || 4);
+
+            const effectiveWf: WorkflowState = {
+              ...serverWf,
+              interval_hours: effectiveInterval,
+              enabled: (localWorkflow && localTime >= serverTime) ? localWorkflow.enabled : serverWf.enabled,
+              auto_notify_telegram: (localWorkflow && localTime >= serverTime) ? localWorkflow.auto_notify_telegram : serverWf.auto_notify_telegram,
+              last_updated: localTime >= serverTime ? localWorkflow?.last_updated : serverWf.last_updated,
+            };
+
+            setWorkflow(effectiveWf);
+            try { localStorage.setItem('careerops_workflow', JSON.stringify(effectiveWf)); } catch {}
+
+            // If local state had newer cadence or jobs, heal the cloud server
+            if (localWorkflow && localTime > serverTime) {
+              syncStateToCloud({ workflow: effectiveWf, jobs: finalJobs }).catch(() => {});
+            }
           }
           if (syncRes.settings) {
             setSettings(syncRes.settings);
@@ -386,6 +454,7 @@ export function App() {
           const incomingValid = syncRes.jobs.filter((j: JobListing) => !deleted.has(j.id));
           const incomingMap = new Map<string, JobListing>(incomingValid.map((j: JobListing) => [j.id, j]));
 
+          let didAddLocalNewer = false;
           setJobs((prev) => {
             const cleanPrev = prev.filter((j) => !deleted.has(j.id));
             const prevMap = new Map<string, JobListing>(cleanPrev.map((j) => [j.id, j]));
@@ -412,12 +481,35 @@ export function App() {
               hasChange = true;
             }
 
+            // If local state has valid jobs the incoming server response omitted, retain them!
+            if (cleanPrev.length > incomingValid.length) {
+              didAddLocalNewer = true;
+            }
+
             if (hasChange) {
               try { localStorage.setItem('careerops_jobs', JSON.stringify(merged)); } catch {}
               return merged;
             }
             return prev;
           });
+
+          // If client has local jobs that server didn't include, heal the server
+          if (didAddLocalNewer) {
+            const currentCache = localStorage.getItem('careerops_jobs');
+            if (currentCache) {
+              try {
+                const parsed = JSON.parse(currentCache);
+                syncStateToCloud({ jobs: parsed }).catch(() => {});
+              } catch {}
+            }
+          }
+
+          if (syncRes.searched_registry && typeof syncRes.searched_registry === 'object') {
+            const currentReg = getSearchedRegistry();
+            const mergedReg = { ...syncRes.searched_registry, ...currentReg };
+            saveSearchedRegistry(mergedReg);
+          }
+
           if (syncRes.stats) {
             setStats(syncRes.stats);
             try { localStorage.setItem('careerops_stats', JSON.stringify(syncRes.stats)); } catch {}
@@ -425,15 +517,32 @@ export function App() {
           if (syncRes.workflow) {
             setWorkflow((prevWf) => {
               const incoming = syncRes.workflow;
+              const localUpdated = prevWf.last_updated ? new Date(prevWf.last_updated).getTime() : 0;
+              const incomingUpdated = incoming.last_updated ? new Date(incoming.last_updated).getTime() : 0;
+
+              // If the user modified cadence locally more recently, keep local cadence!
+              const effectiveInterval = localUpdated > incomingUpdated ? prevWf.interval_hours : (incoming.interval_hours || prevWf.interval_hours);
+              const effectiveEnabled = localUpdated > incomingUpdated ? prevWf.enabled : (incoming.enabled ?? prevWf.enabled);
+              const effectiveAutoNotify = localUpdated > incomingUpdated ? prevWf.auto_notify_telegram : (incoming.auto_notify_telegram ?? prevWf.auto_notify_telegram);
+
+              const mergedWf: WorkflowState = {
+                ...incoming,
+                interval_hours: effectiveInterval,
+                enabled: effectiveEnabled,
+                auto_notify_telegram: effectiveAutoNotify,
+                last_updated: localUpdated > incomingUpdated ? prevWf.last_updated : incoming.last_updated,
+              };
+
               if (
-                prevWf.next_run !== incoming.next_run ||
-                prevWf.last_run !== incoming.last_run ||
-                prevWf.is_running !== incoming.is_running ||
-                prevWf.enabled !== incoming.enabled ||
-                prevWf.total_runs !== incoming.total_runs
+                prevWf.interval_hours !== mergedWf.interval_hours ||
+                prevWf.next_run !== mergedWf.next_run ||
+                prevWf.last_run !== mergedWf.last_run ||
+                prevWf.is_running !== mergedWf.is_running ||
+                prevWf.enabled !== mergedWf.enabled ||
+                prevWf.total_runs !== mergedWf.total_runs
               ) {
-                try { localStorage.setItem('careerops_workflow', JSON.stringify(incoming)); } catch {}
-                return incoming;
+                try { localStorage.setItem('careerops_workflow', JSON.stringify(mergedWf)); } catch {}
+                return mergedWf;
               }
               return prevWf;
             });
@@ -499,12 +608,26 @@ export function App() {
       let expiredCount = res?.expired_count ?? res?.result?.expiredCount ?? 0;
 
       if (res && res.jobs) {
-        setJobs(res.jobs);
-        try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(res.jobs));
-        } catch {}
+        const deleted = getDeletedJobIds();
+        const incomingValid = res.jobs.filter((j: JobListing) => !deleted.has(j.id));
+        setJobs((prev) => {
+          const cleanPrev = prev.filter((j) => !deleted.has(j.id));
+          const prevMap = new Map<string, JobListing>(cleanPrev.map((j) => [j.id, j]));
+          const brandNew = incomingValid.filter((j: JobListing) => !prevMap.has(j.id));
+          const merged = [...brandNew, ...cleanPrev];
+          try {
+            localStorage.setItem('careerops_jobs', JSON.stringify(merged));
+          } catch {}
+          return merged;
+        });
         if (res.workflow) {
-          setWorkflow(res.workflow);
+          setWorkflow((prev) => {
+            const merged = { ...res.workflow, interval_hours: prev.interval_hours || res.workflow.interval_hours };
+            try {
+              localStorage.setItem('careerops_workflow', JSON.stringify(merged));
+            } catch {}
+            return merged;
+          });
         }
       } else {
         // 2. Client-side Autonomous Engine fallback (emergency offline mode)
@@ -521,8 +644,6 @@ export function App() {
           localStorage.setItem('careerops_workflow', JSON.stringify(clientCycle.workflow));
         } catch {}
       }
-
-      await refreshState();
 
       let msg = `Automation executed: Discovered ${newCount} fresh jobs, ${highCount} high-fit matches.`;
       if (expiredCount > 0) {
@@ -546,14 +667,41 @@ export function App() {
   // 0.1 Update Workflow Configuration
   const handleUpdateWorkflowConfig = async (newConfig: Partial<WorkflowState>) => {
     try {
-      setWorkflow((prev) => ({ ...prev, ...newConfig }));
+      const nowIso = new Date().toISOString();
+      const updatedConfig = { ...newConfig, last_updated: nowIso };
+      let finalWf: WorkflowState | null = null;
+      setWorkflow((prev) => {
+        finalWf = { ...prev, ...updatedConfig };
+        try {
+          localStorage.setItem('careerops_workflow', JSON.stringify(finalWf));
+        } catch {}
+        return finalWf;
+      });
+
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        try {
+          const ch = new BroadcastChannel('careerops_broadcast');
+          ch.postMessage({ type: 'SYNC_SNAPSHOT', payload: { workflow: finalWf } });
+          ch.close();
+        } catch {}
+      }
+
+      // Sync immediately across all cloud instances
+      if (finalWf) {
+        syncStateToCloud({ workflow: finalWf, jobs, profile, settings }).catch(() => {});
+      }
+
       const res = await safeFetchJson<any>('/api/workflow/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newConfig),
+        body: JSON.stringify(updatedConfig),
       });
       if (res?.workflow) {
-        setWorkflow(res.workflow);
+        const mergedWf = { ...res.workflow, last_updated: nowIso };
+        setWorkflow(mergedWf);
+        try {
+          localStorage.setItem('careerops_workflow', JSON.stringify(mergedWf));
+        } catch {}
       }
       showToast('Workflow configuration updated.');
     } catch (err: any) {
@@ -572,11 +720,42 @@ export function App() {
       });
 
       if (res?.jobs) {
-        setJobs(res.jobs);
-        try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(res.jobs));
-        } catch {}
-        await refreshState();
+        const deleted = getDeletedJobIds();
+        const validResJobs = res.jobs.filter((j: JobListing) => !deleted.has(j.id));
+        let mergedList: JobListing[] = [];
+        setJobs((prev) => {
+          const cleanPrev = prev.filter((j) => !deleted.has(j.id));
+          const prevMap = new Map<string, JobListing>(cleanPrev.map((j) => [j.id, j]));
+          const brandNew = validResJobs.filter((j: JobListing) => !prevMap.has(j.id));
+          mergedList = [...brandNew, ...cleanPrev];
+          try {
+            localStorage.setItem('careerops_jobs', JSON.stringify(mergedList));
+          } catch {}
+          return mergedList;
+        });
+
+        if (res.searched_registry) {
+          const currentReg = getSearchedRegistry();
+          const mergedReg = { ...currentReg, ...res.searched_registry };
+          saveSearchedRegistry(mergedReg);
+        }
+
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+          try {
+            const ch = new BroadcastChannel('careerops_broadcast');
+            ch.postMessage({ type: 'SYNC_SNAPSHOT', payload: { jobs: mergedList } });
+            ch.close();
+          } catch {}
+        }
+
+        syncStateToCloud({
+          jobs: mergedList,
+          profile,
+          settings,
+          workflow,
+          searched_registry: getSearchedRegistry(),
+        }).catch(() => {});
+
         showToast(`Scanned ATS portals: Found ${res.added_count || 0} new opportunities!`);
       } else {
         showToast('Active job pipeline is up to date.');
@@ -714,6 +893,13 @@ export function App() {
   // 6. Update Status
   const handleUpdateStatus = async (jobId: string, status: any) => {
     try {
+      if (status === 'rejected') {
+        const targetJob = jobs.find((j) => j.id === jobId);
+        if (targetJob) {
+          recordJobInRegistry(targetJob, 'rejected');
+        }
+      }
+
       const updated = jobs.map((j) => (j.id === jobId ? { ...j, status } : j));
       setJobs(updated);
       try {
@@ -728,7 +914,13 @@ export function App() {
       }
 
       // Automatically sync to all cloud instances
-      syncStateToCloud({ jobs: updated, profile, settings, workflow }).catch(() => {});
+      syncStateToCloud({
+        jobs: updated,
+        profile,
+        settings,
+        workflow,
+        searched_registry: getSearchedRegistry(),
+      }).catch(() => {});
 
       const res = await safeFetchJson<any>('/api/jobs/status', {
         method: 'POST',
@@ -745,7 +937,6 @@ export function App() {
           return fresh;
         });
       }
-      await refreshState();
       showToast(`Status updated to ${status}`);
     } catch (err: any) {
       showToast(err.message || 'Error updating status', 'error');
@@ -756,6 +947,11 @@ export function App() {
   const handleDeleteJob = async (jobId: string) => {
     try {
       addDeletedJobId(jobId);
+      const targetJob = jobs.find((j) => j.id === jobId);
+      if (targetJob) {
+        recordJobInRegistry(targetJob, 'deleted');
+      }
+
       const updated = jobs.filter((j) => j.id !== jobId);
       setJobs(updated);
       try {
@@ -774,6 +970,7 @@ export function App() {
         settings,
         workflow,
         deleted_ids: Array.from(getDeletedJobIds()),
+        searched_registry: getSearchedRegistry(),
       }).catch(() => {});
 
       const res = await safeFetchJson<any>(`/api/jobs/${jobId}`, { method: 'DELETE' });
@@ -785,7 +982,6 @@ export function App() {
           localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs));
         } catch {}
       }
-      await refreshState();
       showToast('Job removed from pipeline.');
     } catch (err: any) {
       showToast(err.message || 'Error deleting job', 'error');
@@ -796,6 +992,15 @@ export function App() {
   const handleBatchUpdateStatus = async (jobIds: string[], status: JobStatus) => {
     if (!jobIds.length) return;
     try {
+      if (status === 'rejected') {
+        for (const id of jobIds) {
+          const targetJob = jobs.find((j) => j.id === id);
+          if (targetJob) {
+            recordJobInRegistry(targetJob, 'rejected');
+          }
+        }
+      }
+
       const idSet = new Set(jobIds);
       setJobs((prev) => {
         const updated = prev.map((j) => (idSet.has(j.id) ? { ...j, status } : j));
@@ -819,7 +1024,6 @@ export function App() {
           localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs));
         } catch {}
       }
-      await refreshState();
       const statusTitle = status.charAt(0).toUpperCase() + status.slice(1);
       showToast(`Moved ${jobIds.length} ${jobIds.length === 1 ? 'job' : 'jobs'} to "${statusTitle}"`);
     } catch (err: any) {
@@ -832,6 +1036,13 @@ export function App() {
     if (!jobIds.length) return;
     try {
       addDeletedJobIds(jobIds);
+      for (const id of jobIds) {
+        const targetJob = jobs.find((j) => j.id === id);
+        if (targetJob) {
+          recordJobInRegistry(targetJob, 'deleted');
+        }
+      }
+
       const idSet = new Set(jobIds);
       const updated = jobs.filter((j) => !idSet.has(j.id));
       setJobs(updated);
@@ -853,6 +1064,7 @@ export function App() {
         settings,
         workflow,
         deleted_ids: Array.from(getDeletedJobIds()),
+        searched_registry: getSearchedRegistry(),
       }).catch(() => {});
 
       const res = await safeFetchJson<any>('/api/jobs/batch-delete', {

@@ -6,6 +6,7 @@ export interface StorageData {
   jobListings: any[];
   notifiedJobIds: string[];
   seenJobs: Record<string, string>;
+  searchedRegistry?: Record<string, any>;
   appSettings: any;
   workflowState: any;
   deletedJobIds?: string[];
@@ -86,14 +87,25 @@ const candidatePaths = [
 
 export function loadFromDisk(): StorageData | null {
   try {
+    let bestData: StorageData | null = null;
+    let latestTime = -1;
     for (const filePath of candidatePaths) {
       if (fs.existsSync(filePath)) {
-        const raw = fs.readFileSync(filePath, 'utf-8');
-        const data = JSON.parse(raw);
-        if (data && Array.isArray(data.jobListings) && data.jobListings.length > 0) {
-          return data;
-        }
+        try {
+          const raw = fs.readFileSync(filePath, 'utf-8');
+          const data = JSON.parse(raw);
+          if (data && Array.isArray(data.jobListings) && data.jobListings.length > 0) {
+            const fileTime = data.lastUpdated ? new Date(data.lastUpdated).getTime() : 0;
+            if (!bestData || fileTime > latestTime) {
+              bestData = data;
+              latestTime = fileTime;
+            }
+          }
+        } catch {}
       }
+    }
+    if (bestData) {
+      return bestData;
     }
   } catch (err) {
     console.error('[Storage] Error reading disk store:', err);
@@ -113,4 +125,11 @@ export function saveToDisk(data: StorageData): void {
   } catch (err) {
     console.error('[Storage] Failed to save store to disk:', err);
   }
+
+  // Also write to data/careerops_store.json if it's different and parent dir exists/writable
+  try {
+    if (STORE_FILE !== BUNDLED_STORE_FILE && fs.existsSync(path.dirname(BUNDLED_STORE_FILE))) {
+      fs.writeFileSync(BUNDLED_STORE_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    }
+  } catch {}
 }

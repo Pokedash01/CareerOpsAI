@@ -2,9 +2,14 @@ name: CareerOps 24/7 Autonomous Alert Trigger
 
 on:
   schedule:
-    # Run every 4 hours automatically around the clock
+    # Run every 4 hours automatically around the clock (00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC)
     - cron: '0 */4 * * *'
-  workflow_dispatch: # Allows manual trigger from GitHub UI
+  workflow_dispatch:
+    inputs:
+      app_url:
+        description: 'Optional custom CareerOps App URL to trigger'
+        required: false
+        default: ''
 
 jobs:
   trigger-pipeline:
@@ -12,12 +17,38 @@ jobs:
     steps:
       - name: Trigger CareerOps Webhook
         env:
-          APP_URL: ${{ secrets.CAREEROPS_APP_URL }}
+          INPUT_APP_URL: ${{ github.event.inputs.app_url }}
+          SECRET_APP_URL: ${{ secrets.CAREEROPS_APP_URL }}
+          VAR_APP_URL: ${{ vars.CAREEROPS_APP_URL }}
+          DEFAULT_APP_URL: 'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app'
         run: |
+          # Priority: Manual input > Secret > Variable > Default Deployed Cloud Run URL
+          APP_URL="${INPUT_APP_URL:-${SECRET_APP_URL:-${VAR_APP_URL:-$DEFAULT_APP_URL}}}"
+          
+          # Trim whitespace and remove trailing slashes
+          APP_URL="$(echo "$APP_URL" | xargs | sed 's:/*$::')"
+
           if [ -z "$APP_URL" ]; then
-            echo "CAREEROPS_APP_URL secret is not set. Please set it in Repository Secrets to your deployed Cloud Run or Render URL."
+            echo "::error::No App URL found to trigger. Please set CAREEROPS_APP_URL in GitHub Repository Secrets or Variables."
             exit 1
           fi
+
+          if [ -z "$SECRET_APP_URL" ] && [ -z "$VAR_APP_URL" ] && [ -z "$INPUT_APP_URL" ]; then
+            echo "Notice: CAREEROPS_APP_URL secret/variable is not configured in Repository Settings."
+            echo "Using default live deployment URL: $APP_URL"
+            echo "To configure a custom URL, navigate to: Repository Settings -> Secrets and variables -> Actions -> New repository secret -> Name: CAREEROPS_APP_URL"
+          else
+            echo "Using configured App URL: $APP_URL"
+          fi
+
           echo "Dispatching webhook to $APP_URL/api/cron/trigger..."
-          curl -s -f -X GET "$APP_URL/api/cron/trigger" || curl -s -f -X POST "$APP_URL/api/cron/trigger"
-          echo "Webhook successfully dispatched!"
+          RESPONSE=$(curl -s -S --max-time 30 -X GET "$APP_URL/api/cron/trigger" 2>&1 || curl -s -S --max-time 30 -X POST "$APP_URL/api/cron/trigger" 2>&1)
+          CURL_EXIT=$?
+
+          if [ $CURL_EXIT -ne 0 ]; then
+            echo "::error::Failed to reach webhook at $APP_URL/api/cron/trigger (Exit code $CURL_EXIT): $RESPONSE"
+            exit $CURL_EXIT
+          fi
+
+          echo "Server Response: $RESPONSE"
+          echo "CareerOps autonomous workflow cycle triggered successfully!"

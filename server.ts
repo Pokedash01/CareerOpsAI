@@ -73,11 +73,73 @@ let jobListings: JobListing[] = INITIAL_JOBS.filter(
 const notifiedJobIds = new Set<string>();
 const deletedJobIds = new Set<string>();
 const seenJobs: Record<string, string> = {};
+const searchedRegistry: Record<string, any> = {};
+let storeLastUpdated: string = new Date().toISOString();
 
 // Permanently blacklist fake/dead SOTI seed in memory
 seenJobs['9dfe6112a2137e75'] = new Date().toISOString();
 seenJobs['https://soti.careers/jobs/bi-solutions-analyst-gurugram'] = new Date().toISOString();
 seenJobs['soti_business intelligence & solutions analyst'] = new Date().toISOString();
+
+// Pre-populate searchedRegistry with initial job listings
+for (const j of jobListings) {
+  const sig = `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`;
+  const normLink = normalizeJobUrl(j.apply_link);
+  searchedRegistry[j.id] = {
+    id: j.id,
+    signature: sig,
+    normalized_url: normLink,
+    company_name: j.company_name,
+    title: j.title,
+    status: j.status || 'discovered',
+    discovered_at: j.discovered_at || new Date().toISOString(),
+    last_seen_at: new Date().toISOString(),
+  };
+}
+
+/**
+ * Truncates searchedRegistry based on retention policy and maximum capacity.
+ * To strictly follow user intent ("if the job is already searched for, don't research even if I have rejected it"),
+ * rejected roles are preserved with extended retention (2x TTL) and prioritized during capacity prunes.
+ */
+function truncateSearchedRegistry(ttlDays: number = 30, maxCapacity: number = 5000): { prunedCount: number; remainingCount: number } {
+  const now = Date.now();
+  const cutoffMs = ttlDays * 24 * 3600 * 1000;
+  let prunedCount = 0;
+  const entries = Object.entries(searchedRegistry);
+  for (const [key, item] of entries) {
+    if (!item) continue;
+    const isRejected = item.status === 'rejected' || item.status === 'deleted';
+    const retentionMs = isRejected ? cutoffMs * 2 : cutoffMs;
+    const itemTime = item.last_seen_at ? new Date(item.last_seen_at).getTime() : 0;
+    if (now - itemTime > retentionMs) {
+      delete searchedRegistry[key];
+      delete seenJobs[key];
+      prunedCount++;
+    }
+  }
+  const remainingKeys = Object.keys(searchedRegistry);
+  if (remainingKeys.length > maxCapacity) {
+    const sorted = remainingKeys
+      .map((k) => ({ key: k, item: searchedRegistry[k] }))
+      .sort((a, b) => {
+        const aIsRejected = a.item?.status === 'rejected' || a.item?.status === 'deleted';
+        const bIsRejected = b.item?.status === 'rejected' || b.item?.status === 'deleted';
+        if (aIsRejected && !bIsRejected) return 1;
+        if (bIsRejected && !aIsRejected) return -1;
+        const aTime = a.item?.last_seen_at ? new Date(a.item.last_seen_at).getTime() : 0;
+        const bTime = b.item?.last_seen_at ? new Date(b.item.last_seen_at).getTime() : 0;
+        return aTime - bTime;
+      });
+    const toRemove = sorted.slice(0, remainingKeys.length - maxCapacity);
+    for (const { key } of toRemove) {
+      delete searchedRegistry[key];
+      delete seenJobs[key];
+      prunedCount++;
+    }
+  }
+  return { prunedCount, remainingCount: Object.keys(searchedRegistry).length };
+}
 
 const appSettings: AppSettings & { serpapi_key?: string } = {
   min_match_score: 75,
@@ -159,6 +221,20 @@ function applyLoadedData(data: any) {
   }
   if (data.seenJobs && typeof data.seenJobs === 'object') {
     Object.assign(seenJobs, data.seenJobs);
+  }
+  if (data.searchedRegistry && typeof data.searchedRegistry === 'object') {
+    Object.assign(searchedRegistry, data.searchedRegistry);
+    for (const [key, item] of Object.entries(data.searchedRegistry)) {
+      if (item && typeof item === 'object') {
+        const anyItem = item as any;
+        if (anyItem.id) seenJobs[anyItem.id] = anyItem.last_seen_at || new Date().toISOString();
+        if (anyItem.signature) seenJobs[anyItem.signature] = anyItem.last_seen_at || new Date().toISOString();
+        if (anyItem.normalized_url) seenJobs[anyItem.normalized_url] = anyItem.last_seen_at || new Date().toISOString();
+      }
+    }
+  }
+  if (data.lastUpdated) {
+    storeLastUpdated = data.lastUpdated;
   }
 
   // Ensure fake/dead SOTI seed is registered in seenJobs
@@ -247,6 +323,8 @@ async function replicateToPeers(data: StorageData) {
           settings: data.appSettings,
           workflow: data.workflowState,
           deleted_ids: data.deletedJobIds,
+          searched_registry: data.searchedRegistry,
+          last_updated: data.lastUpdated,
           _replicated: true,
         }),
       }).catch(() => {});
@@ -257,15 +335,19 @@ async function replicateToPeers(data: StorageData) {
 function saveStoreToDisk(shouldReplicate = true) {
   try {
     workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
+    storeLastUpdated = new Date().toISOString();
+    workflowState.last_updated = storeLastUpdated;
+    appSettings.last_updated = storeLastUpdated;
     const data: StorageData = {
       currentProfile,
       jobListings: jobListings.filter((j) => !deletedJobIds.has(j.id)),
       notifiedJobIds: Array.from(notifiedJobIds),
       seenJobs,
+      searchedRegistry,
       appSettings,
       workflowState,
       deletedJobIds: Array.from(deletedJobIds),
-      lastUpdated: new Date().toISOString(),
+      lastUpdated: storeLastUpdated,
     };
     saveToDisk(data);
     saveToRemoteKV(data).catch(() => {});
@@ -292,32 +374,58 @@ function loadStoreFromDisk() {
         .then((res) => res.json())
         .then((peerData: any) => {
           if (peerData && Array.isArray(peerData.jobs) && peerData.jobs.length > 0) {
+            const peerTime = peerData.last_updated ? new Date(peerData.last_updated).getTime() : 0;
+            const localTime = storeLastUpdated ? new Date(storeLastUpdated).getTime() : 0;
+
+            // Guard against stale peer rolling back fresher local state
+            if (peerTime < localTime && jobListings.length >= 40) {
+              console.log(`[Store] Local store (${localTime}) is fresher than peer ${peer} (${peerTime}). Pushing local state to peer.`);
+              replicateToPeers({
+                currentProfile,
+                jobListings,
+                notifiedJobIds: Array.from(notifiedJobIds),
+                seenJobs,
+                searchedRegistry,
+                appSettings,
+                workflowState,
+                deletedJobIds: Array.from(deletedJobIds),
+                lastUpdated: storeLastUpdated,
+              });
+              return;
+            }
+
             if (Array.isArray(peerData.deleted_ids)) {
               for (const id of peerData.deleted_ids) {
                 if (id) deletedJobIds.add(id);
               }
             }
-            const nonDeletedJobs = peerData.jobs.filter((j: any) => !deletedJobIds.has(j.id));
-            console.log(`[Store] Hydrated from peer ${peer} (${nonDeletedJobs.length} jobs)`);
-            applyLoadedData({
-              currentProfile: peerData.profile,
-              jobListings: nonDeletedJobs,
-              appSettings: peerData.settings,
-              workflowState: peerData.workflow,
-              deletedJobIds: Array.from(deletedJobIds),
-              notifiedJobIds: [],
-              seenJobs: {},
-            });
-            saveToDisk({
-              currentProfile,
-              jobListings,
-              notifiedJobIds: Array.from(notifiedJobIds),
-              seenJobs,
-              appSettings,
-              workflowState,
-              deletedJobIds: Array.from(deletedJobIds),
-              lastUpdated: new Date().toISOString(),
-            });
+            if (peerData.searched_registry && typeof peerData.searched_registry === 'object') {
+              Object.assign(searchedRegistry, peerData.searched_registry);
+            }
+
+            // SAFE MERGE: Keep existing discovered jobs and merge peer jobs
+            const existingMap = new Map<string, JobListing>(jobListings.map((j) => [j.id, j]));
+            const peerNonDeleted = peerData.jobs.filter((j: any) => !deletedJobIds.has(j.id));
+            let newAdded = 0;
+            for (const pj of peerNonDeleted) {
+              if (!existingMap.has(pj.id)) {
+                jobListings.push(pj);
+                existingMap.set(pj.id, pj);
+                newAdded++;
+              }
+            }
+
+            // Only update cadence if peer's update is strictly newer
+            if (peerData.workflow && peerTime >= localTime) {
+              Object.assign(workflowState, peerData.workflow);
+            }
+            if (peerData.settings && peerTime >= localTime) {
+              Object.assign(appSettings, peerData.settings);
+            }
+
+            storeLastUpdated = peerData.last_updated || new Date().toISOString();
+            console.log(`[Store] Merged with peer ${peer} (${newAdded} new jobs, total: ${jobListings.length})`);
+            saveStoreToDisk(false);
           }
         })
         .catch(() => {});
@@ -505,9 +613,10 @@ app.use((req, res, next) => {
         query,
         jobListings,
         seenJobs,
-        appSettings.serpapi_key || process.env.SERPAPI_KEY
+        appSettings.serpapi_key || process.env.SERPAPI_KEY,
+        searchedRegistry
       );
-      // Deduplicate and record in seenJobs
+      // Deduplicate and record in seenJobs and searchedRegistry
       const existingIds = new Set(jobListings.map((j) => j.id));
       const existingSignatures = new Set(
         jobListings.map((j) => `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`)
@@ -517,10 +626,21 @@ app.use((req, res, next) => {
         const sig = `${nj.company_name.toLowerCase()}_${nj.title.toLowerCase()}`;
         const normLink = normalizeJobUrl(nj.apply_link);
 
-        // Record in seenJobs so it is never searched or returned again
+        // Record in seenJobs and searchedRegistry so it is never searched or returned again
         seenJobs[nj.id] = new Date().toISOString();
         if (normLink) seenJobs[normLink] = new Date().toISOString();
         seenJobs[sig] = new Date().toISOString();
+
+        searchedRegistry[nj.id] = {
+          id: nj.id,
+          signature: sig,
+          normalized_url: normLink,
+          company_name: nj.company_name,
+          title: nj.title,
+          status: nj.status || 'discovered',
+          discovered_at: nj.discovered_at || new Date().toISOString(),
+          last_seen_at: new Date().toISOString(),
+        };
 
         if (!existingIds.has(nj.id) && !existingSignatures.has(sig)) {
           jobListings.unshift(nj);
@@ -530,7 +650,7 @@ app.use((req, res, next) => {
         }
       }
       saveStoreToDisk();
-      res.json({ success: true, added_count: added.length, jobs: jobListings });
+      res.json({ success: true, added_count: added.length, jobs: jobListings, searched_registry: searchedRegistry });
     } catch (err: any) {
       console.error('[Jobs Search] Error:', err);
       res.status(500).json({ error: err.message });
@@ -709,11 +829,32 @@ app.use((req, res, next) => {
   // Delete specific job endpoint
   app.delete('/api/jobs/:id', (req, res) => {
     const { id } = req.params;
-    if (id) deletedJobIds.add(id);
+    if (id) {
+      deletedJobIds.add(id);
+      const target = jobListings.find((j) => j.id === id);
+      if (target) {
+        const sig = `${target.company_name.toLowerCase()}_${target.title.toLowerCase()}`;
+        const norm = normalizeJobUrl(target.apply_link);
+        searchedRegistry[id] = {
+          id,
+          signature: sig,
+          normalized_url: norm,
+          company_name: target.company_name,
+          title: target.title,
+          status: 'deleted',
+          discovered_at: target.discovered_at || new Date().toISOString(),
+          rejected_at: new Date().toISOString(),
+          last_seen_at: new Date().toISOString(),
+        };
+        seenJobs[id] = new Date().toISOString();
+        if (norm) seenJobs[norm] = new Date().toISOString();
+        seenJobs[sig] = new Date().toISOString();
+      }
+    }
     const initialCount = jobListings.length;
     jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
     saveStoreToDisk();
-    res.json({ success: true, deleted: initialCount > jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds) });
+    res.json({ success: true, deleted: initialCount > jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds), searched_registry: searchedRegistry });
   });
 
   // --- Download Cover Letter Endpoint (Direct mobile file download) ---
@@ -919,8 +1060,26 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     if (!target) return res.status(404).json({ error: 'Job listing not found.' });
 
     target.status = status;
+    if (status === 'rejected') {
+      const sig = `${target.company_name.toLowerCase()}_${target.title.toLowerCase()}`;
+      const norm = normalizeJobUrl(target.apply_link);
+      searchedRegistry[id] = {
+        id,
+        signature: sig,
+        normalized_url: norm,
+        company_name: target.company_name,
+        title: target.title,
+        status: 'rejected',
+        discovered_at: target.discovered_at || new Date().toISOString(),
+        rejected_at: new Date().toISOString(),
+        last_seen_at: new Date().toISOString(),
+      };
+      seenJobs[id] = new Date().toISOString();
+      if (norm) seenJobs[norm] = new Date().toISOString();
+      seenJobs[sig] = new Date().toISOString();
+    }
     saveStoreToDisk();
-    res.json({ success: true, job: target, jobs: jobListings });
+    res.json({ success: true, job: target, jobs: jobListings, searched_registry: searchedRegistry });
   });
 
   // Batch update status for multiple jobs (move from one sub-tab to another)
@@ -935,10 +1094,28 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
       if (idSet.has(j.id)) {
         j.status = status;
         updatedCount++;
+        if (status === 'rejected') {
+          const sig = `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`;
+          const norm = normalizeJobUrl(j.apply_link);
+          searchedRegistry[j.id] = {
+            id: j.id,
+            signature: sig,
+            normalized_url: norm,
+            company_name: j.company_name,
+            title: j.title,
+            status: 'rejected',
+            discovered_at: j.discovered_at || new Date().toISOString(),
+            rejected_at: new Date().toISOString(),
+            last_seen_at: new Date().toISOString(),
+          };
+          seenJobs[j.id] = new Date().toISOString();
+          if (norm) seenJobs[norm] = new Date().toISOString();
+          seenJobs[sig] = new Date().toISOString();
+        }
       }
     });
     saveStoreToDisk();
-    res.json({ success: true, updatedCount, jobs: jobListings });
+    res.json({ success: true, updatedCount, jobs: jobListings, searched_registry: searchedRegistry });
   });
 
   // Batch delete jobs
@@ -948,12 +1125,33 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
       return res.status(400).json({ error: 'ids array required' });
     }
     for (const id of ids) {
-      if (id) deletedJobIds.add(id);
+      if (id) {
+        deletedJobIds.add(id);
+        const target = jobListings.find((j) => j.id === id);
+        if (target) {
+          const sig = `${target.company_name.toLowerCase()}_${target.title.toLowerCase()}`;
+          const norm = normalizeJobUrl(target.apply_link);
+          searchedRegistry[id] = {
+            id,
+            signature: sig,
+            normalized_url: norm,
+            company_name: target.company_name,
+            title: target.title,
+            status: 'deleted',
+            discovered_at: target.discovered_at || new Date().toISOString(),
+            rejected_at: new Date().toISOString(),
+            last_seen_at: new Date().toISOString(),
+          };
+          seenJobs[id] = new Date().toISOString();
+          if (norm) seenJobs[norm] = new Date().toISOString();
+          seenJobs[sig] = new Date().toISOString();
+        }
+      }
     }
     const initialCount = jobListings.length;
     jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
     saveStoreToDisk();
-    res.json({ success: true, deletedCount: initialCount - jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds) });
+    res.json({ success: true, deletedCount: initialCount - jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds), searched_registry: searchedRegistry });
   });
 
   // --- Match & Fit Evaluation ---
@@ -1605,6 +1803,7 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     if (typeof auto_notify_telegram === 'boolean') {
       workflowState.auto_notify_telegram = auto_notify_telegram;
     }
+    workflowState.last_updated = new Date().toISOString();
     setupWorkflowScheduler();
     saveStoreToDisk();
     res.json({ success: true, workflow: workflowState });
@@ -1635,6 +1834,59 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     });
   });
 
+  // --- Searched & Rejected Roles Registry Endpoints ---
+  app.get('/api/registry/stats', (req, res) => {
+    const values = Object.values(searchedRegistry);
+    const rejectedCount = values.filter((v: any) => v && (v.status === 'rejected' || v.status === 'deleted')).length;
+    res.json({
+      success: true,
+      stats: {
+        total_tracked: values.length,
+        rejected_count: rejectedCount,
+        retention_days: appSettings.seen_ttl_days || 30,
+        last_truncated_at: storeLastUpdated,
+      },
+    });
+  });
+
+  app.post('/api/registry/truncate', (req, res) => {
+    const { ttl_days, max_capacity } = req.body || {};
+    const ttl = typeof ttl_days === 'number' ? ttl_days : (appSettings.seen_ttl_days || 30);
+    const maxCap = typeof max_capacity === 'number' ? max_capacity : 5000;
+    const result = truncateSearchedRegistry(ttl, maxCap);
+    saveStoreToDisk();
+    console.log(`[Registry] Truncated searched registry: pruned ${result.prunedCount}, remaining ${result.remainingCount}`);
+    res.json({
+      success: true,
+      pruned_count: result.prunedCount,
+      remaining_count: result.remainingCount,
+      registry: searchedRegistry,
+    });
+  });
+
+  app.post('/api/registry/reset', (req, res) => {
+    const activeJobs = jobListings.filter((j) => !deletedJobIds.has(j.id));
+    for (const key of Object.keys(searchedRegistry)) {
+      delete searchedRegistry[key];
+    }
+    for (const j of activeJobs) {
+      const sig = `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`;
+      const normLink = normalizeJobUrl(j.apply_link);
+      searchedRegistry[j.id] = {
+        id: j.id,
+        signature: sig,
+        normalized_url: normLink,
+        company_name: j.company_name,
+        title: j.title,
+        status: j.status || 'discovered',
+        discovered_at: j.discovered_at || new Date().toISOString(),
+        last_seen_at: new Date().toISOString(),
+      };
+    }
+    saveStoreToDisk();
+    res.json({ success: true, remaining_count: Object.keys(searchedRegistry).length });
+  });
+
   // --- Live Cross-System Real-Time Synchronization Endpoint ---
   app.get('/api/state/sync', (req, res) => {
     workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
@@ -1646,13 +1898,14 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
       stats: computePipelineStats(),
       workflow: workflowState,
       settings: appSettings,
+      searched_registry: searchedRegistry,
       deleted_ids: Array.from(deletedJobIds),
-      last_updated: new Date().toISOString(),
+      last_updated: storeLastUpdated || new Date().toISOString(),
     });
   });
 
   app.post('/api/state/sync', async (req, res) => {
-    const { jobs, profile, settings, workflow, deleted_ids, _replicated } = req.body;
+    const { jobs, profile, settings, workflow, deleted_ids, searched_registry, _replicated } = req.body;
     let modified = false;
 
     if (Array.isArray(deleted_ids)) {
@@ -1684,6 +1937,19 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     if (workflow && typeof workflow === 'object') {
       Object.assign(workflowState, workflow);
       workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
+      modified = true;
+    }
+
+    if (searched_registry && typeof searched_registry === 'object') {
+      Object.assign(searchedRegistry, searched_registry);
+      for (const [k, v] of Object.entries(searched_registry)) {
+        if (v && typeof v === 'object') {
+          const item = v as any;
+          if (item.id) seenJobs[item.id] = item.last_seen_at || new Date().toISOString();
+          if (item.signature) seenJobs[item.signature] = item.last_seen_at || new Date().toISOString();
+          if (item.normalized_url) seenJobs[item.normalized_url] = item.last_seen_at || new Date().toISOString();
+        }
+      }
       modified = true;
     }
 
@@ -1719,6 +1985,18 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
           jobListings.unshift(incJob);
           existingMap.set(incJob.id, incJob);
           seenJobs[incJob.id] = new Date().toISOString();
+          const sig = `${incJob.company_name.toLowerCase()}_${incJob.title.toLowerCase()}`;
+          const normLink = normalizeJobUrl(incJob.apply_link);
+          searchedRegistry[incJob.id] = {
+            id: incJob.id,
+            signature: sig,
+            normalized_url: normLink,
+            company_name: incJob.company_name,
+            title: incJob.title,
+            status: incJob.status || 'discovered',
+            discovered_at: incJob.discovered_at || new Date().toISOString(),
+            last_seen_at: new Date().toISOString(),
+          };
           modified = true;
         }
       }
@@ -1737,8 +2015,9 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
       stats: computePipelineStats(),
       workflow: workflowState,
       settings: appSettings,
+      searched_registry: searchedRegistry,
       deleted_ids: Array.from(deletedJobIds),
-      last_updated: new Date().toISOString(),
+      last_updated: storeLastUpdated || new Date().toISOString(),
     });
   });
 
@@ -1893,6 +2172,8 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     const effectiveToken = appSettings.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN;
     const effectiveChat = appSettings.telegram_chat_id || process.env.TELEGRAM_CHAT_ID;
     appSettings.telegram_configured = Boolean(effectiveToken && effectiveChat);
+    appSettings.last_updated = new Date().toISOString();
+    saveStoreToDisk();
 
     res.json({ success: true, settings: appSettings });
   });

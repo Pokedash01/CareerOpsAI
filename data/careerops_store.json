@@ -137,8 +137,8 @@
       "fit": {
         "is_viable": false,
         "match_score": 0,
-        "detected_experience": "Not evaluated",
-        "salary_range": "Not evaluated",
+        "detected_experience": "2-4 Years (Inferred)",
+        "salary_range": "₹9 - ₹16 LPA",
         "location": "Chennai",
         "skills_gap": "Location mismatch",
         "rejection_reason": "Location 'Chennai' not in preferred list [Gurgaon, Gurugram, Noida, Delhi, Remote, Bangalore, Bengaluru]",
@@ -3298,9 +3298,9 @@
     "f4004405d9c00c39"
   ],
   "seenJobs": {
-    "9dfe6112a2137e75": "2026-09-18T09:02:42.388Z",
-    "https://soti.careers/jobs/bi-solutions-analyst-gurugram": "2026-09-18T09:02:42.388Z",
-    "soti_business intelligence & solutions analyst": "2026-09-18T09:02:42.388Z",
+    "9dfe6112a2137e75": "2026-09-22T12:33:12.224Z",
+    "https://soti.careers/jobs/bi-solutions-analyst-gurugram": "2026-09-22T12:33:12.224Z",
+    "soti_business intelligence & solutions analyst": "2026-09-22T12:33:12.224Z",
     "gtn-prod-ba-01": "2026-09-05T05:39:51.735Z",
     "gartner_senior product business analyst": "2026-09-05T05:39:51.735Z",
     "https://gartner.wd5.myworkdayjobs.com/en-us/gartner_careers/job/gurugram/senior-product-business-analyst_jr10928": "2026-09-05T05:39:51.735Z",
@@ -3476,6 +3476,498 @@
     "https://hitachi.wd1.myworkdayjobs.com/en-US/hitachi/job/Power-BI-Specialist-Data-analyst_R0144246": "2026-09-18T08:13:35.538Z",
     "hitachi_power bi specialist/data analyst": "2026-09-18T08:13:35.538Z"
   },
+  "searchedRegistry": {
+    "90f943841b863e7f": {
+      "id": "90f943841b863e7f",
+      "signature": "hitachi_power bi specialist/data analyst",
+      "normalized_url": "https://hitachi.wd1.myworkdayjobs.com/en-US/hitachi/job/Power-BI-Specialist-Data-analyst_R0144246",
+      "company_name": "Hitachi",
+      "title": "Power BI Specialist/Data analyst",
+      "status": "rejected",
+      "discovered_at": "2026-09-18T08:13:35.538Z",
+      "last_seen_at": "2026-09-22T12:33:12.215Z"
+    },
+    "0b8112e0e79c3309": {
+      "id": "0b8112e0e79c3309",
+      "signature": "worldwide_business analyst",
+      "normalized_url": "https://worldwide.wd1.myworkdayjobs.com/en-US/External/job/Trivandrum/Business-Analyst---India_JR102991",
+      "company_name": "Worldwide",
+      "title": "Business Analyst",
+      "status": "discovered",
+      "discovered_at": "2026-09-18T08:13:32.302Z",
+      "last_seen_at": "2026-09-22T12:33:12.215Z"
+    },
+    "5816b194c70faf0c": {
+      "id": "5816b194c70faf0c",
+      "signature": "truetandem_power bi developer (active secret clearance required)",
+      "normalized_url": "https://jobs.lever.co/truetandem/f9e53ae9-6126-49e0-be40-c59aef46ddd3",
+      "company_name": "Truetandem",
+      "title": "Power BI Developer (Active Secret clearance required)",
+      "status": "discovered",
+      "discovered_at": "2026-09-18T08:13:31.663Z",
+      "last_seen_at": "2026-09-22T12:33:12.215Z"
+    },
+    "e7f2e7da0ac13125": {
+      "id": "e7f2e7da0ac13125",
+      "signature": "beghouconsulting_beghou consulting - power bi developer (318)",
+      "normalized_url": "https://jobs.lever.co/beghouconsulting/b26af326-54b6-4028-8fd2-efd092408909",
+      "company_name": "Beghouconsulting",
+      "title": "Beghou Consulting - Power BI Developer (318)",
+      "status": "discovered",
+      "discovered_at": "2026-09-18T08:13:31.699Z",
+      "last_seen_at": "2026-09-22T12:33:12.215Z"
+    },
+    "f4004405d9c00c39": {
+      "id": "f4004405d9c00c39",
+      "signature": "openx_business intelligence data analyst",
+      "normalized_url": "https://jobs.lever.co/openx/df23b30a-21b5-4055-9698-5b5c2767df3c",
+      "company_name": "Openx",
+      "title": "Business Intelligence Data Analyst",
+      "status": "discovered",
+      "discovered_at": "2026-09-18T08:13:31.925Z",
+      "last_seen_at": "2026-09-22T12:33:12.215Z"
+    },
+    "9d2fa173be361ff4": {
+      "id": "9d2fa173be361ff4",
+      "signature": "fil_lead business analyst",
+      "normalized_url": "https://fil.wd3.myworkdayjobs.com/en-US/001/job/Gurgaon-Office/Lead-Business-Analyst_J69759-1",
+      "company_name": "Fil",
+      "title": "Lead Business Analyst",
+      "status": "rejected",
+      "discovered_at": "2026-09-15T16:03:03.574Z",
+      "last_seen_at": "2026-09-22T12:33:12.215Z"
+    },
+    "3b18b89dfeaea21f": {
+      "id": "3b18b89dfeaea21f",
+      "signature": "wtilth technologies_deployment analyst",
+      "normalized_url": "https://in.linkedin.com/jobs/view/deployment-analyst-power-platform-solutions-at-wtilth-technologies-4424065666",
+      "company_name": "Wtilth Technologies",
+      "title": "Deployment Analyst",
+      "status": "rejected",
+      "discovered_at": "2026-09-15T15:15:02.569Z",
+      "last_seen_at": "2026-09-22T12:33:12.215Z"
+    },
+    "8d82f497f6dbb3c4": {
+      "id": "8d82f497f6dbb3c4",
+      "signature": "luxurypresence_luxury presence - senior data analyst, gtm analytics",
+      "normalized_url": "https://jobs.lever.co/luxurypresence/0a6fd9f4-a606-460e-b65e-5b31de56331a",
+      "company_name": "Luxurypresence",
+      "title": "Luxury Presence - Senior Data Analyst, GTM Analytics",
+      "status": "rejected",
+      "discovered_at": "2026-09-15T15:14:58.415Z",
+      "last_seen_at": "2026-09-22T12:33:12.215Z"
+    },
+    "e955cd2af9cdd9c4": {
+      "id": "e955cd2af9cdd9c4",
+      "signature": "necsws_business analyst - nec software solutions (india)",
+      "normalized_url": "https://jobs.smartrecruiters.com/NECSWS/744000147432449-business-analyst?oga=true",
+      "company_name": "NECSWS",
+      "title": "Business Analyst - NEC Software Solutions (India)",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:41:13.525Z",
+      "last_seen_at": "2026-09-22T12:33:12.215Z"
+    },
+    "30e93f98f920ef5d": {
+      "id": "30e93f98f920ef5d",
+      "signature": "truetandem_true tandem - sr. power platform developer",
+      "normalized_url": "https://jobs.lever.co/truetandem/ffc7256e-ac54-4e76-85aa-a27dc8f34d01",
+      "company_name": "Truetandem",
+      "title": "True Tandem - Sr. Power Platform Developer",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:37:22.849Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "1451db036cd51e0f": {
+      "id": "1451db036cd51e0f",
+      "signature": "junipersquare_business analyst - india @ juniper square",
+      "normalized_url": "https://jobs.ashbyhq.com/junipersquare/1f486b69-025f-43e0-ac7b-858f63606364",
+      "company_name": "Junipersquare",
+      "title": "Business Analyst - India @ Juniper Square",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:20:10.661Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "810ab4223ca8ee8c": {
+      "id": "810ab4223ca8ee8c",
+      "signature": "stoneridgesoftware_stoneridge software",
+      "normalized_url": "https://jobs.lever.co/stoneridgesoftware/46e1bcfe-8ed6-46d7-9111-7fd372871059",
+      "company_name": "Stoneridgesoftware",
+      "title": "Stoneridge Software",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:20:04.202Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "347c7b14d7484894": {
+      "id": "347c7b14d7484894",
+      "signature": "mcaconnect_d365 ce & power platform technical engineer",
+      "normalized_url": "https://jobs.lever.co/mcaconnect/5df445f4-cf12-4970-8ab7-7cf46a7aab3c",
+      "company_name": "Mcaconnect",
+      "title": "D365 CE & Power Platform Technical Engineer",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:20:02.201Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "c305d1b9d2b85704": {
+      "id": "c305d1b9d2b85704",
+      "signature": "virtusa_microsoft power platform/uipath",
+      "normalized_url": "https://in.linkedin.com/jobs/view/microsoft-power-platform-uipath-at-virtusa-4406055294",
+      "company_name": "Virtusa",
+      "title": "Microsoft Power Platform/Uipath",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:05:03.130Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "22dbb05fbd266208": {
+      "id": "22dbb05fbd266208",
+      "signature": "kroll_power platform developer (modelling, portfolio valuations)",
+      "normalized_url": "https://in.linkedin.com/jobs/view/power-platform-developer-modelling-portfolio-valuations-at-kroll-4437695964",
+      "company_name": "Kroll",
+      "title": "Power Platform Developer (Modelling, Portfolio Valuations)",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:05:06.230Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "4894d72b4fce5174": {
+      "id": "4894d72b4fce5174",
+      "signature": "cognizant_cognizant hiring hiring for power platform in bangalore ...",
+      "normalized_url": "https://in.linkedin.com/jobs/view/hiring-for-power-platform-at-cognizant-4451934434",
+      "company_name": "Cognizant",
+      "title": "Cognizant hiring Hiring for Power Platform in Bangalore ...",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:05:02.960Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "8a61cd64ca3a2a93": {
+      "id": "8a61cd64ca3a2a93",
+      "signature": "fnz_crm developer",
+      "normalized_url": "https://fnz.wd3.myworkdayjobs.com/en-US/fnz_careers/job/CRM-Developer_REQ-16456",
+      "company_name": "Fnz",
+      "title": "CRM Developer",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:04:59.506Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "8ee0bf9c792290b3": {
+      "id": "8ee0bf9c792290b3",
+      "signature": "guidehouse_lead developer",
+      "normalized_url": "https://guidehouse.wd1.myworkdayjobs.com/en-US/External/job/Lead-Developer_41854",
+      "company_name": "Guidehouse",
+      "title": "Lead Developer",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:04:58.624Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "304505672428c070": {
+      "id": "304505672428c070",
+      "signature": "resmed external_business analyst",
+      "normalized_url": "https://resmed.wd3.myworkdayjobs.com/en-US/ResMed_External_Careers/job/Bangalore-India/Business-Analyst---Marketing-Solutions_JR_053457",
+      "company_name": "ResMed External",
+      "title": "Business Analyst",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:04:51.317Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "e88727d8f7b82e06": {
+      "id": "e88727d8f7b82e06",
+      "signature": "brillio 2_brillio - bi architect",
+      "normalized_url": "https://jobs.lever.co/brillio-2/579a47f4-1b59-4948-890c-a36d4e5bd23d",
+      "company_name": "Brillio 2",
+      "title": "Brillio - BI Architect",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:04:45.762Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "409c657801f4bea8": {
+      "id": "409c657801f4bea8",
+      "signature": "hevodata_hevo data",
+      "normalized_url": "https://jobs.lever.co/hevodata/308fe760-b657-45d3-ab4c-a13efdcf230f",
+      "company_name": "Hevodata",
+      "title": "Hevo Data",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:04:46.615Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "b0bd0a21e8a7e3e6": {
+      "id": "b0bd0a21e8a7e3e6",
+      "signature": "grantstreet_grant street group",
+      "normalized_url": "https://jobs.lever.co/grantstreet/ee9892b2-41f6-45d7-b31a-56b806fd1565/apply",
+      "company_name": "Grantstreet",
+      "title": "Grant Street Group",
+      "status": "rejected",
+      "discovered_at": "2026-09-14T08:04:43.975Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "d8c37ec1dd5dccc5": {
+      "id": "d8c37ec1dd5dccc5",
+      "signature": "exl_associate - business analyst-application development ...",
+      "normalized_url": "https://in.linkedin.com/jobs/view/associate-business-analyst-application-development-backend-development-at-exl-4446744290",
+      "company_name": "Exl",
+      "title": "Associate - Business Analyst-Application Development ...",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:31.673Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "7262d454e1b7c678": {
+      "id": "7262d454e1b7c678",
+      "signature": "travelhrportal_business analyst",
+      "normalized_url": "https://travelhrportal.wd1.myworkdayjobs.com/en-US/Jobs/job/Gurgaon-India/Business-Analyst_J-84869",
+      "company_name": "Travelhrportal",
+      "title": "Business Analyst",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:28.994Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "ec40c7ac4dc66532": {
+      "id": "ec40c7ac4dc66532",
+      "signature": "risepoint_senior business analyst (remote - united kingdom)",
+      "normalized_url": "https://risepoint.wd503.myworkdayjobs.com/en-US/Risepoint/job/Senior-Partnerships-Analyst--Remote---United-Kingdom-_JR101264",
+      "company_name": "Risepoint",
+      "title": "Senior Business Analyst (Remote - United Kingdom)",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:24.490Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "7d9f33074387ae98": {
+      "id": "7d9f33074387ae98",
+      "signature": "lingarogroup_lingaro",
+      "normalized_url": "https://jobs.lever.co/lingarogroup/8a3fb292-95c2-46f9-adae-9f1eba22b5c2",
+      "company_name": "Lingarogroup",
+      "title": "Lingaro",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:20.782Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "5713959e0c980c3b": {
+      "id": "5713959e0c980c3b",
+      "signature": "the battery network_microsoft dynamics crm and power platform engineer",
+      "normalized_url": "https://jobs.lever.co/The-Battery-Network/f9395fbc-48c0-4d27-b00a-dff45f566adc",
+      "company_name": "The Battery Network",
+      "title": "Microsoft Dynamics CRM and Power Platform Engineer",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:20.828Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "5cc33ac2cc1a5a04": {
+      "id": "5cc33ac2cc1a5a04",
+      "signature": "ciellos_join ciellos team anywhere - apply now!",
+      "normalized_url": "https://jobs.lever.co/ciellos/4eb6e44e-b11d-45e2-930e-91a9664fa906",
+      "company_name": "Ciellos",
+      "title": "Join Ciellos team anywhere - Apply now!",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:21.158Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "2cf094fbdb37fc39": {
+      "id": "2cf094fbdb37fc39",
+      "signature": "cgsfederal_power bi developer - contact government services, llc",
+      "normalized_url": "https://jobs.lever.co/cgsfederal/3b2f160a-1d2f-40ae-8db8-2cbdc01ab32c",
+      "company_name": "Cgsfederal",
+      "title": "Power BI Developer - Contact Government Services, LLC",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:14.758Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "b21fbd2fb2d252b9": {
+      "id": "b21fbd2fb2d252b9",
+      "signature": "jobgether_software engineer, ms power platform",
+      "normalized_url": "https://jobs.lever.co/jobgether/0c459c89-5607-41ab-b0ba-140d90562e82",
+      "company_name": "Jobgether",
+      "title": "Software Engineer, MS Power Platform",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:14.404Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "534a84ce10abb52a": {
+      "id": "534a84ce10abb52a",
+      "signature": "truetandem_power platform developer",
+      "normalized_url": "https://jobs.lever.co/truetandem/d82debe7-ee94-401c-bd78-7f50c5b2bd51",
+      "company_name": "Truetandem",
+      "title": "Power Platform Developer",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:08.282Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "a778dea21164de04": {
+      "id": "a778dea21164de04",
+      "signature": "planettechnologies_planet technologies - power platform/dynamics consultant",
+      "normalized_url": "https://jobs.lever.co/planettechnologies/d392af4a-cfdc-4fdb-9b52-004d7dc0a2c3",
+      "company_name": "Planettechnologies",
+      "title": "Planet Technologies - Power Platform/Dynamics Consultant",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:12.039Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "696785151b0d79d1": {
+      "id": "696785151b0d79d1",
+      "signature": "padsplit_padsplit - senior data analyst (fully remote)",
+      "normalized_url": "https://jobs.lever.co/padsplit/323075a3-d79e-49c4-9591-a7d3240c387d",
+      "company_name": "Padsplit",
+      "title": "PadSplit - Senior Data Analyst (Fully Remote)",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:08.196Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "45b6f003dbb50c79": {
+      "id": "45b6f003dbb50c79",
+      "signature": "alltrails_alltrails - growth product & business analyst",
+      "normalized_url": "https://jobs.lever.co/alltrails/721f9b9b-8382-4292-b6c2-a57637795dfe",
+      "company_name": "Alltrails",
+      "title": "AllTrails - Growth Product & Business Analyst",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:08.217Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "8c4bdef9784d9191": {
+      "id": "8c4bdef9784d9191",
+      "signature": "nix_lead data analyst (marketing performance) (#5210)",
+      "normalized_url": "https://boards.greenhouse.io/nix/jobs/4861104101",
+      "company_name": "Nix",
+      "title": "Lead Data Analyst (Marketing Performance) (#5210)",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:06.358Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "ad383a9373045350": {
+      "id": "ad383a9373045350",
+      "signature": "portcast_data analyst",
+      "normalized_url": "https://jobs.lever.co/portcast/e66df487-0622-480f-8506-532b3db5db28",
+      "company_name": "Portcast",
+      "title": "Data Analyst",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:06.181Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "ff3e5b292662a5da": {
+      "id": "ff3e5b292662a5da",
+      "signature": "drivetrain_drivetrain - business analyst",
+      "normalized_url": "https://jobs.lever.co/drivetrain/7c194c7d-4bbf-41cc-9dea-e0db2d2b2032/apply",
+      "company_name": "Drivetrain",
+      "title": "Drivetrain - Business Analyst",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:07.880Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "d1977f2e73d66276": {
+      "id": "d1977f2e73d66276",
+      "signature": "portcast_data analyst intern",
+      "normalized_url": "https://jobs.lever.co/portcast/f18cc64e-c34a-416c-b213-62a39906260e",
+      "company_name": "Portcast",
+      "title": "Data Analyst Intern",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:05.230Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "9c75946b010609ac": {
+      "id": "9c75946b010609ac",
+      "signature": "jumpcloud_jumpcloud - financial data analyst",
+      "normalized_url": "https://jobs.lever.co/jumpcloud/3cde05a3-b7e2-4aea-a5f0-e85f6974789c",
+      "company_name": "Jumpcloud",
+      "title": "JumpCloud - Financial Data Analyst",
+      "status": "rejected",
+      "discovered_at": "2026-09-13T07:25:06.820Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "ee05aa9b2b97d144": {
+      "id": "ee05aa9b2b97d144",
+      "signature": "paytm_business analyst",
+      "normalized_url": "https://jobs.lever.co/paytm/0a05295a-5393-4c0d-bb0a-a0e7c97f1287",
+      "company_name": "Paytm",
+      "title": "Business Analyst",
+      "status": "rejected",
+      "discovered_at": "2026-09-05T10:14:36.389Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "50198a9a9ee4e22b": {
+      "id": "50198a9a9ee4e22b",
+      "signature": "genpact_sr. specialist",
+      "normalized_url": "https://genpact.wd108.myworkdayjobs.com/en-US/External_Careers/job/Sr-Specialist---Lean-Digital-Transformation-4C_JR10006616",
+      "company_name": "Genpact",
+      "title": "Sr. Specialist",
+      "status": "rejected",
+      "discovered_at": "2026-09-05T10:00:17.633Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "b52eee3c54037f73": {
+      "id": "b52eee3c54037f73",
+      "signature": "genpact_leader",
+      "normalized_url": "https://genpact.wd108.myworkdayjobs.com/External_Careers/job/1401-GIPL-Prestige-Technology-Park-IV-Bangalore/Leader---Lean-Digital-Transformation-2_JR10023648",
+      "company_name": "Genpact",
+      "title": "Leader",
+      "status": "rejected",
+      "discovered_at": "2026-09-05T10:00:17.680Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "738b66c882a529cf": {
+      "id": "738b66c882a529cf",
+      "signature": "enterprise employer_lead business analyst",
+      "normalized_url": "https://au.linkedin.com/jobs/view/lead-business-analyst-at-soci%C3%A9t%C3%A9-g%C3%A9n%C3%A9rale-4406610672",
+      "company_name": "Enterprise Employer",
+      "title": "Lead Business Analyst",
+      "status": "rejected",
+      "discovered_at": "2026-09-05T10:00:13.156Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "cc57ba1c032ffb98": {
+      "id": "cc57ba1c032ffb98",
+      "signature": "automationanywhere_business analyst",
+      "normalized_url": "https://automationanywhere.wd5.myworkdayjobs.com/en-US/AutomationAnywhereJobs/job/Business-Analyst_JR1406",
+      "company_name": "AutomationAnywhere",
+      "title": "Business Analyst",
+      "status": "rejected",
+      "discovered_at": "2026-09-05T10:00:12.356Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "d8a6e743a8f6476c": {
+      "id": "d8a6e743a8f6476c",
+      "signature": "boschgroup_senior data analyst / business analyst (power bi & ...",
+      "normalized_url": "https://jobs.smartrecruiters.com/BoschGroup/744000137628779-senior-data-analyst-business-analyst-power-bi-power-platform-for-leads-activities-",
+      "company_name": "BoschGroup",
+      "title": "Senior Data Analyst / Business Analyst (Power BI & ...",
+      "status": "rejected",
+      "discovered_at": "2026-09-05T10:00:09.705Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "eb61da20f0def377": {
+      "id": "eb61da20f0def377",
+      "signature": "elevancehealth_- reporting, sql - sr business analyst - gr - 40207-74077-1",
+      "normalized_url": "https://elevancehealth.wd1.myworkdayjobs.com/en-US/carelonglobal_in/job/XMLNAME---Reporting-SQL---Sr-Business-Analyst---GR---40207-74077-1---JR201921_JR201921",
+      "company_name": "Elevancehealth",
+      "title": "- Reporting, SQL - Sr Business Analyst - GR - 40207-74077-1",
+      "status": "rejected",
+      "discovered_at": "2026-09-05T10:00:09.376Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "71950346017ecf32": {
+      "id": "71950346017ecf32",
+      "signature": "soprasteria1_sopra steria power apps module lead",
+      "normalized_url": "https://jobs.smartrecruiters.com/SopraSteria1/744000142633139-power-apps-module-lead",
+      "company_name": "SopraSteria1",
+      "title": "Sopra Steria Power Apps Module Lead",
+      "status": "rejected",
+      "discovered_at": "2026-09-05T10:00:08.046Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "dc578b6afefe1246": {
+      "id": "dc578b6afefe1246",
+      "signature": "kaplan_power platform support analyst (hybrid)",
+      "normalized_url": "https://ghc.wd1.myworkdayjobs.com/en-US/Kaplan_Careers/job/Power-Platform-Support-Analyst--Hybrid-_JR253886",
+      "company_name": "Kaplan",
+      "title": "Power Platform Support Analyst (Hybrid)",
+      "status": "rejected",
+      "discovered_at": "2026-09-05T10:00:07.829Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    },
+    "68914bc11b7abbe9": {
+      "id": "68914bc11b7abbe9",
+      "signature": "genpact_automation consultant - power platform & copilot",
+      "normalized_url": "https://genpact.taleo.net/careersection/jobdetail.ftl?job=AUT2025GEN",
+      "company_name": "Genpact",
+      "title": "Automation Consultant - Power Platform & Copilot",
+      "status": "rejected",
+      "discovered_at": "2026-09-04T23:39:51.736Z",
+      "last_seen_at": "2026-09-22T12:33:12.216Z"
+    }
+  },
   "appSettings": {
     "min_match_score": 75,
     "telegram_configured": true,
@@ -3490,13 +3982,14 @@
     "workflow_enabled": true,
     "workflow_interval_hours": 4,
     "auto_notify_telegram": true,
-    "serpapi_key": "GNLQpQWpHAMcEL9MguEkrxq1"
+    "serpapi_key": "GNLQpQWpHAMcEL9MguEkrxq1",
+    "last_updated": "2026-09-22T12:33:18.879Z"
   },
   "workflowState": {
     "enabled": true,
     "interval_hours": 4,
     "last_run": "2026-09-18T08:14:00.795Z",
-    "next_run": "2026-09-18T12:00:00.000Z",
+    "next_run": "2026-09-22T16:00:00.000Z",
     "is_running": false,
     "total_runs": 10,
     "auto_notify_telegram": true,
@@ -3621,8 +4114,9 @@
         "status": "completed",
         "summary": "Automated 4-hour cycle: Scanned Workday, Greenhouse & Ashby portals. Evaluated 6 roles, 4 high-fit (≥75%), 2 dispatched to Telegram."
       }
-    ]
+    ],
+    "last_updated": "2026-09-22T12:33:18.879Z"
   },
   "deletedJobIds": [],
-  "lastUpdated": "2026-09-18T09:02:54.093Z"
+  "lastUpdated": "2026-09-22T12:33:18.879Z"
 }

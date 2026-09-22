@@ -164,6 +164,7 @@ export interface AppSettings {
   workflow_interval_hours?: number;
   auto_notify_telegram?: boolean;
   serpapi_key?: string;
+  last_updated?: string;
 }
 
 export interface WorkflowRunLog {
@@ -188,4 +189,24 @@ export interface WorkflowState {
   total_runs: number;
   auto_notify_telegram: boolean;
   runs: WorkflowRunLog[];
+  last_updated?: string;
+}
+
+export interface SearchedJobRecord {
+  id: string;
+  signature: string; // `${company.toLowerCase()}_${cleanTitle.toLowerCase()}`
+  normalized_url?: string;
+  company_name: string;
+  title: string;
+  status: 'discovered' | 'applied' | 'rejected' | 'deleted' | 'expired' | 'interviewing';
+  discovered_at: string;
+  rejected_at?: string;
+  last_seen_at: string;
+}
+
+export interface SearchedRegistryStats {
+  total_tracked: number;
+  rejected_count: number;
+  retention_days: number;
+  last_truncated_at?: string;
 }
