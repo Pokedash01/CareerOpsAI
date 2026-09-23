@@ -1,130 +1,338 @@
-# 🎯 CareerOps AI
+# 🎯 CareerOps AI — Autonomous Career Pipeline Engine
 
 [![CI & Build Validation](https://github.com/Pokedash01/CareerOps/actions/workflows/ci.yml/badge.svg)](https://github.com/Pokedash01/CareerOps/actions)
 [![24/7 Autonomous Alert Trigger](https://github.com/Pokedash01/CareerOps/actions/workflows/workflow-cron.yml/badge.svg)](https://github.com/Pokedash01/CareerOps/actions)
 [![Node.js Version](https://img.shields.io/badge/node-20.x-green.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**CareerOps AI** is an intelligent candidate pipeline automation platform. It continuously scans corporate ATS job portals (Greenhouse, Lever, SmartRecruiters, Workday, etc.), evaluates semantic profile compatibility using Gemini AI, tailors custom ATS resumes and cover letters, and delivers instant Telegram alerts for high-fit opportunities 24/7.
-
----
-
-## ⚡ Core Features
-
-- **🌐 Autonomous 24/7 Job Discovery**: Scans top tech employer portals and job feeds automatically on a customizable cadence (2h, 4h, 8h, 12h) via GitHub Actions, Cloud Run, or Vercel Cron.
-- **🛡️ Search Deduplication & Anti-Requery Memory**: Tracks every discovered, evaluated, rejected, or deleted job by URL and title signature. Dismissed or rejected roles are permanently excluded from future searches.
-- **🔄 Real-Time Multi-Device State Sync**: Bidirectional state synchronization with timestamp-aware anti-rollback protection ensuring your discovered jobs, pipeline changes, and cadence selections never revert.
-- **🧠 Gemini AI Profile Matching**: Evaluates job descriptions against candidate experience, extracting skill overlap, missing keywords, and generating a quantitative Fit Score (0–100%).
-- **📄 ATS Document Studio**: Automatically crafts tailored, ATS-compliant resumes and cover letters highlighting relevant achievements, with instant PDF and text export.
-- **📱 Instant Telegram Alerts**: Dispatches rich Telegram notifications with direct apply links, salary ranges, and matching rationale whenever a position exceeds your configured threshold.
-- **🔗 Link Verifier Engine**: Periodically checks live job URLs to mark expired or filled positions automatically.
+**CareerOps AI** is a production-grade, autonomous candidate operations system. It continuously scans corporate ATS job portals (Greenhouse, Lever, SmartRecruiters, Workday, etc.), semantically scores candidate-to-role compatibility using Google's Gemini AI, automatically tailors ATS-compliant resumes and cover letters, and dispatches instant Telegram alerts for high-fit positions 24 hours a day, 7 days a week.
 
 ---
 
-## 🛠️ Tech Stack
+## 📑 Table of Contents
 
-- **Frontend**: React 19, TypeScript, Tailwind CSS v4, Motion, Lucide Icons, jsPDF.
-- **Backend**: Node.js 20, Express, Google GenAI SDK (`@google/genai`), esbuild, tsx.
-- **Automation & Scheduling**: GitHub Actions (`workflow-cron.yml`), Vercel Cron (`/api/cron/trigger?wait=true`).
-- **Containerization**: Multi-stage Dockerfile (`node:20-alpine`).
+- [Core Capabilities](#-core-capabilities)
+- [System Architecture](#-system-architecture)
+- [Tech Stack](#-tech-stack)
+- [Repository Structure](#-repository-structure)
+- [Quick Start](#-quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Local Installation](#local-installation)
+  - [Environment Configuration](#environment-configuration)
+- [24/7 Automation & Scheduling](#-247-automation--scheduling)
+  - [GitHub Actions 24/7 Cron](#github-actions-247-cron)
+  - [Vercel Cron & Cloud Run](#vercel-cron--cloud-run)
+- [State Synchronization & Deduplication](#-state-synchronization--deduplication)
+- [API Reference](#-api-reference)
+- [Docker Deployment](#-docker-deployment)
+- [CI/CD & Code Quality](#-cicd--code-quality)
+- [License](#-license)
+
+---
+
+## ⚡ Core Capabilities
+
+1. **🌐 Autonomous 24/7 ATS Job Discovery**
+   - Directly indexes opportunities from primary ATS portals (Greenhouse, Lever, SmartRecruiters, Workday, Taleo, Ashby) and verified search indices.
+   - Eliminates junk aggregator reposts by enforcing strict canonical link resolution and domain validation.
+
+2. **🧠 Deep Gemini AI Semantic Matching**
+   - Analyzes full job descriptions against candidate experience, projects, skills, and seniority tiers.
+   - Generates quantitative Fit Scores (0–100%), detailed justification breakdowns, identified core strengths, and missing prerequisite keywords.
+
+3. **📄 Automated ATS Document Studio**
+   - Instantly generates tailored resumes with quantified impact metrics and customized cover letters for any discovered or manually tracked position.
+   - One-click PDF export using custom high-legibility formatting, plus raw Markdown/Plaintext export for direct ATS form submissions.
+
+4. **📱 Real-Time Telegram Alerts**
+   - Automatically sends formatted alerts to your Telegram chat whenever a position exceeds your configured match threshold (e.g., ≥80%).
+   - Includes direct application links, compensation estimates (LPA / USD), and matching rationale.
+
+5. **🛡️ Search Deduplication & Anti-Requery Memory**
+   - Every reviewed, rejected, or deleted job is permanently remembered in a canonical signature registry.
+   - Dismissed or rejected roles are guaranteed never to re-appear in subsequent automated cycles or ad-hoc searches.
+
+6. **🔄 Timestamp-Aware Anti-Rollback State Sync**
+   - Synchronizes application state across multiple browser tabs, mobile devices, and serverless peers using ISO-timestamped reconciliation.
+   - Prevents stale peer containers from reverting user-curated pipelines or cadence preferences.
+
+---
+
+## 🏗 System Architecture
+
+```
+                    ┌────────────────────────────────────────────────────────┐
+                    │            24/7 Scheduled Automation Drivers           │
+                    │  (GitHub Actions Cron / Vercel Cron / Cloud Scheduler) │
+                    └──────────────────────────┬─────────────────────────────┘
+                                               │ Webhook Dispatch
+                                               ▼
+                              ┌──────────────────────────────────┐
+                              │    POST /api/cron/trigger        │
+                              └────────────────┬─────────────────┘
+                                               │
+                                               ▼
+                         ┌───────────────────────────────────────────┐
+                         │       Candidate Profile Ingestion         │
+                         │      (Work History, Skills, Goals)        │
+                         └─────────────────────┬─────────────────────┘
+                                               │
+                                               ▼
+                         ┌───────────────────────────────────────────┐
+                         │         Direct ATS Scraping Engine        │
+                         │   Greenhouse • Lever • SmartRecruiters    │
+                         └─────────────────────┬─────────────────────┘
+                                               │
+                         ┌─────────────────────▼─────────────────────┐
+                         │     Deduplication & Anti-Requery Registry │
+                         │ (Filter out seen, rejected & deleted jobs)│
+                         └─────────────────────┬─────────────────────┘
+                                               │ New Unique Listings
+                                               ▼
+                         ┌───────────────────────────────────────────┐
+                         │        Gemini AI Semantic Scoring         │
+                         │  (Match Score, Strengths, Gaps, Strategy) │
+                         └─────────────────────┬─────────────────────┘
+                                               │
+                    ┌──────────────────────────┴──────────────────────────┐
+                    │ If Match Score >= Configured Minimum Threshold     │
+                    ▼                                                     ▼
+┌─────────────────────────────────────────┐             ┌───────────────────────────────────┐
+│       ATS Document Studio Tailoring     │             │    Telegram Instant Alert Dispatch│
+│ • Custom Targeted Bullet Points         │             │ • One-Click Apply URL             │
+│ • Cover Letter Customization            │             │ • Compensation Estimate           │
+│ • PDF / Plaintext Export Ready          │             │ • Key Compatibility Factors       │
+└─────────────────────────────────────────┘             └───────────────────────────────────┘
+```
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| **Frontend UI** | React 19, TypeScript, Tailwind CSS v4, Motion, Lucide Icons, jsPDF |
+| **Backend Runtime** | Node.js 20, Express, Google GenAI SDK (`@google/genai`), esbuild, tsx |
+| **AI Models** | Google Gemini (`gemini-3.8-flash` / `gemini-2.5-flash`) |
+| **Automation** | GitHub Actions (`workflow-cron.yml`), Vercel Cron, Cloud Run Scheduler |
+| **State & Storage** | JSON Store with Cross-Peer KV Replication, LocalStorage Fallback |
+| **Containerization** | Multi-stage Dockerfile (`node:20-alpine`) |
+
+---
+
+## 📁 Repository Structure
+
+```
+├── .github/
+│   └── workflows/
+│       ├── ci.yml                 # Continuous Integration: Lint & build validation
+│       └── workflow-cron.yml      # 24/7 Autonomous Alert Cron Trigger
+├── api/
+│   └── index.ts                   # Vercel Serverless entrypoint
+├── data/
+│   └── careerops_store.json       # Persistent job & workflow state store
+├── public/
+│   └── favicon.svg                # Application branding icon
+├── server/
+│   ├── gemini.ts                  # Google GenAI SDK initialization & helpers
+│   ├── jobSearch.ts               # Direct ATS query engine & URL normalizers
+│   ├── linkVerifier.ts            # Headless posting status & dead-link detector
+│   ├── matcher.ts                 # Gemini prompt engineering for job fit evaluation
+│   ├── resumeScraper.ts           # Resume PDF & DOCX extraction and profile enrichment
+│   ├── salaryEstimator.ts         # Experience-to-LPA compensation estimation
+│   ├── salaryHelpers.ts           # Currency parsing and salary normalizers
+│   ├── seedData.ts                # Seed re-exports for server bootstrapping
+│   ├── storage.ts                 # Disk persistence & peer sync handlers
+│   └── tailor.ts                  # Gemini prompt for targeted ATS documents
+├── src/
+│   ├── components/
+│   │   ├── AddJobModal.tsx        # Manual position entry modal
+│   │   ├── AutomationView.tsx     # 24/7 Cadence & Deduplication Memory controls
+│   │   ├── DashboardView.tsx      # Metrics, pipeline funnels & high-fit highlights
+│   │   ├── DocumentStudioView.tsx # Resume & cover letter editor with PDF export
+│   │   ├── JobFeedView.tsx        # Search, filters, status pipeline, bulk actions
+│   │   ├── MobileBottomNav.tsx    # Mobile-responsive bottom navigation
+│   │   ├── Navbar.tsx             # Main header navigation bar
+│   │   └── ProfileView.tsx        # Profile resume management & skill editor
+│   ├── lib/
+│   │   ├── clientAutomation.ts    # Browser-side background polling runner
+│   │   ├── dateUtils.ts           # Relative time formatting utilities
+│   │   ├── pdfExport.ts           # High-resolution ATS resume PDF compiler
+│   │   ├── searchedRegistry.ts    # Client-side deduplication memory store
+│   │   ├── syncClock.ts           # Multi-device clock reconciliation
+│   │   └── telegramClient.ts      # Direct Telegram Bot API client
+│   ├── App.tsx                    # Main state orchestration & peer sync engine
+│   ├── index.css                  # Global Tailwind CSS styles
+│   ├── main.tsx                   # React DOM root entrypoint
+│   ├── seedData.ts                # Baseline candidate profile & job state
+│   └── types.ts                   # Shared TypeScript interfaces
+├── Dockerfile                     # Multi-stage production container image
+├── package.json                   # Project metadata, scripts, and dependencies
+├── server.ts                      # Express API server & Vite development middleware
+├── tsconfig.json                  # TypeScript compiler options
+└── vercel.json                    # Vercel serverless functions & cron rules
+```
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Prerequisites
-- Node.js 20+ (LTS)
-- npm or bun
+### Prerequisites
+- **Node.js**: v20.x or later
+- **npm** or **bun**
+- A **Gemini API Key** from [Google AI Studio](https://aistudio.google.com/)
 
-### 2. Installation
+### Local Installation
+
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/Pokedash01/CareerOps.git
 cd CareerOps
 
-# Install dependencies using clean install
+# 2. Install all dependencies
 npm ci
+
+# 3. Create your local environment file
+cp .env.example .env
 ```
 
-### 3. Environment Configuration
-Create a `.env` file in the root directory (based on `.env.example`):
+### Environment Configuration
+
+Configure your `.env` file with the required keys:
+
 ```env
-# Required for Gemini AI matching and document tailoring
+# Required: Google Gemini API Key
 GEMINI_API_KEY="your-gemini-api-key"
 
-# Base URL for the app (used for self-referential webhooks & links)
+# Base URL for the local server
 APP_URL="http://localhost:3000"
 
-# Optional: Telegram alert credentials
-TELEGRAM_BOT_TOKEN="your-bot-token"
-TELEGRAM_CHAT_ID="your-chat-id"
+# Optional: Telegram instant alerts
+TELEGRAM_BOT_TOKEN="your-telegram-bot-token"
+TELEGRAM_CHAT_ID="your-telegram-chat-id"
 
-# Optional: Google Jobs / ATS live search key
+# Optional: Search key for additional job board coverage
 SERPAPI_KEY=""
 ```
 
-### 4. Development Mode
+#### Obtaining Telegram Credentials:
+1. Create a bot by messaging [@BotFather](https://t.me/BotFather) on Telegram and copy the API token.
+2. Retrieve your chat ID by messaging [@userinfobot](https://t.me/userinfobot).
+3. Add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` to your `.env` or GitHub Secrets.
+
+### Running in Development Mode
 ```bash
 npm run dev
 ```
-The app will be accessible at `http://localhost:3000`.
+The application will be live at `http://localhost:3000`.
 
-### 5. Production Build
+### Production Build & Launch
 ```bash
-# Compile frontend, bundle backend server.cjs, and generate serverless server.js
+# Build Vite frontend and compile standalone server bundle
 npm run build
 
-# Start the compiled production server
+# Start the Node.js production server
 npm start
 ```
 
 ---
 
-## 🤖 24/7 GitHub Actions Automation
+## 🤖 24/7 Automation & Scheduling
 
-CareerOps includes a pre-configured GitHub Actions workflow located at `.github/workflows/workflow-cron.yml` that triggers autonomous pipeline scans every 4 hours.
+CareerOps can execute autonomous searches and send alerts completely in the background without needing an open browser window.
 
-### Setting up GitHub Actions:
-1. Navigate to your GitHub repository:
-   **Settings** > **Secrets and variables** > **Actions**
-2. Click **New repository secret**:
+### GitHub Actions 24/7 Cron
+The workflow located at `.github/workflows/workflow-cron.yml` runs every 4 hours automatically:
+
+1. In your GitHub repository, open **Settings** > **Secrets and variables** > **Actions**.
+2. Add a new repository secret:
    - **Name**: `CAREEROPS_APP_URL`
-   - **Value**: Your live deployed app URL (e.g., `https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app`)
-3. The workflow will automatically trigger every 4 hours, or you can trigger it manually at any time via **Actions** > **CareerOps 24/7 Autonomous Alert Trigger** > **Run workflow**.
+   - **Value**: Your deployed app URL (e.g., `https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app`)
+3. Optional inputs can be triggered on-demand via **Actions** > **Trigger CareerOps Workflow** > **Run workflow**.
+
+### Features of the GitHub Actions Runner:
+- **Resilient Retry Policy**: Employs `--connect-timeout 20 --max-time 90 --retry 2` with automatic POST-to-GET method fallback.
+- **Failover Target Resolution**: Automatically falls back to secondary preview URLs if the primary instance is warming up from a cold start.
+- **Visual Summary Output**: Generates rich Markdown status logs directly inside `$GITHUB_STEP_SUMMARY`.
+
+---
+
+## 🛡️ State Synchronization & Deduplication
+
+### Deduplication Registry
+Every job is assigned a deterministic ID and composite signature:
+```ts
+signature = `${company_name.toLowerCase()}_${title.toLowerCase()}`
+```
+When any job is reviewed, rejected, or deleted:
+- It is permanently indexed into `searchedRegistry`.
+- ATS search scrapers match raw candidate listings against canonical URLs and signatures.
+- Rejected listings are filtered out before reaching the Gemini evaluation stage, preventing unnecessary token usage and duplicate notifications.
+
+### Anti-Rollback Synchronization
+To avoid race conditions across multiple open browser tabs or ephemeral cloud containers:
+- All state updates carry a `last_updated` ISO timestamp.
+- Incoming data is only applied if its timestamp is newer than the local state.
+- If a client has local additions unknown to the cloud, it heals the cloud store automatically by issuing an immediate sync payload.
+
+---
+
+## 📡 API Reference
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/health` | `GET` | Health check returning service status and Gemini API key configuration |
+| `/api/jobs` | `GET` | Returns all active job listings in the user's pipeline |
+| `/api/jobs` | `POST` | Discovers and indexes fresh positions matching candidate profile |
+| `/api/match` | `POST` | Evaluates a single position against the candidate profile using Gemini |
+| `/api/tailor` | `POST` | Generates tailored resume bullets and cover letters |
+| `/api/cron/trigger` | `GET / POST` | Triggers the autonomous 24/7 discovery, scoring, and alert workflow |
+| `/api/state/sync` | `GET / POST` | Bidirectional state sync endpoint with anti-rollback merging |
+| `/api/registry/stats` | `GET` | Returns count of tracked, rejected, and active deduplication entries |
+| `/api/registry/truncate`| `POST` | Prunes stale deduplication entries exceeding retention TTL |
 
 ---
 
 ## 🐳 Docker Deployment
 
-You can build and run CareerOps as a self-contained container:
+A multi-stage, production-ready `Dockerfile` is included in the root directory:
 
 ```bash
-# Build the Docker image
+# 1. Build the Docker container image
 docker build -t careerops-ai .
 
-# Run the container
+# 2. Run container on port 3000
 docker run -d -p 3000:3000 \
-  -e GEMINI_API_KEY="your-api-key" \
-  -e TELEGRAM_BOT_TOKEN="your-bot-token" \
-  -e TELEGRAM_CHAT_ID="your-chat-id" \
+  -e GEMINI_API_KEY="your-gemini-api-key" \
+  -e APP_URL="http://localhost:3000" \
+  -e TELEGRAM_BOT_TOKEN="your-telegram-bot-token" \
+  -e TELEGRAM_CHAT_ID="your-telegram-chat-id" \
+  --name careerops \
   careerops-ai
 ```
 
 ---
 
-## 🧪 Testing & CI
+## 🧪 CI/CD & Code Quality
 
-Continuous integration is handled by `.github/workflows/ci.yml`:
+CareerOps maintains strict code quality standards:
+
 ```bash
-# Run TypeScript typechecks
+# Validate TypeScript type consistency across client and server
 npm run lint
 
-# Verify production compilation
+# Compile production bundles
 npm run build
+
+# Clean temporary build artifacts
+npm run clean
 ```
+
+All pushes and pull requests trigger automated GitHub Actions CI (`.github/workflows/ci.yml`) to verify type safety and clean compilation.
 
 ---
 
 ## 📄 License
 
-MIT License. Designed for personal and production career automation.
+This project is licensed under the [MIT License](LICENSE). Built for automated candidate excellence.
