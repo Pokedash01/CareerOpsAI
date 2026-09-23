@@ -47,7 +47,6 @@ interface AuthModalProps {
       skills?: string[];
     }
   ) => Promise<{ success: boolean; error?: string }>;
-  onDemoLogin: (email?: string) => Promise<{ success: boolean; error?: string }>;
   onQuickSwitch?: (accountId: string) => Promise<{ success: boolean; error?: string }>;
   onLogout: () => Promise<void>;
   requireAuthToDismiss?: boolean;
@@ -139,7 +138,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   currentUser,
   onLogin,
   onRegister,
-  onDemoLogin,
   onLogout,
   requireAuthToDismiss = false,
   initialTab = 'login',
@@ -421,26 +419,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleDemoSignIn = async (targetEmail = 'kb270102@gmail.com') => {
-    setErrorMessage(null);
-    setIsLoading(true);
-    try {
-      const res = await onDemoLogin(targetEmail);
-      if (res.success) {
-        setSuccessMessage('Signed in to workspace!');
-        setTimeout(() => {
-          if (onClose) onClose();
-        }, 500);
-      } else {
-        setErrorMessage(res.error || 'Failed to initialize session.');
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Demo login failed.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div
       onClick={() => {
@@ -693,29 +671,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </>
                 )}
               </button>
-
-              {/* Demo Sign In Button */}
-              <div className="pt-2 border-t border-white/[0.06]">
-                <p className="text-[11px] text-zinc-400 mb-1.5 text-center">
-                  Or sign in with 1-click verified account:
-                </p>
-                <button
-                  type="button"
-                  onClick={() => handleDemoSignIn('kb270102@gmail.com')}
-                  disabled={isLoading}
-                  className="w-full py-2 px-3 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-medium text-zinc-200 rounded-xl transition flex items-center justify-between cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-[9px] font-bold">
-                      KB
-                    </span>
-                    <span>Kartik (kb270102@gmail.com)</span>
-                  </span>
-                  <span className="text-[10px] text-blue-400 flex items-center gap-1 font-semibold">
-                    1-Click Sign In <ArrowRight className="w-3 h-3" />
-                  </span>
-                </button>
-              </div>
             </form>
           )}
 

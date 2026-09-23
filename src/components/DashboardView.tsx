@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
+  Sparkles,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { getSynchronizedRemaining } from '../lib/syncClock.js';
@@ -59,13 +60,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   isWorkflowRunning,
   setActiveTab,
 }) => {
-  const highFitJobs = jobs.filter((j) => (j.fit?.match_score || 0) >= 75);
-  const pendingEvaluation = jobs.filter((j) => !j.fit);
+  const isNewCandidate = !workflow?.last_run || (workflow?.total_runs || 0) === 0 || jobs.length === 0;
+  const highFitJobs = isNewCandidate ? [] : jobs.filter((j) => (j.fit?.match_score || 0) >= 75);
+  const pendingEvaluation = isNewCandidate ? [] : jobs.filter((j) => !j.fit);
 
   const [remainingTime, setRemainingTime] = useState<string>('03h 48m 22s');
 
   useEffect(() => {
     const updateCountdown = () => {
+      if (isNewCandidate && !workflow?.is_running && !isWorkflowRunning) {
+        setRemainingTime('Awaiting 1st Execution');
+        return;
+      }
       const remaining = getSynchronizedRemaining(
         workflow?.next_run,
         workflow?.interval_hours || 4,
@@ -77,12 +83,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [workflow?.next_run, workflow?.interval_hours, isWorkflowRunning, workflow?.is_running]);
+  }, [workflow?.next_run, workflow?.interval_hours, isWorkflowRunning, workflow?.is_running, isNewCandidate]);
 
   const metrics = [
     {
       title: 'Total Scanned',
-      value: jobs.length,
+      value: isNewCandidate ? 0 : jobs.length,
       subtitle: 'ATS & Portal Listings',
       icon: Briefcase,
       color: 'text-zinc-100',
@@ -90,7 +96,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     },
     {
       title: 'Viable Fit',
-      value: jobs.filter((j) => j.fit?.is_viable).length,
+      value: isNewCandidate ? 0 : jobs.filter((j) => j.fit?.is_viable).length,
       subtitle: 'Passed Hard Constraints',
       icon: ShieldCheck,
       color: 'text-cyan-400',
@@ -98,7 +104,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     },
     {
       title: 'High Match (≥75%)',
-      value: highFitJobs.length,
+      value: isNewCandidate ? 0 : highFitJobs.length,
       subtitle: 'Ready for Application',
       icon: TrendingUp,
       color: 'text-emerald-400',
@@ -106,7 +112,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     },
     {
       title: 'Telegram Alerts',
-      value: jobs.filter((j) => j.status === 'notified').length,
+      value: isNewCandidate ? 0 : jobs.filter((j) => j.status === 'notified').length,
       subtitle: 'Dispatched to Bot',
       icon: Send,
       color: 'text-violet-400',
@@ -114,7 +120,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     },
     {
       title: 'Applied',
-      value: jobs.filter((j) => j.status === 'applied').length,
+      value: isNewCandidate ? 0 : jobs.filter((j) => j.status === 'applied').length,
       subtitle: 'Tracked In Pipeline',
       icon: CheckCircle2,
       color: 'text-blue-400',
@@ -176,7 +182,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/[0.07] text-zinc-300">
               <span className="text-zinc-500 text-[11px]">Last Run:</span>
               <span className="font-medium text-zinc-200">
-                {workflow?.last_run
+                {isNewCandidate
+                  ? 'Not yet executed'
+                  : workflow?.last_run
                   ? new Date(workflow.last_run).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                   : 'Recent'}
               </span>
@@ -226,52 +234,69 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         })}
       </div>
 
-      {/* Empty State Banner for New User Accounts (Pristine Feed) */}
-      {jobs.length === 0 && (
+      {/* Prompt to Initiate First Execution for New Users */}
+      {isNewCandidate && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.15 }}
-          className="glass-panel border border-blue-500/30 rounded-2xl p-6 sm:p-8 text-center space-y-4 bg-gradient-to-b from-blue-950/20 to-black/40 shadow-xl"
+          className="glass-panel border-2 border-blue-500/40 rounded-2xl p-6 sm:p-8 text-center space-y-4 bg-gradient-to-b from-blue-950/30 via-indigo-950/20 to-black/50 shadow-2xl relative overflow-hidden"
         >
-          <div className="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 mx-auto shadow-inner">
-            <Search className="w-7 h-7" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400 text-xs font-semibold">
+            <Sparkles className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
+            <span>Workspace Configured &bull; 000 Baseline KPIs</span>
           </div>
-          <div className="max-w-xl mx-auto space-y-1.5">
-            <h3 className="text-base sm:text-lg font-semibold text-white">
-              Ready to Discover Verified Openings for {profile.full_name}
+
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600/30 to-indigo-600/30 border border-blue-500/30 flex items-center justify-center text-blue-400 mx-auto shadow-inner">
+            <Zap className="w-7 h-7 text-amber-300" />
+          </div>
+
+          <div className="max-w-xl mx-auto space-y-2">
+            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+              Initiate Your First Autonomous Execution
             </h3>
-            <p className="text-xs text-zinc-300">
-              Your career targets are active: <span className="text-white font-medium">{(profile.target_roles || []).join(', ') || 'Tech Roles'}</span> in <span className="text-blue-300 font-medium">{(profile.preferred_locations || []).join(', ') || 'Remote'}</span> ({profile.salary_expectation ? `₹${profile.salary_expectation.min_lpa}–₹${profile.salary_expectation.max_lpa} LPA` : 'Market Competitive'}).
+            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+              Welcome, <span className="text-white font-semibold">{profile.full_name}</span>! Your career targets are active for{' '}
+              <span className="text-cyan-300 font-medium">{(profile.target_roles || []).slice(0, 3).join(', ') || 'Target Roles'}</span>{' '}
+              in <span className="text-blue-300 font-medium">{(profile.preferred_locations || []).slice(0, 2).join(', ') || 'Locations'}</span>{' '}
+              ({profile.salary_expectation ? `₹${profile.salary_expectation.min_lpa}–₹${profile.salary_expectation.max_lpa} LPA` : 'Market Competitive'}).
             </p>
             <p className="text-xs text-zinc-400">
-              Your dashboard starts clean with zero old mock jobs. Run your first autonomous ATS discovery scan to find live opportunities!
+              Your dashboard currently shows 0 KPIs. Trigger your first autonomous run now to scan verified ATS portals (Greenhouse, Lever, Ashby, Workday), filter expired ghost listings, and receive real-time fit analysis.
             </p>
           </div>
+
           <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
             <button
-              onClick={onDiscoverJobs}
-              disabled={isDiscovering || isPipelineRunning}
-              className="py-2.5 px-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-blue-600/25 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              onClick={() => {
+                if (onTriggerWorkflow) {
+                  onTriggerWorkflow();
+                } else {
+                  onRunPipeline();
+                }
+              }}
+              disabled={isWorkflowRunning || isPipelineRunning}
+              className="py-3 px-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xl shadow-blue-600/30 transition-all flex items-center gap-2 cursor-pointer border border-blue-400/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
             >
-              {isDiscovering || isPipelineRunning ? (
+              {isWorkflowRunning || isPipelineRunning ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Scanning ATS Portals...</span>
+                  <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                  <span>Executing Autonomous Discovery Engine...</span>
                 </>
               ) : (
                 <>
-                  <Zap className="w-4 h-4" />
-                  <span>Run First Autonomous Scan Now</span>
+                  <Zap className="w-4 h-4 text-amber-300" />
+                  <span>Initiate First Autonomous Execution</span>
+                  <ArrowRight className="w-4 h-4 ml-0.5" />
                 </>
               )}
             </button>
+
             <button
-              onClick={onOpenAddJob}
-              className="py-2.5 px-4 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white text-xs font-medium rounded-xl transition-all flex items-center gap-2 cursor-pointer"
+              onClick={() => setActiveTab('profile')}
+              className="py-3 px-4 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-medium rounded-xl transition-all cursor-pointer"
             >
-              <PlusCircle className="w-4 h-4 text-zinc-400" />
-              <span>Paste Job Description Manually</span>
+              Review Career Target Criteria
             </button>
           </div>
         </motion.div>

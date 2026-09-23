@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'motion/react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Briefcase,
   Zap,
@@ -12,30 +12,106 @@ import {
   Sliders,
   Smartphone,
   ExternalLink,
-  Bot,
   Lock,
   Search,
-  BellRing,
-  ChevronRight,
-  TrendingUp,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Check,
+  Layers,
+  Cpu,
+  RefreshCw,
+  Globe,
+  Terminal,
 } from 'lucide-react';
 
 interface HomeLandingViewProps {
   onOpenRegister: () => void;
   onOpenLogin: () => void;
-  onExploreDemo: () => void;
 }
 
 export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
   onOpenRegister,
   onOpenLogin,
-  onExploreDemo,
 }) => {
+  const [activePipelineStep, setActivePipelineStep] = useState<number>(0);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  const pipelineStages = [
+    {
+      step: '01',
+      title: 'Portal Discovery',
+      badge: 'Continuous Crawl',
+      desc: 'Autonomous scraper targets direct company ATS boards (Greenhouse, Lever, Ashby, Workday) rather than aggregated spam boards.',
+      sampleData: {
+        sources: ['Greenhouse API', 'Lever Postings', 'Ashby HQ', 'Workday Direct'],
+        status: 'Active Crawling',
+        lastScanFound: '14 New Openings',
+      },
+    },
+    {
+      step: '02',
+      title: 'Anti-Ghost Check',
+      badge: 'HTTP Verification',
+      desc: 'Every single link is pinged with real-time HTTP validation. 404s, expired positions, and closed requisitions are pruned immediately.',
+      sampleData: {
+        verifiedLinks: '100% Live URLs',
+        deadLinksPruned: '4 Expired Skipped',
+        validationTime: '<150ms per link',
+      },
+    },
+    {
+      step: '03',
+      title: 'Gemini Fit Engine',
+      badge: 'Multi-Modal ATS',
+      desc: 'Evaluates hard constraints: tech stack overlap, verified experience brackets, and CTC expectations. Only roles scoring ≥75% are prioritized.',
+      sampleData: {
+        model: 'Gemini 3.8 Flash',
+        criteria: 'Tech Stack (40%), Experience (30%), CTC (20%), Location (10%)',
+        fitScore: '94% Viable Match',
+      },
+    },
+    {
+      step: '04',
+      title: 'Telegram Dispatch',
+      badge: 'Instant Push',
+      desc: 'Dispatches instant push alerts directly to your phone Telegram with direct application links and tailored ATS resume ready for download.',
+      sampleData: {
+        destination: 'Personal Telegram ID',
+        latency: 'Instant (< 2s)',
+        payload: 'Role, CTC, Match %, 1-Click ATS Resume, Direct Apply',
+      },
+    },
+  ];
+
+  const faqs = [
+    {
+      q: 'How does the autonomous 4-hour schedule work for my personal account?',
+      a: 'Every registered candidate receives an independent background schedule. When you create your account (e.g. at 9:27 AM), your 4-hour cycle begins based on your personal clock. Even when your browser tab is closed or your computer is asleep, our cloud agent continues crawling verified ATS portals for your target roles and dispatches alerts directly to your phone.',
+    },
+    {
+      q: 'Do I need to build, code, or host a Telegram bot?',
+      a: 'No. You do not need to visit BotFather, create bot tokens, or write any code. CareerOps AI operates a centralized, verified notification dispatcher. During sign-up, simply enter your Telegram Chat ID (we provide a 1-click link to retrieve it in 5 seconds). When high-fit roles (≥75%) are discovered, your phone buzzes immediately.',
+    },
+    {
+      q: 'How does CareerOps AI prevent ghost jobs and dead links?',
+      a: 'Unlike traditional job boards that aggregate months-old reposts, our pipeline performs real-time HTTP link verification before ever presenting a job to you. Any requisition returning a 404, an expired posting page, or a closed career portal is pruned automatically.',
+    },
+    {
+      q: 'How does the Gemini ATS fit scoring work?',
+      a: 'We pass your verified resume profile and target parameters through Gemini 3.8 Flash along with the employer job description. The model checks tech stack overlap, required years of experience, and salary alignment. It generates transparent reasoning and notes any skill gaps so you know exactly why a role matched.',
+    },
+    {
+      q: 'Can I export tailored resumes and cover letters for each job?',
+      a: 'Yes. Our 1-Click Document Studio dynamically crafts an ATS-optimized resume and tailored cover letter specifically aligned to the keywords and competencies of each high-fit job description. You can preview, edit, copy, or export them in seconds.',
+    },
+  ];
+
   return (
-    <div className="space-y-16 sm:space-y-24 py-4 sm:py-8">
-      {/* 1. Hero Section */}
-      <section className="relative text-center max-w-4xl mx-auto pt-6 sm:pt-12 space-y-6">
-        {/* Ambient Badge */}
+    <div className="space-y-20 sm:space-y-28 py-4 sm:py-8">
+      {/* 1. HERO SECTION */}
+      <section className="relative text-center max-w-5xl mx-auto pt-4 sm:pt-10 space-y-7">
+        {/* Ambient Top Pill */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -43,77 +119,151 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
           className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400 text-xs font-semibold shadow-sm"
         >
           <Sparkles className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
-          <span>Autonomous 24/7 Career Operations & Phone Alerts</span>
+          <span>Autonomous 24/7 Career Operations & Phone Dispatch</span>
         </motion.div>
 
-        {/* Main Headline */}
+        {/* Main Title */}
         <motion.h1
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.15]"
+          className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]"
         >
-          Job Hunting on Autopilot.{' '}
+          Land Your Dream Job on{' '}
           <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-cyan-300 bg-clip-text text-transparent">
-            Real-time ATS Matches Delivered to Your Telegram.
+            Autonomous Autopilot.
           </span>
         </motion.h1>
 
         {/* Subtitle */}
         <motion.p
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-base sm:text-lg text-zinc-300 max-w-2xl mx-auto leading-relaxed"
+          className="text-sm sm:text-lg text-zinc-300 max-w-3xl mx-auto leading-relaxed"
         >
-          Never miss a high-fit opening again. CareerOps AI autonomously scans verified job portals 24/7, scores opportunities against your exact skills and experience brackets, generates ATS-tailored resumes, and sends instant push notifications straight to your Telegram phone.
+          Stop spending hours skimming stale job boards. CareerOps AI continuously scans direct company ATS portals 24/7, eliminates ghost links with HTTP verification, evaluates deep fit using Gemini 3.8 Flash, and sends instant high-fit alerts straight to your personal Telegram.
         </motion.p>
 
         {/* Action Buttons */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2"
         >
           <button
             onClick={onOpenRegister}
-            className="w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm rounded-xl shadow-xl shadow-blue-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer border border-blue-400/30 hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm rounded-xl shadow-xl shadow-blue-600/30 transition-all flex items-center justify-center gap-2.5 cursor-pointer border border-blue-400/30 hover:scale-[1.02] active:scale-[0.98]"
           >
             <Zap className="w-4 h-4 text-amber-300" />
-            <span>Create Free Workspace</span>
+            <span>Get Started Free</span>
             <ArrowRight className="w-4 h-4 ml-0.5" />
           </button>
 
           <button
-            onClick={onExploreDemo}
-            className="w-full sm:w-auto px-6 py-3.5 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 font-semibold text-sm rounded-xl border border-white/[0.1] transition-all flex items-center justify-center gap-2 cursor-pointer hover:border-white/[0.2]"
-          >
-            <Bot className="w-4 h-4 text-blue-400" />
-            <span>1-Click Verified Demo</span>
-          </button>
-
-          <button
             onClick={onOpenLogin}
-            className="w-full sm:w-auto px-5 py-3.5 text-zinc-400 hover:text-white text-sm font-medium transition-colors cursor-pointer"
+            className="w-full sm:w-auto px-6 py-4 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white font-medium text-sm rounded-xl border border-white/[0.1] transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
-            Existing Member? Sign In
+            <Lock className="w-4 h-4 text-blue-400" />
+            <span>Existing Candidate? Sign In</span>
           </button>
+        </motion.div>
+
+        {/* Real-time Interactive Pipeline Simulator Box */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.35 }}
+          className="pt-6"
+        >
+          <div className="glass-panel p-5 sm:p-7 rounded-3xl border border-white/[0.12] bg-[#0c1019]/90 shadow-2xl text-left max-w-4xl mx-auto space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full bg-rose-500/80" />
+                  <span className="w-3 h-3 rounded-full bg-amber-500/80" />
+                  <span className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                </div>
+                <span className="text-xs font-mono text-zinc-400 pl-2">
+                  careerops-agent --cadence=4h --notifications=telegram
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-emerald-400 font-mono bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Autonomous Engine Online</span>
+              </div>
+            </div>
+
+            {/* Pipeline Stage Tabs */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {pipelineStages.map((stage, idx) => {
+                const isActive = activePipelineStep === idx;
+                return (
+                  <button
+                    key={stage.step}
+                    onClick={() => setActivePipelineStep(idx)}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-blue-600/20 border-blue-500/50 shadow-md shadow-blue-500/10'
+                        : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.05]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-mono text-blue-400 font-bold">{stage.step}</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${
+                        isActive ? 'bg-blue-500/20 text-blue-300' : 'bg-white/[0.04] text-zinc-400'
+                      }`}>
+                        {stage.badge}
+                      </span>
+                    </div>
+                    <p className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-zinc-300'}`}>
+                      {stage.title}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Active Stage Simulation Inspector */}
+            <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] font-mono text-xs text-zinc-300 space-y-2.5">
+              <div className="flex items-center justify-between text-[11px] text-zinc-400 pb-2 border-b border-white/[0.06]">
+                <span className="flex items-center gap-1.5 text-blue-400">
+                  <Terminal className="w-3.5 h-3.5" />
+                  Stage Inspector: {pipelineStages[activePipelineStep].title}
+                </span>
+                <span className="text-zinc-500 text-[10px]">Click any stage above to inspect</span>
+              </div>
+              <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+                {pipelineStages[activePipelineStep].desc}
+              </p>
+              <div className="pt-1 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                {Object.entries(pipelineStages[activePipelineStep].sampleData).map(([k, v]) => (
+                  <div key={k} className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.04]">
+                    <span className="text-[10px] text-zinc-400 capitalize">{k.replace(/([A-Z])/g, ' $1')}:</span>
+                    <p className="text-emerald-400 font-semibold truncate mt-0.5">
+                      {Array.isArray(v) ? v.join(', ') : String(v)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         {/* Trust Badges Bar */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-8 max-w-3xl mx-auto text-left"
+          transition={{ duration: 0.6, delay: 0.45 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 max-w-3xl mx-auto text-left"
         >
           <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
             <div className="flex items-center gap-2 text-xs font-semibold text-white mb-1">
               <Zap className="w-3.5 h-3.5 text-blue-400" />
               <span>24/7 Autonomous</span>
             </div>
-            <p className="text-[11px] text-zinc-400">Scrapes verified postings every 4 hours automatically</p>
+            <p className="text-[11px] text-zinc-400">Background cadence scans every 4 hours automatically</p>
           </div>
 
           <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
@@ -121,7 +271,7 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
               <Send className="w-3.5 h-3.5 text-emerald-400" />
               <span>Zero-Setup Telegram</span>
             </div>
-            <p className="text-[11px] text-zinc-400">Pre-configured bot sends instant phone alerts</p>
+            <p className="text-[11px] text-zinc-400">Pre-configured dispatcher delivers instant phone alerts</p>
           </div>
 
           <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
@@ -129,24 +279,214 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
               <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
               <span>Anti-Ghosting Check</span>
             </div>
-            <p className="text-[11px] text-zinc-400">HTTP link verification filters 404s and expired roles</p>
+            <p className="text-[11px] text-zinc-400">Real-time HTTP link checks prune 404s and expired roles</p>
           </div>
 
           <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
             <div className="flex items-center gap-2 text-xs font-semibold text-white mb-1">
               <Lock className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Private Partition</span>
+              <span>Private Workspace</span>
             </div>
-            <p className="text-[11px] text-zinc-400">Isolated workspace and device cookies for each user</p>
+            <p className="text-[11px] text-zinc-400">Isolated partition and custom candidate preferences</p>
           </div>
         </motion.div>
       </section>
 
-      {/* 2. Interactive Telegram Showcase Section */}
-      <section id="telegram-alerts" className="max-w-5xl mx-auto">
+      {/* 2. HOW IT WORKS SECTION */}
+      <section id="how-it-works" className="max-w-6xl mx-auto space-y-10 scroll-mt-20">
+        <div className="text-center max-w-2xl mx-auto space-y-2.5">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-semibold">
+            <Layers className="w-3.5 h-3.5" />
+            <span>Autonomous Pipeline</span>
+          </div>
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+            How CareerOps AI Solves Job Hunting
+          </h2>
+          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+            From verified company ATS portals to tailored resumes and phone notifications in minutes.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-blue-500/40 transition-all space-y-3 group">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+              <Search className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider">Step 01</span>
+            <h3 className="font-bold text-white text-base">Direct ATS Crawling</h3>
+            <p className="text-xs text-zinc-300 leading-relaxed">
+              Continuously crawls live openings across Greenhouse, Lever, Ashby, and Workday. Bypasses recruiter spam and third-party scrapers.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-emerald-500/40 transition-all space-y-3 group">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider">Step 02</span>
+            <h3 className="font-bold text-white text-base">HTTP Link Verification</h3>
+            <p className="text-xs text-zinc-300 leading-relaxed">
+              Every job listing undergoes an HTTP probe. 404s, expired postings, and closed requisitions are filtered out before you ever see them.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-purple-500/40 transition-all space-y-3 group">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+              <Cpu className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] font-mono font-bold text-purple-400 uppercase tracking-wider">Step 03</span>
+            <h3 className="font-bold text-white text-base">Gemini ATS Fit Scoring</h3>
+            <p className="text-xs text-zinc-300 leading-relaxed">
+              Calculates tech stack overlap, verified experience brackets, and CTC constraints. Only roles with match score ≥75% trigger alerts.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-amber-500/40 transition-all space-y-3 group">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+              <Smartphone className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-wider">Step 04</span>
+            <h3 className="font-bold text-white text-base">Instant Telegram Dispatch</h3>
+            <p className="text-xs text-zinc-300 leading-relaxed">
+              Instant alerts sent directly to your phone. Includes direct application links, salary brackets, and tailored ATS resume ready in 1 click.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. ATS ENGINE & DOCUMENT STUDIO */}
+      <section id="ats-engine" className="max-w-5xl mx-auto scroll-mt-20">
+        <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-white/[0.1] bg-gradient-to-b from-white/[0.03] to-transparent shadow-2xl space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-6 space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-indigo-500/10 text-indigo-400 text-xs font-semibold border border-indigo-500/20">
+                <FileText className="w-3.5 h-3.5" />
+                <span>Precision ATS Alignment</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                No Generic Hallucinations.<br />
+                <span className="text-indigo-400">Tailored Strictly to Your Real Achievements.</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                Most AI resume tools hallucinate fake experience that fails technical interviews. CareerOps AI takes your authentic career trajectory and maps your proven skills to the exact keywords and competency bars demanded by the hiring manager.
+              </p>
+              <div className="space-y-2 pt-2 text-xs">
+                <div className="flex items-center gap-2.5 text-zinc-200">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Deterministic keyword match scoring across core tech stacks</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-zinc-200">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>1-Click tailored cover letter generated per job opening</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-zinc-200">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Export to clean ATS-compliant text or professional PDF</span>
+                </div>
+              </div>
+              <div className="pt-2">
+                <button
+                  onClick={onOpenRegister}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl shadow-md shadow-indigo-600/20 transition-all inline-flex items-center gap-2 cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Try Document Studio</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Document Diff Card */}
+            <div className="lg:col-span-6 space-y-3">
+              <div className="p-4 rounded-2xl bg-[#111622] border border-white/[0.08] space-y-3 text-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                  <span className="font-semibold text-white flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                    ATS Optimization Comparison
+                  </span>
+                  <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-mono">
+                    94% Match
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="p-2.5 rounded-lg bg-rose-500/5 border border-rose-500/20 text-[11px] text-zinc-300">
+                    <span className="text-rose-400 font-bold text-[10px] block mb-0.5">Generic Resume Keyword Overlap (42%):</span>
+                    "Worked on frontend web applications using common libraries and deployed backend services."
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-[11px] text-zinc-300">
+                    <span className="text-emerald-400 font-bold text-[10px] block mb-0.5">CareerOps Tailored ATS Resume (94%):</span>
+                    "Architected responsive React/TypeScript frontend microservices, integrated REST APIs with 99.9% uptime, and reduced bundle load latency by 38%."
+                  </div>
+                </div>
+
+                <div className="pt-1 flex items-center justify-between text-[10px] text-zinc-400">
+                  <span>Target: Senior Frontend Engineer</span>
+                  <span className="text-indigo-400">ATS Compliant &bull; 0 Hallucinations</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. INDEPENDENT AUTOMATION CADENCE */}
+      <section id="cadence" className="max-w-5xl mx-auto scroll-mt-20">
+        <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-white/[0.1] bg-gradient-to-b from-[#0c1019] to-transparent shadow-2xl space-y-6">
+          <div className="max-w-2xl space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-semibold border border-blue-500/20">
+              <Clock className="w-3.5 h-3.5" />
+              <span>Independent 4-Hour Background Cadence</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Personal Schedules Per Candidate.<br />
+              <span className="text-blue-400">No Shared Clocks. No Server Lag.</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+              When candidate A registers at 9:27 AM, their next autonomous cycle runs at 1:27 PM. When candidate B registers at 10:15 AM, their next cycle runs at 2:15 PM. Every candidate gets their own isolated background runner that continuously checks verified job portals and pushes matching opportunities.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2">
+            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+              <div className="flex items-center gap-2 text-xs font-semibold text-white mb-1">
+                <Globe className="w-4 h-4 text-cyan-400" />
+                <span>Runs in the Cloud</span>
+              </div>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                You do not need to keep a browser tab open. Server-side schedulers execute continuously in the background.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+              <div className="flex items-center gap-2 text-xs font-semibold text-white mb-1">
+                <RefreshCw className="w-4 h-4 text-emerald-400" />
+                <span>Manual Trigger Anytime</span>
+              </div>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                Need fresh jobs immediately? Click "Trigger Automation" in your navbar at any time to run an instant on-demand cycle.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+              <div className="flex items-center gap-2 text-xs font-semibold text-white mb-1">
+                <Lock className="w-4 h-4 text-indigo-400" />
+                <span>Data Isolation</span>
+              </div>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                Your target roles, salary criteria, notified history, and tailored resumes are saved exclusively in your private partition.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. TELEGRAM SHOWCASE SECTION */}
+      <section id="telegram-alerts" className="max-w-5xl mx-auto scroll-mt-20">
         <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-white/[0.1] bg-gradient-to-b from-white/[0.04] to-transparent shadow-2xl overflow-hidden relative">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Left side: Why Telegram & Zero Effort explanation */}
+            {/* Left side: Why Telegram explanation */}
             <div className="lg:col-span-6 space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-semibold border border-emerald-500/20">
                 <Send className="w-3.5 h-3.5" />
@@ -159,25 +499,25 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
               </h2>
 
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                Traditional notification systems force you to visit BotFather, generate bot tokens, deploy servers, or configure complicated webhooks.
+                Traditional notification setups force you to visit BotFather, manage private bot tokens, or deploy webhook servers.
               </p>
 
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                With CareerOps AI, we run a centralized notification dispatcher. During sign-up, simply enter your Telegram Chat ID (we provide a 1-click link to retrieve it in 5 seconds). When high-fit roles matching your profile (&ge;75%) are discovered, your phone buzzes immediately with direct apply links and tailored resumes.
+                CareerOps AI runs a pre-configured central notification dispatcher. When you register, simply paste your numeric Telegram Chat ID. The moment a verified job scores ≥75%, your phone buzzes with the exact salary, match analysis, direct apply link, and tailored resume.
               </p>
 
               <div className="space-y-2 pt-2 text-xs">
                 <div className="flex items-center gap-2.5 text-zinc-200">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Each registered user has their own isolated Telegram destination ID</span>
+                  <span>First-applicant advantage: Apply within minutes of a role going live</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-zinc-200">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Instant 1-click verification test ping during registration</span>
+                  <span>Includes salary ranges (LPA), ATS fit score, and skill gaps preview</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-zinc-200">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Includes salary ranges, ATS fit score, and skill gaps preview</span>
+                  <span>1-click verification test ping right during registration wizard</span>
                 </div>
               </div>
 
@@ -188,7 +528,7 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Connect Your Telegram ID</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -204,7 +544,7 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
                     </div>
                     <div>
                       <p className="font-semibold text-white text-xs">CareerOps Bot</p>
-                      <p className="text-[10px] text-cyan-400 font-medium">bot • online</p>
+                      <p className="text-[10px] text-cyan-400 font-medium">bot &bull; online</p>
                     </div>
                   </div>
                   <span className="text-[10px] text-zinc-400">Just now</span>
@@ -213,15 +553,15 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
                 {/* Bubble Message */}
                 <div className="bg-[#1E2C3A] rounded-xl p-3.5 space-y-2 border border-white/[0.04]">
                   <p className="font-bold text-emerald-400 text-xs">
-                    🎯 New High-Fit Role Matched for Kartik! (CareerOps AI)
+                    🎯 New High-Fit Role Matched! (CareerOps AI)
                   </p>
 
                   <div className="space-y-1 text-[11px] text-zinc-200 leading-normal">
-                    <p>📌 <b>Role:</b> Lead Automation Specialist</p>
-                    <p>🏢 <b>Company:</b> KPMG Global Services</p>
-                    <p>📍 <b>Location:</b> Gurugram, India (Hybrid)</p>
-                    <p>⏳ <b>Experience Required:</b> 3 - 5 Years</p>
-                    <p>💰 <b>Salary Range:</b> ₹14.0 - ₹20.0 LPA</p>
+                    <p>📌 <b>Role:</b> Senior Full Stack Engineer</p>
+                    <p>🏢 <b>Company:</b> Razorpay Software</p>
+                    <p>📍 <b>Location:</b> Bengaluru, India (Hybrid / Remote)</p>
+                    <p>⏳ <b>Experience Required:</b> 2 - 5 Years</p>
+                    <p>💰 <b>Salary Range:</b> ₹18.0 - ₹28.0 LPA</p>
                     <p className="text-emerald-400 font-bold">📊 Fit Score: 94%</p>
                     <p>⚠️ <b>Skill Gap:</b> None (100% Core Competency Overlap)</p>
                   </div>
@@ -238,7 +578,7 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
                     <div className="p-2 rounded-lg bg-emerald-600/30 border border-emerald-500/30 flex items-center justify-between text-[11px] text-emerald-300">
                       <span className="flex items-center gap-1.5 font-semibold">
                         <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                        Apply Directly on KPMG Career Portal
+                        Apply Directly on Razorpay Careers
                       </span>
                       <ExternalLink className="w-3 h-3 text-emerald-400" />
                     </div>
@@ -254,95 +594,15 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
         </div>
       </section>
 
-      {/* 3. The 5-Step Solution Architecture */}
-      <section id="solution" className="max-w-6xl mx-auto space-y-8">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            How CareerOps AI Solves Job Hunting
-          </h2>
-          <p className="text-xs sm:text-sm text-zinc-400">
-            A complete autonomous pipeline from web discovery to ATS submission.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Card 1 */}
-          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-blue-500/30 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-              <Search className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-white text-base">1. Multi-Portal Scraping</h3>
-            <p className="text-xs text-zinc-300 leading-relaxed">
-              Continuously crawls live openings across LinkedIn, Google Jobs, and direct company ATS portals. Automatically skips recruiter spam and irrelevant listings.
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-emerald-500/30 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-white text-base">2. Anti-Ghosting Link Check</h3>
-            <p className="text-xs text-zinc-300 leading-relaxed">
-              Every job listing is tested with an HTTP verification check. 404s, expired positions, and closed corporate requisitions are immediately pruned so you never waste time.
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-purple-500/30 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-              <Sliders className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-white text-base">3. Gemini ATS Fit Scoring</h3>
-            <p className="text-xs text-zinc-300 leading-relaxed">
-              Evaluates tech stack overlap, verified years of experience, and role expectations. Jobs scoring &ge;75% are prioritized; mismatches are filed with transparent reasoning.
-            </p>
-          </div>
-
-          {/* Card 4 */}
-          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-amber-500/30 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <Smartphone className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-white text-base">4. Telegram Push Alerts</h3>
-            <p className="text-xs text-zinc-300 leading-relaxed">
-              Instant alerts sent directly to your phone. Includes direct application links, salary brackets, and fit analysis so you can apply within minutes of a posting going live.
-            </p>
-          </div>
-
-          {/* Card 5 */}
-          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-cyan-500/30 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-              <FileText className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-white text-base">5. ATS Document Studio</h3>
-            <p className="text-xs text-zinc-300 leading-relaxed">
-              Generates customized resumes and tailored cover letters grounded strictly in your real career accomplishments. Export to professional PDF or clean text in 1 click.
-            </p>
-          </div>
-
-          {/* Card 6 */}
-          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-blue-500/30 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-              <Lock className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-white text-base">6. Private Data Partitioning</h3>
-            <p className="text-xs text-zinc-300 leading-relaxed">
-              Each user gets an isolated workspace, personal Telegram alerts, and 90-day device-persistent cookie login without requiring third-party cloud database dependencies.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. Comparison Table: Manual vs Traditional vs CareerOps */}
-      <section className="max-w-5xl mx-auto">
+      {/* 6. COMPARISON TABLE */}
+      <section id="comparison" className="max-w-5xl mx-auto scroll-mt-20">
         <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/[0.08] space-y-6">
           <div className="text-center max-w-xl mx-auto space-y-1">
             <h3 className="text-xl sm:text-2xl font-bold text-white">
               Why Manual Job Hunting Fails
             </h3>
             <p className="text-xs text-zinc-400">
-              See the difference when automation powers your career search.
+              See how automation transforms your search efficiency and callback rates.
             </p>
           </div>
 
@@ -350,9 +610,9 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-white/[0.1] text-zinc-400">
-                  <th className="py-3 px-4 font-semibold">Feature</th>
+                  <th className="py-3 px-4 font-semibold">Capability</th>
                   <th className="py-3 px-4 font-semibold text-zinc-400">Manual Job Search</th>
-                  <th className="py-3 px-4 font-semibold text-zinc-400">Generic Job Alerts</th>
+                  <th className="py-3 px-4 font-semibold text-zinc-400">Generic Job Newsletters</th>
                   <th className="py-3 px-4 font-bold text-blue-400 bg-blue-500/10 rounded-t-lg">
                     CareerOps AI
                   </th>
@@ -361,42 +621,42 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
               <tbody className="divide-y divide-white/[0.06] text-zinc-300">
                 <tr>
                   <td className="py-3 px-4 font-medium text-white">Discovery Speed</td>
-                  <td className="py-3 px-4 text-zinc-400">Hours spent browsing tabs daily</td>
-                  <td className="py-3 px-4 text-zinc-400">Daily bulk email newsletters</td>
+                  <td className="py-3 px-4 text-zinc-400">3+ hours spent skimming tabs daily</td>
+                  <td className="py-3 px-4 text-zinc-400">Bulk daily or weekly emails</td>
                   <td className="py-3 px-4 font-semibold text-emerald-400 bg-blue-500/5">
-                    Real-time 24/7 background scraping
+                    Autonomous 24/7 background agent
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-medium text-white">Ghost / 404 Links</td>
-                  <td className="py-3 px-4 text-zinc-400">Frequent dead ends & closed portals</td>
+                  <td className="py-3 px-4 font-medium text-white">Ghost / Dead Links</td>
+                  <td className="py-3 px-4 text-zinc-400">High (30%+ expired requisitions)</td>
                   <td className="py-3 px-4 text-zinc-400">No link validation performed</td>
                   <td className="py-3 px-4 font-semibold text-emerald-400 bg-blue-500/5">
-                    Automated HTTP link check (0 dead links)
+                    100% Verified active HTTP links
                   </td>
                 </tr>
                 <tr>
                   <td className="py-3 px-4 font-medium text-white">Fit Accuracy</td>
-                  <td className="py-3 px-4 text-zinc-400">Manual keyword skimming</td>
-                  <td className="py-3 px-4 text-zinc-400">Broad keyword alerts (low relevance)</td>
+                  <td className="py-3 px-4 text-zinc-400">Subjective manual skimming</td>
+                  <td className="py-3 px-4 text-zinc-400">Broad keyword match (low relevance)</td>
                   <td className="py-3 px-4 font-semibold text-emerald-400 bg-blue-500/5">
-                    Multi-modal ATS & experience fit (&ge;75%)
+                    Gemini 3.8 Flash multi-factor match (&ge;75%)
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-medium text-white">Phone Notifications</td>
+                  <td className="py-3 px-4 font-medium text-white">Phone Alerts</td>
                   <td className="py-3 px-4 text-zinc-400">None</td>
-                  <td className="py-3 px-4 text-zinc-400">Email spam (easily lost)</td>
+                  <td className="py-3 px-4 text-zinc-400">Lost in email spam</td>
                   <td className="py-3 px-4 font-semibold text-emerald-400 bg-blue-500/5">
-                    Instant Telegram push to your personal ID
+                    Instant Telegram push to your phone
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-medium text-white">Resume Customization</td>
-                  <td className="py-3 px-4 text-zinc-400">Manual editing per application</td>
-                  <td className="py-3 px-4 text-zinc-400">None</td>
+                  <td className="py-3 px-4 font-medium text-white">Resume Tailoring</td>
+                  <td className="py-3 px-4 text-zinc-400">30–45 mins per application</td>
+                  <td className="py-3 px-4 text-zinc-400">None provided</td>
                   <td className="py-3 px-4 font-semibold text-emerald-400 bg-blue-500/5">
-                    1-Click ATS Tailored PDF & Text
+                    1-Click ATS Document Studio
                   </td>
                 </tr>
               </tbody>
@@ -405,29 +665,99 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
         </div>
       </section>
 
-      {/* 5. Bottom CTA Box */}
+      {/* 7. FREQUENTLY ASKED QUESTIONS */}
+      <section id="faq" className="max-w-4xl mx-auto space-y-6 scroll-mt-20">
+        <div className="text-center space-y-2">
+          <h3 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
+            Frequently Asked Questions
+          </h3>
+          <p className="text-xs sm:text-sm text-zinc-400">
+            Everything you need to know about the CareerOps AI autonomous pipeline.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {faqs.map((faq, idx) => {
+            const isOpen = openFaqIndex === idx;
+            return (
+              <div
+                key={idx}
+                className="rounded-2xl bg-white/[0.02] border border-white/[0.08] overflow-hidden transition-all"
+              >
+                <button
+                  onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                  className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-white/[0.02] transition"
+                >
+                  <span className="font-semibold text-white text-xs sm:text-sm">
+                    {faq.q}
+                  </span>
+                  {isOpen ? (
+                    <ChevronUp className="w-4 h-4 text-blue-400 shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-zinc-400 shrink-0" />
+                  )}
+                </button>
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="px-4 sm:px-5 pb-4 text-xs text-zinc-300 leading-relaxed border-t border-white/[0.04] pt-3"
+                    >
+                      {faq.a}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 8. BOTTOM WORLDWIDE CONVERSION CTA */}
       <section className="max-w-4xl mx-auto text-center p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-blue-900/40 border border-blue-500/30 shadow-2xl space-y-5">
-        <h3 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+        <h3 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
           Ready to Automate Your Career Search?
         </h3>
-        <p className="text-xs sm:text-sm text-zinc-300 max-w-xl mx-auto">
-          Create your private workspace in seconds. Enter your Telegram ID to receive instant alerts for verified high-fit roles.
+        <p className="text-xs sm:text-sm text-zinc-300 max-w-xl mx-auto leading-relaxed">
+          Create your private candidate workspace in seconds. Select your target roles, locations, and salary brackets, and let CareerOps AI handle the rest 24/7.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <button
             onClick={onOpenRegister}
-            className="w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-lg shadow-blue-600/30 transition-all cursor-pointer"
+            className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-lg shadow-blue-600/30 transition-all cursor-pointer border border-blue-400/30 hover:scale-[1.02] active:scale-[0.98]"
           >
-            Create Free Account & Sync Telegram
+            Get Started Free
           </button>
           <button
-            onClick={onExploreDemo}
-            className="w-full sm:w-auto px-6 py-3.5 bg-white/[0.06] hover:bg-white/[0.1] text-white font-semibold text-xs sm:text-sm rounded-xl border border-white/[0.12] transition-all cursor-pointer"
+            onClick={onOpenLogin}
+            className="w-full sm:w-auto px-6 py-4 bg-white/[0.06] hover:bg-white/[0.1] text-white font-semibold text-xs sm:text-sm rounded-xl border border-white/[0.12] transition-all cursor-pointer"
           >
-            Explore Live Demo Workspace
+            Candidate Sign In
           </button>
         </div>
       </section>
+
+      {/* 9. MINIMALIST FOOTER */}
+      <footer className="pt-8 pb-4 border-t border-white/[0.08] max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold text-[10px]">
+            CO
+          </div>
+          <span className="font-semibold text-white">CareerOps AI</span>
+          <span className="text-zinc-600">&bull;</span>
+          <span className="text-zinc-400">Autonomous Career Operations Engine</span>
+        </div>
+        <div className="flex items-center gap-4 text-[11px]">
+          <a href="#how-it-works" className="hover:text-white transition">How It Works</a>
+          <a href="#ats-engine" className="hover:text-white transition">ATS Engine</a>
+          <a href="#cadence" className="hover:text-white transition">Automation</a>
+          <a href="#telegram-alerts" className="hover:text-white transition">Telegram</a>
+          <a href="#faq" className="hover:text-white transition">FAQ</a>
+        </div>
+      </footer>
     </div>
   );
 };

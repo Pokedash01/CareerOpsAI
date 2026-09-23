@@ -157,7 +157,7 @@ export function createDefaultPartitionForUser(
     enabled: true,
     interval_hours: 4,
     last_run: null,
-    next_run: getCanonicalNextRun(4),
+    next_run: new Date(Date.now() + 4 * 3600 * 1000).toISOString(),
     is_running: false,
     total_runs: 0,
     auto_notify_telegram: hasTelegram,
@@ -283,6 +283,19 @@ export function getUserPartition(userId: string, initialPreferences?: InitialCar
     userPartitions[userId] = createDefaultPartitionForUser(users[userId], initialPreferences);
   }
   return userPartitions[userId];
+}
+
+/**
+ * Retrieves all registered user partitions currently loaded in memory
+ */
+export function getAllUserPartitions(): Array<{ userId: string; user?: UserAccountRecord; partition: UserPartitionData }> {
+  const list: Array<{ userId: string; user?: UserAccountRecord; partition: UserPartitionData }> = [];
+  for (const [userId, partition] of Object.entries(userPartitions)) {
+    if (partition) {
+      list.push({ userId, user: users[userId], partition });
+    }
+  }
+  return list;
 }
 
 /**

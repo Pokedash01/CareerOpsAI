@@ -1637,7 +1637,6 @@ export function App() {
           setIsAuthModalOpen(true);
         }}
         onLogout={handleLogout}
-        onExploreDemo={() => handleDemoLogin('demo@careerops.ai')}
       />
 
       {/* Main Content Area */}
@@ -1652,7 +1651,6 @@ export function App() {
               setAuthModalInitialTab('login');
               setIsAuthModalOpen(true);
             }}
-            onExploreDemo={() => handleDemoLogin('demo@careerops.ai')}
           />
         ) : (
           <AnimatePresence mode="wait">
@@ -1807,7 +1805,6 @@ export function App() {
         savedAccounts={savedAccounts}
         onLogin={handleLogin}
         onRegister={handleRegister}
-        onDemoLogin={handleDemoLogin}
         onQuickSwitch={handleQuickSwitch}
         onLogout={handleLogout}
         initialTab={authModalInitialTab}

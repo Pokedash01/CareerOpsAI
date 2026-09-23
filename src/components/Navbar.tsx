@@ -28,7 +28,6 @@ interface NavbarProps {
   currentUser?: UserAccount | null;
   onOpenAuth: (initialTab?: 'login' | 'register') => void;
   onLogout: () => void;
-  onExploreDemo?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -41,7 +40,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   onOpenAuth,
   onLogout,
-  onExploreDemo,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -165,19 +163,43 @@ export const Navbar: React.FC<NavbarProps> = ({
                 })}
               </nav>
             ) : (
-              <nav className="hidden md:flex items-center gap-1.5">
+              <nav className="hidden lg:flex items-center gap-1">
                 <a
-                  href="#solution"
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.04] transition-colors"
+                  href="#how-it-works"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.05] transition-colors"
                 >
-                  The Solution
+                  How It Works
+                </a>
+                <a
+                  href="#ats-engine"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.05] transition-colors"
+                >
+                  ATS Engine
+                </a>
+                <a
+                  href="#cadence"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.05] transition-colors"
+                >
+                  Automation
                 </a>
                 <a
                   href="#telegram-alerts"
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors flex items-center gap-1.5"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors flex items-center gap-1"
                 >
                   <Send className="w-3 h-3" />
                   <span>Telegram Alerts</span>
+                </a>
+                <a
+                  href="#comparison"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.05] transition-colors"
+                >
+                  Why Us
+                </a>
+                <a
+                  href="#faq"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.05] transition-colors"
+                >
+                  FAQ
                 </a>
               </nav>
             )}
@@ -311,16 +333,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </>
               ) : (
                 <div className="flex items-center gap-2">
-                  {onExploreDemo && (
-                    <button
-                      onClick={onExploreDemo}
-                      className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-medium text-zinc-300 hover:text-white transition-all cursor-pointer"
-                    >
-                      <Laptop className="w-3.5 h-3.5 text-blue-400" />
-                      <span>Live Demo</span>
-                    </button>
-                  )}
-
                   <button
                     onClick={() => onOpenAuth('login')}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] text-xs font-semibold text-zinc-200 hover:text-white transition-all cursor-pointer"
@@ -331,7 +343,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                   <button
                     onClick={() => onOpenAuth('register')}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all cursor-pointer border border-blue-400/25"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all cursor-pointer border border-blue-400/25 hover:scale-[1.02] active:scale-[0.98]"
                   >
                     <Zap className="w-3.5 h-3.5 text-amber-300" />
                     <span>Get Started</span>

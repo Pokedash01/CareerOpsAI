@@ -74,6 +74,7 @@ import {
   deserializeAuthData,
   UserPartitionData,
   UserAccountRecord,
+  getAllUserPartitions,
 } from './server/auth.js';
 
 const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'data');
@@ -1700,13 +1701,15 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
 
   // --- Run Full Automation / Pipeline Batch (Unified with Workflow Engine) ---
   app.post('/api/pipeline/run', async (req, res) => {
-    const result = await executeWorkflowCycle('manual');
+    const { partition, userId } = getRequestContext(req);
+    const result = await executeWorkflowCycle(partition, userId, 'manual');
     saveStoreToDisk();
+    const activeJobs = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
     res.json({
       success: true,
       result,
-      workflow: workflowState,
-      jobs: jobListings,
+      workflow: partition.workflowState,
+      jobs: activeJobs,
       evaluated_count: result.run?.evaluated_count || 0,
       newly_added_count: result.newlyAddedCount || 0,
       expired_count: result.expiredCount || 0,
@@ -1876,9 +1879,14 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
   }
 
   // --- Telegram Error / Issue Alert Dispatch Helper ---
-  async function sendTelegramIssueAlert(errorMessage: string, context?: string) {
-    const chatId = appSettings.telegram_chat_id || process.env.TELEGRAM_CHAT_ID || '1368681854';
-    const botToken = appSettings.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN;
+  async function sendTelegramIssueAlert(
+    errorMessage: string,
+    context?: string,
+    targetChatId?: string,
+    targetBotToken?: string
+  ) {
+    const chatId = targetChatId || appSettings.telegram_chat_id || process.env.TELEGRAM_CHAT_ID || '1368681854';
+    const botToken = targetBotToken || appSettings.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN;
     const candFirst = currentProfile.full_name.split(' ')[0] || 'Candidate';
 
     const htmlMessage =
@@ -1907,20 +1915,51 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     }
   }
 
-  // --- Autonomous Workflow Execution Engine ---
-  async function executeWorkflowCycle(trigger: 'scheduled_4h' | 'manual' = 'scheduled_4h') {
-    if (workflowState.is_running) {
-      return { status: 'already_running', runs: workflowState.runs, jobs: jobListings };
+  // --- Autonomous Workflow Execution Engine (Multi-User Partition Aware) ---
+  async function executeWorkflowCycle(
+    partitionOrTrigger?: UserPartitionData | 'scheduled_4h' | 'manual',
+    userId?: string,
+    trigger: 'scheduled_4h' | 'manual' = 'scheduled_4h'
+  ) {
+    let targetPartition: UserPartitionData;
+    let targetUserId: string;
+    let actualTrigger: 'scheduled_4h' | 'manual' = trigger;
+
+    if (typeof partitionOrTrigger === 'string') {
+      actualTrigger = partitionOrTrigger;
+      targetPartition = getUserPartition(PRIMARY_USER_ID);
+      targetUserId = PRIMARY_USER_ID;
+    } else if (partitionOrTrigger) {
+      targetPartition = partitionOrTrigger;
+      targetUserId = userId || PRIMARY_USER_ID;
+    } else {
+      targetPartition = getUserPartition(PRIMARY_USER_ID);
+      targetUserId = userId || PRIMARY_USER_ID;
+    }
+
+    const targetWorkflow = targetPartition.workflowState;
+    const targetProfile = targetPartition.currentProfile;
+    const targetSettings = targetPartition.appSettings;
+    const targetJobs = targetPartition.jobListings;
+    const targetSeen = targetPartition.seenJobs;
+    const targetDeleted = new Set(targetPartition.deletedJobIds);
+    const targetNotified = new Set(targetPartition.notifiedJobIds);
+
+    if (targetWorkflow.is_running) {
+      return { status: 'already_running', runs: targetWorkflow.runs, jobs: targetJobs };
     }
 
     const runId = `run-${Date.now()}`;
     const startedAt = new Date().toISOString();
-    workflowState.is_running = true;
+    targetWorkflow.is_running = true;
+    if (targetUserId === PRIMARY_USER_ID) {
+      workflowState.is_running = true;
+    }
 
     try {
       // 1. Scan a sample of jobs for expiration concurrently (fast, non-blocking)
       let expiredCount = 0;
-      const sampleToVerify = jobListings.slice(0, 5);
+      const sampleToVerify = targetJobs.slice(0, 5);
       await Promise.all(
         sampleToVerify.map(async (job) => {
           try {
@@ -1942,22 +1981,22 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
         })
       );
 
-      // 2. Discover Fresh New Jobs (Excluding existing ones and anything in seenJobs)
+      // 2. Discover Fresh New Jobs for this candidate's profile
       let discovered = await discoverJobsForProfile(
-        currentProfile,
+        targetProfile,
         undefined,
-        jobListings,
-        seenJobs,
-        appSettings.serpapi_key || process.env.SERPAPI_KEY
+        targetJobs,
+        targetSeen,
+        targetSettings.serpapi_key || process.env.SERPAPI_KEY
       );
 
       if (!discovered) {
         discovered = [];
       }
 
-      const existingIds = new Set(jobListings.map((j) => j.id));
+      const existingIds = new Set(targetJobs.map((j) => j.id));
       const existingSignatures = new Set(
-        jobListings.map((j) => `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`)
+        targetJobs.map((j) => `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`)
       );
       const newlyAdded: JobListing[] = [];
 
@@ -1966,29 +2005,29 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
         const normLink = normalizeJobUrl(nj.apply_link);
 
         // Record in seenJobs so it is never searched or returned again
-        seenJobs[nj.id] = new Date().toISOString();
-        if (normLink) seenJobs[normLink] = new Date().toISOString();
-        seenJobs[sig] = new Date().toISOString();
+        targetSeen[nj.id] = new Date().toISOString();
+        if (normLink) targetSeen[normLink] = new Date().toISOString();
+        targetSeen[sig] = new Date().toISOString();
 
-        if (!existingIds.has(nj.id) && !existingSignatures.has(sig)) {
-          jobListings.unshift(nj);
+        if (!existingIds.has(nj.id) && !existingSignatures.has(sig) && !targetDeleted.has(nj.id)) {
+          targetJobs.unshift(nj);
           existingIds.add(nj.id);
           existingSignatures.add(sig);
           newlyAdded.push(nj);
         }
       }
 
-      // Persist newly discovered jobs immediately
+      // Persist newly discovered jobs
       if (newlyAdded.length > 0) {
         saveStoreToDisk();
       }
 
-      // 3. Evaluate Un-evaluated Jobs with Gemini Fit Matcher (Concurrent Batches of 4)
+      // 3. Evaluate Un-evaluated Jobs with Gemini Fit Matcher
       let evaluatedCount = 0;
       let highFitCount = 0;
       let notifiedCount = 0;
 
-      const unEvaluatedJobs = jobListings.filter(
+      const unEvaluatedJobs = targetJobs.filter(
         (j) => !j.fit && j.status !== 'expired' && j.verification_status !== 'expired_or_invalid'
       );
       const jobsToEvaluate = unEvaluatedJobs.slice(0, 8);
@@ -2000,7 +2039,7 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
           batch.map(async (job) => {
             try {
               const fit = await evaluateJobFit(
-                currentProfile,
+                targetProfile,
                 job.title,
                 job.company_name,
                 job.description,
@@ -2011,18 +2050,23 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
               job.fit = fit;
               evaluatedCount++;
 
-              if (fit.is_viable && fit.match_score >= appSettings.min_match_score) {
+              if (fit.is_viable && fit.match_score >= (targetSettings.min_match_score || 75)) {
                 if (job.status === 'new') job.status = 'discovered';
                 highFitCount++;
 
-                // Strictly only notify if NOT expired and verified
+                const userChatId = targetSettings.telegram_chat_id || (targetProfile.contact as any)?.telegram_chat_id;
                 if (
                   job.status !== 'expired' &&
                   job.verification_status !== 'expired_or_invalid' &&
-                  workflowState.auto_notify_telegram &&
-                  !notifiedJobIds.has(job.id)
+                  targetWorkflow.auto_notify_telegram &&
+                  userChatId &&
+                  !targetNotified.has(job.id)
                 ) {
-                  await sendTelegramAlertForJob(job);
+                  await sendTelegramAlertForJob(job, userChatId, targetSettings.telegram_bot_token);
+                  targetNotified.add(job.id);
+                  if (!targetPartition.notifiedJobIds.includes(job.id)) {
+                    targetPartition.notifiedJobIds.push(job.id);
+                  }
                   notifiedCount++;
                 }
               } else if (!fit.is_viable && (job.status === 'new' || job.status === 'discovered')) {
@@ -2036,35 +2080,46 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
         saveStoreToDisk();
       }
 
-      // Also count existing evaluated high-fit roles and notify if not yet notified
-      for (const job of jobListings) {
+      // Also check existing evaluated high-fit roles for dispatch if not yet notified
+      const userChatId = targetSettings.telegram_chat_id || (targetProfile.contact as any)?.telegram_chat_id;
+      for (const job of targetJobs) {
         if (
           job.fit &&
           job.fit.is_viable &&
-          job.fit.match_score >= appSettings.min_match_score &&
+          job.fit.match_score >= (targetSettings.min_match_score || 75) &&
           job.status !== 'expired' &&
           job.verification_status !== 'expired_or_invalid'
         ) {
           highFitCount++;
-          if (workflowState.auto_notify_telegram && !notifiedJobIds.has(job.id) && job.status !== 'applied') {
-            await sendTelegramAlertForJob(job);
+          if (
+            targetWorkflow.auto_notify_telegram &&
+            userChatId &&
+            !targetNotified.has(job.id) &&
+            job.status !== 'applied'
+          ) {
+            await sendTelegramAlertForJob(job, userChatId, targetSettings.telegram_bot_token);
+            targetNotified.add(job.id);
+            if (!targetPartition.notifiedJobIds.includes(job.id)) {
+              targetPartition.notifiedJobIds.push(job.id);
+            }
             notifiedCount++;
           }
         }
       }
 
-      // 4. Reset Clock on Every Execution
+      // 4. Update Workflow Cadence Clock strictly for this candidate
       const completedAt = new Date().toISOString();
-      workflowState.last_run = completedAt;
-      const intervalMs = workflowState.interval_hours * 60 * 60 * 1000;
-      workflowState.next_run = new Date(Math.ceil((Date.now() + 1000) / intervalMs) * intervalMs).toISOString();
-      workflowState.total_runs++;
-      setupWorkflowScheduler(); // Resets countdown timer interval
+      targetWorkflow.last_run = completedAt;
+      const intervalHours = targetWorkflow.interval_hours || 4;
+      const intervalMs = intervalHours * 60 * 60 * 1000;
+      targetWorkflow.next_run = new Date(Date.now() + intervalMs).toISOString();
+      targetWorkflow.total_runs = (targetWorkflow.total_runs || 0) + 1;
+      targetPartition.lastUpdated = completedAt;
 
       const runSummary =
         trigger === 'scheduled_4h'
-          ? `Automated cycle: Scanned existing links (${expiredCount} expired identified), discovered ${newlyAdded.length} fresh jobs. Evaluated ${evaluatedCount} listings, ${highFitCount} high-fit matches, ${notifiedCount} Telegram alerts dispatched.`
-          : `Automation cycle: Scanned links (${expiredCount} expired identified), discovered ${newlyAdded.length} fresh jobs. Evaluated ${evaluatedCount} listings, ${highFitCount} high-fit matches, ${notifiedCount} Telegram alerts dispatched.`;
+          ? `Autonomous 4-hour cycle: Verified active postings (${expiredCount} dead links pruned), found ${newlyAdded.length} fresh roles. Evaluated ${evaluatedCount} listings (${highFitCount} high-fit ≥75%), ${notifiedCount} alerts pushed to Telegram.`
+          : `Manual cycle trigger: Verified active postings (${expiredCount} dead links pruned), found ${newlyAdded.length} fresh roles. Evaluated ${evaluatedCount} listings (${highFitCount} high-fit ≥75%), ${notifiedCount} alerts pushed to Telegram.`;
 
       const runLog: WorkflowRunLog = {
         id: runId,
@@ -2079,21 +2134,33 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
         summary: runSummary,
       };
 
-      workflowState.runs.unshift(runLog);
-      if (workflowState.runs.length > 20) workflowState.runs.pop();
+      targetWorkflow.runs = targetWorkflow.runs || [];
+      targetWorkflow.runs.unshift(runLog);
+      if (targetWorkflow.runs.length > 20) targetWorkflow.runs.pop();
+
+      // Sync primary global state if primary account
+      if (targetUserId === PRIMARY_USER_ID) {
+        jobListings = targetJobs;
+        workflowState.last_run = targetWorkflow.last_run;
+        workflowState.next_run = targetWorkflow.next_run;
+        workflowState.total_runs = targetWorkflow.total_runs;
+        workflowState.runs = targetWorkflow.runs;
+      }
 
       return {
         success: true,
         run: runLog,
         newlyAddedCount: newlyAdded.length,
         expiredCount,
-        jobs: jobListings,
+        jobs: targetJobs.filter((j) => !targetDeleted.has(j.id)),
       };
     } catch (err: any) {
-      console.error('[Workflow] Error executing cycle:', err);
+      console.error(`[Workflow] Error executing cycle for user ${targetUserId}:`, err);
 
-      // Revert issue alert to Telegram ID
-      await sendTelegramIssueAlert(err.message || 'Workflow automation failure', 'Autonomous Search Engine');
+      const userChatId = targetSettings.telegram_chat_id || (targetProfile.contact as any)?.telegram_chat_id;
+      if (userChatId) {
+        await sendTelegramIssueAlert(err.message || 'Workflow automation failure', 'Autonomous Search Engine', userChatId);
+      }
 
       const failedLog: WorkflowRunLog = {
         id: runId,
@@ -2107,36 +2174,49 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
         status: 'failed',
         summary: `Workflow execution issue: ${err.message}`,
       };
-      const intervalMs = (workflowState.interval_hours || 4) * 60 * 60 * 1000;
-      workflowState.next_run = new Date(Math.ceil((Date.now() + 1000) / intervalMs) * intervalMs).toISOString();
-      workflowState.runs.unshift(failedLog);
-      return { success: false, error: err.message, jobs: jobListings };
+      const intervalMs = (targetWorkflow.interval_hours || 4) * 60 * 60 * 1000;
+      targetWorkflow.next_run = new Date(Date.now() + intervalMs).toISOString();
+      targetWorkflow.runs = targetWorkflow.runs || [];
+      targetWorkflow.runs.unshift(failedLog);
+      return { success: false, error: err.message, jobs: targetJobs.filter((j) => !targetDeleted.has(j.id)) };
     } finally {
-      workflowState.is_running = false;
+      targetWorkflow.is_running = false;
+      if (targetUserId === PRIMARY_USER_ID) {
+        workflowState.is_running = false;
+      }
       saveStoreToDisk();
     }
   }
 
-  // Set up resilient heartbeat scheduler (checks every 30 seconds against target time)
+  // Set up resilient heartbeat scheduler (checks every 20 seconds across all user partitions)
   let workflowIntervalTimer: NodeJS.Timeout | null = null;
   function setupWorkflowScheduler() {
     if (workflowIntervalTimer) clearInterval(workflowIntervalTimer);
-    if (!workflowState.enabled) return;
 
-    // Heartbeat check: checks every 30s so sleeping/resumed containers fire immediately
+    // Heartbeat check: inspects every candidate partition independently
+    // Each candidate's 4-hour cycle begins at their personal registration/last execution timestamp
     workflowIntervalTimer = setInterval(async () => {
-      if (!workflowState.enabled || workflowState.is_running) return;
       const now = Date.now();
-      const nextRunTime = workflowState.next_run ? new Date(workflowState.next_run).getTime() : 0;
-      if (nextRunTime > 0 && now >= nextRunTime) {
-        console.log(`[Workflow Scheduler Heartbeat] Next run time reached (${new Date().toISOString()}). Executing cycle...`);
-        try {
-          await executeWorkflowCycle('scheduled_4h');
-        } catch (e) {
-          console.error('[Workflow Scheduler] Recurring cycle failed:', e);
+      const partitions = getAllUserPartitions();
+
+      for (const { userId, partition } of partitions) {
+        if (!partition || !partition.workflowState || !partition.workflowState.enabled) continue;
+        if (partition.workflowState.is_running) continue;
+
+        const nextRunTime = partition.workflowState.next_run
+          ? new Date(partition.workflowState.next_run).getTime()
+          : 0;
+
+        if (nextRunTime > 0 && now >= nextRunTime) {
+          console.log(`[Workflow Scheduler] Running scheduled 4-hour cycle for user ${userId} (${new Date().toISOString()})...`);
+          try {
+            await executeWorkflowCycle(partition, userId, 'scheduled_4h');
+          } catch (e) {
+            console.error(`[Workflow Scheduler] Recurring cycle failed for user ${userId}:`, e);
+          }
         }
       }
-    }, 30 * 1000);
+    }, 20 * 1000);
     if (workflowIntervalTimer.unref) {
       workflowIntervalTimer.unref();
     }
@@ -2145,24 +2225,44 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
   // Initialize scheduler on server boot
   setupWorkflowScheduler();
 
-  // --- Workflow Endpoints ---
+  // --- Workflow Endpoints (User Partition Aware) ---
   app.get('/api/workflow/status', (req, res) => {
+    const { partition } = getRequestContext(req);
+    const activeJobs = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
     res.json({
       success: true,
-      workflow: workflowState,
-      jobs_count: jobListings.length,
+      workflow: partition.workflowState,
+      jobs_count: activeJobs.length,
     });
   });
 
   app.post('/api/workflow/run', async (req, res) => {
-    const result = await executeWorkflowCycle('manual');
+    const { partition, userId } = getRequestContext(req);
+    const result = await executeWorkflowCycle(partition, userId, 'manual');
     saveStoreToDisk();
+    const activeJobs = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
     res.json({
       success: true,
       result,
-      workflow: workflowState,
-      jobs: jobListings,
+      workflow: partition.workflowState,
+      jobs: activeJobs,
     });
+  });
+
+  app.post('/api/workflow/config', (req, res) => {
+    const { partition } = getRequestContext(req);
+    const { enabled, interval_hours, auto_notify_telegram } = req.body;
+    if (typeof enabled === 'boolean') partition.workflowState.enabled = enabled;
+    if (typeof interval_hours === 'number' && interval_hours > 0) {
+      partition.workflowState.interval_hours = interval_hours;
+      partition.workflowState.next_run = new Date(Date.now() + interval_hours * 3600 * 1000).toISOString();
+    }
+    if (typeof auto_notify_telegram === 'boolean') {
+      partition.workflowState.auto_notify_telegram = auto_notify_telegram;
+    }
+    partition.workflowState.last_updated = new Date().toISOString();
+    saveStoreToDisk();
+    res.json({ success: true, workflow: partition.workflowState });
   });
 
   // Helper to compute unified pipeline stats for a partition
