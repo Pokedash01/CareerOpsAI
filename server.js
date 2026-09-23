@@ -3265,6 +3265,22 @@ var INITIAL_JOBS = [
     "experience_inferred_reason": "Exact requirement extracted from Job Description: 2+ years of hands-on experience"
   }
 ];
+var INITIAL_SETTINGS = {
+  "min_match_score": 75,
+  "telegram_configured": true,
+  "telegram_chat_id": "1368681854",
+  "telegram_bot_token": "8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas",
+  "telegram_bot_name": "CareerOps Bot",
+  "telegram_custom_header": "\u{1F3AF} New High-Fit Role Matched!",
+  "telegram_include_salary": true,
+  "telegram_include_skill_gap": true,
+  "telegram_include_apply_link": true,
+  "seen_ttl_days": 14,
+  "workflow_enabled": true,
+  "workflow_interval_hours": 4,
+  "auto_notify_telegram": true,
+  "serpapi_key": "GNLQpQWpHAMcEL9MguEkrxq1"
+};
 
 // server/gemini.ts
 import { GoogleGenAI } from "@google/genai";
@@ -5692,7 +5708,8 @@ ${externalEvidenceBlocks}` : `(No active external hyperlinks were scrapeable)`}`
 }
 
 // server.ts
-import crypto3 from "crypto";
+import crypto4 from "crypto";
+import cookieParser from "cookie-parser";
 
 // server/storage.ts
 import fs from "fs";
@@ -5763,7 +5780,7 @@ function loadFromDisk() {
         try {
           const raw = fs.readFileSync(filePath, "utf-8");
           const data = JSON.parse(raw);
-          if (data && Array.isArray(data.jobListings) && data.jobListings.length > 0) {
+          if (data && (Array.isArray(data.jobListings) && data.jobListings.length > 0 || data.users && Object.keys(data.users).length > 0)) {
             const fileTime = data.lastUpdated ? new Date(data.lastUpdated).getTime() : 0;
             if (!bestData || fileTime > latestTime) {
               bestData = data;
@@ -5796,6 +5813,278 @@ function saveToDisk(data) {
       fs.writeFileSync(BUNDLED_STORE_FILE, JSON.stringify(data, null, 2), "utf-8");
     }
   } catch {
+  }
+}
+
+// server/auth.ts
+import crypto3 from "crypto";
+var SESSION_COOKIE_NAME = "careerops_session";
+var SESSION_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1e3;
+var PRIMARY_USER_ID = "usr_kb270102";
+var DEMO_USER_ID = "usr_demo";
+var users = {};
+var userEmailIndex = {};
+var sessions = {};
+var userPartitions = {};
+function hashPassword(password, customSalt) {
+  const salt = customSalt || crypto3.randomBytes(16).toString("hex");
+  const hash = crypto3.scryptSync(password, salt, 64).toString("hex");
+  return { hash, salt };
+}
+function verifyPassword(password, storedHash, salt) {
+  try {
+    const derived = crypto3.scryptSync(password, salt, 64).toString("hex");
+    const a = Buffer.from(derived, "hex");
+    const b = Buffer.from(storedHash, "hex");
+    if (a.length !== b.length) return false;
+    return crypto3.timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
+function generateSessionToken() {
+  return crypto3.randomBytes(32).toString("hex");
+}
+function getCanonicalNextRun(intervalHours = 4) {
+  const now = Date.now();
+  const intervalMs = (intervalHours || 4) * 3600 * 1e3;
+  const nextTimestamp = Math.ceil((now + 1e3) / intervalMs) * intervalMs;
+  return new Date(nextTimestamp).toISOString();
+}
+function createDefaultPartitionForUser(user) {
+  const userProfile = {
+    full_name: user?.full_name || "Candidate",
+    contact: {
+      email: user?.email || "",
+      phone: "",
+      location: "Remote / India",
+      links: ""
+    },
+    total_years_experience: 2.5,
+    seniority_tier: "Mid",
+    education: [
+      {
+        institution: "University / Institute",
+        degree: "Bachelor of Science / Technology",
+        details: "Majors: Computer Science, Top 5%",
+        dates: "2020 \u2013 2024"
+      }
+    ],
+    experience: [],
+    skills: ["Python", "SQL", "Data Analytics", "TypeScript", "React", "Power BI", "Automation"],
+    certifications: [],
+    target_roles: ["Data Analyst", "Software Engineer", "AI/BI Developer", "Solutions Analyst"],
+    anti_targets: ["Telemarketing", "Cold Calling Sales", "Unpaid Internships"],
+    preferred_locations: ["Remote", "Gurugram", "Bengaluru", "Delhi NCR", "Hybrid"]
+  };
+  const defaultChatId = user?.telegram_chat_id || (user?.id === PRIMARY_USER_ID ? process.env.TELEGRAM_CHAT_ID || "1368681854" : "");
+  const defaultBotToken = process.env.TELEGRAM_BOT_TOKEN || "8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas";
+  const hasTelegram = Boolean(defaultChatId);
+  const partitionSettings = {
+    min_match_score: 75,
+    telegram_configured: hasTelegram,
+    telegram_chat_id: defaultChatId,
+    telegram_bot_token: defaultBotToken,
+    telegram_bot_name: "CareerOps Bot",
+    telegram_custom_header: `\u{1F3AF} ${user?.full_name || "CareerOps"} High-Fit Role!`,
+    telegram_include_salary: true,
+    telegram_include_skill_gap: true,
+    telegram_include_apply_link: true,
+    seen_ttl_days: 14,
+    workflow_enabled: true,
+    workflow_interval_hours: 4,
+    auto_notify_telegram: hasTelegram
+  };
+  const partitionWorkflow = {
+    enabled: true,
+    interval_hours: 4,
+    last_run: null,
+    next_run: getCanonicalNextRun(4),
+    is_running: false,
+    total_runs: 0,
+    auto_notify_telegram: hasTelegram,
+    runs: []
+  };
+  const sampleJobs = INITIAL_JOBS.slice(0, 8).map((j, idx) => ({
+    ...j,
+    id: computeSafeJobId(j.title, `${j.company_name}_${user?.id || "sample"}_${idx}`),
+    status: idx === 0 ? "discovered" : idx === 1 ? "notified" : "discovered"
+  }));
+  const partitionRegistry = {};
+  for (const j of sampleJobs) {
+    const sig = `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`;
+    const normLink = normalizeJobUrl(j.apply_link);
+    partitionRegistry[j.id] = {
+      id: j.id,
+      signature: sig,
+      normalized_url: normLink,
+      company_name: j.company_name,
+      title: j.title,
+      status: j.status || "discovered",
+      discovered_at: (/* @__PURE__ */ new Date()).toISOString(),
+      last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
+    };
+  }
+  return {
+    currentProfile: userProfile,
+    jobListings: sampleJobs,
+    notifiedJobIds: [],
+    deletedJobIds: [],
+    seenJobs: {},
+    searchedRegistry: partitionRegistry,
+    appSettings: partitionSettings,
+    workflowState: partitionWorkflow,
+    lastUpdated: (/* @__PURE__ */ new Date()).toISOString()
+  };
+}
+function seedDefaultUsers() {
+  if (!users[PRIMARY_USER_ID]) {
+    const { hash, salt } = hashPassword("careerops123");
+    const primaryAccount = {
+      id: PRIMARY_USER_ID,
+      email: "kb270102@gmail.com",
+      full_name: "Kartik Bhatt",
+      password_hash: hash,
+      salt,
+      created_at: "2026-01-01T00:00:00.000Z",
+      last_login_at: (/* @__PURE__ */ new Date()).toISOString(),
+      telegram_chat_id: process.env.TELEGRAM_CHAT_ID || "1368681854"
+    };
+    users[PRIMARY_USER_ID] = primaryAccount;
+    userEmailIndex["kb270102@gmail.com"] = PRIMARY_USER_ID;
+  }
+  if (!users[DEMO_USER_ID]) {
+    const { hash, salt } = hashPassword("demo123");
+    const demoAccount = {
+      id: DEMO_USER_ID,
+      email: "demo@careerops.ai",
+      full_name: "Demo Candidate",
+      password_hash: hash,
+      salt,
+      created_at: "2026-01-01T00:00:00.000Z",
+      last_login_at: (/* @__PURE__ */ new Date()).toISOString(),
+      telegram_chat_id: "1368681854"
+    };
+    users[DEMO_USER_ID] = demoAccount;
+    userEmailIndex["demo@careerops.ai"] = DEMO_USER_ID;
+  }
+}
+seedDefaultUsers();
+function resolveAuthUser(req) {
+  let token = req.cookies?.[SESSION_COOKIE_NAME];
+  if (!token && req.headers.authorization) {
+    const parts = req.headers.authorization.split(" ");
+    if (parts.length === 2 && parts[0].toLowerCase() === "bearer") {
+      token = parts[1];
+    }
+  }
+  if (!token && typeof req.query.auth_token === "string") {
+    token = req.query.auth_token;
+  }
+  if (!token) return null;
+  const session = sessions[token];
+  if (!session) return null;
+  if (new Date(session.expires_at).getTime() < Date.now()) {
+    delete sessions[token];
+    return null;
+  }
+  return users[session.user_id] || null;
+}
+function getUserPartition(userId) {
+  if (!userPartitions[userId]) {
+    userPartitions[userId] = createDefaultPartitionForUser(users[userId]);
+  }
+  return userPartitions[userId];
+}
+function createSessionForUser(userId, userAgent) {
+  const token = generateSessionToken();
+  const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_MS).toISOString();
+  sessions[token] = {
+    token,
+    user_id: userId,
+    created_at: (/* @__PURE__ */ new Date()).toISOString(),
+    expires_at: expiresAt,
+    user_agent: userAgent
+  };
+  return token;
+}
+function attachSessionCookie(res, req, token) {
+  const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https" || req.headers.host && !req.headers.host.includes("localhost");
+  res.cookie(SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    maxAge: SESSION_MAX_AGE_MS,
+    sameSite: "lax",
+    secure: isHttps,
+    path: "/"
+  });
+}
+function clearSessionCookie(res) {
+  res.clearCookie(SESSION_COOKIE_NAME, { path: "/" });
+}
+function getSavedAccountsList() {
+  return Object.values(users).map((u) => ({
+    id: u.id,
+    email: u.email,
+    name: u.full_name || u.email.split("@")[0],
+    full_name: u.full_name,
+    telegram_chat_id: u.telegram_chat_id,
+    last_active_at: u.last_login_at || (/* @__PURE__ */ new Date()).toISOString(),
+    last_login_at: u.last_login_at
+  }));
+}
+function serializeAuthData() {
+  return {
+    users,
+    sessions,
+    userPartitions
+  };
+}
+function deserializeAuthData(data, legacyData) {
+  if (data?.users && typeof data.users === "object") {
+    Object.assign(users, data.users);
+    for (const [id, u] of Object.entries(users)) {
+      if (u?.email) {
+        userEmailIndex[u.email.toLowerCase()] = id;
+      }
+    }
+  }
+  if (data?.sessions && typeof data.sessions === "object") {
+    const now = Date.now();
+    for (const [token, s] of Object.entries(data.sessions)) {
+      if (s && new Date(s.expires_at).getTime() > now) {
+        sessions[token] = s;
+      }
+    }
+  }
+  if (data?.userPartitions && typeof data.userPartitions === "object") {
+    Object.assign(userPartitions, data.userPartitions);
+  }
+  seedDefaultUsers();
+  if ((!userPartitions[PRIMARY_USER_ID] || userPartitions[PRIMARY_USER_ID].jobListings.length === 0) && legacyData && Array.isArray(legacyData.jobListings) && legacyData.jobListings.length > 0) {
+    console.log(`[Auth] Migrating legacy single-user store into primary user partition (${legacyData.jobListings.length} jobs)`);
+    userPartitions[PRIMARY_USER_ID] = {
+      currentProfile: legacyData.currentProfile || INITIAL_PROFILE,
+      jobListings: legacyData.jobListings,
+      notifiedJobIds: legacyData.notifiedJobIds || [],
+      deletedJobIds: legacyData.deletedJobIds || [],
+      seenJobs: legacyData.seenJobs || {},
+      searchedRegistry: legacyData.searchedRegistry || {},
+      appSettings: legacyData.appSettings || INITIAL_SETTINGS,
+      workflowState: legacyData.workflowState || {
+        enabled: true,
+        interval_hours: 4,
+        last_run: null,
+        next_run: getCanonicalNextRun(4),
+        is_running: false,
+        total_runs: 0,
+        auto_notify_telegram: true,
+        runs: []
+      },
+      lastUpdated: legacyData.lastUpdated || (/* @__PURE__ */ new Date()).toISOString()
+    };
+  }
+  if (!userPartitions[DEMO_USER_ID]) {
+    userPartitions[DEMO_USER_ID] = createDefaultPartitionForUser(users[DEMO_USER_ID]);
   }
 }
 
@@ -5967,7 +6256,7 @@ var appSettings = {
   serpapi_key: process.env.SERPAPI_KEY || "GNLQpQWpHAMcEL9MguEkrxq1"
 };
 var FOUR_HOURS_MS = 4 * 60 * 60 * 1e3;
-function getCanonicalNextRun(intervalHours = 4) {
+function getCanonicalNextRun2(intervalHours = 4) {
   const now = Date.now();
   const intervalMs = (intervalHours || 4) * 3600 * 1e3;
   const nextTimestamp = Math.ceil((now + 1e3) / intervalMs) * intervalMs;
@@ -5981,7 +6270,7 @@ var workflowState = {
   enabled: true,
   interval_hours: 4,
   last_run: new Date(Date.now() - 34 * 60 * 1e3).toISOString(),
-  next_run: getCanonicalNextRun(4),
+  next_run: getCanonicalNextRun2(4),
   is_running: false,
   total_runs: 1,
   auto_notify_telegram: true,
@@ -6039,6 +6328,14 @@ function applyLoadedData(data) {
   }
   if (data.lastUpdated) {
     storeLastUpdated = data.lastUpdated;
+  }
+  deserializeAuthData(data, data);
+  if (userPartitions[PRIMARY_USER_ID]) {
+    const part = userPartitions[PRIMARY_USER_ID];
+    if (part.currentProfile) currentProfile = part.currentProfile;
+    if (Array.isArray(part.jobListings) && part.jobListings.length > 0) {
+      jobListings = part.jobListings;
+    }
   }
   seenJobs["9dfe6112a2137e75"] = (/* @__PURE__ */ new Date()).toISOString();
   seenJobs["https://soti.careers/jobs/bi-solutions-analyst-gurugram"] = (/* @__PURE__ */ new Date()).toISOString();
@@ -6117,10 +6414,22 @@ async function replicateToPeers(data) {
 }
 function saveStoreToDisk(shouldReplicate = true) {
   try {
-    workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
+    workflowState.next_run = getCanonicalNextRun2(workflowState.interval_hours || 4);
     storeLastUpdated = (/* @__PURE__ */ new Date()).toISOString();
     workflowState.last_updated = storeLastUpdated;
     appSettings.last_updated = storeLastUpdated;
+    userPartitions[PRIMARY_USER_ID] = {
+      currentProfile,
+      jobListings: jobListings.filter((j) => !deletedJobIds.has(j.id)),
+      notifiedJobIds: Array.from(notifiedJobIds),
+      deletedJobIds: Array.from(deletedJobIds),
+      seenJobs,
+      searchedRegistry,
+      appSettings,
+      workflowState,
+      lastUpdated: storeLastUpdated
+    };
+    const authData = serializeAuthData();
     const data = {
       currentProfile,
       jobListings: jobListings.filter((j) => !deletedJobIds.has(j.id)),
@@ -6130,7 +6439,10 @@ function saveStoreToDisk(shouldReplicate = true) {
       appSettings,
       workflowState,
       deletedJobIds: Array.from(deletedJobIds),
-      lastUpdated: storeLastUpdated
+      lastUpdated: storeLastUpdated,
+      users: authData.users,
+      sessions: authData.sessions,
+      userPartitions: authData.userPartitions
     };
     saveToDisk(data);
     saveToRemoteKV(data).catch(() => {
@@ -6220,9 +6532,15 @@ var PORT = 3e3;
 var DEFAULT_PUBLIC_URL = process.env.APP_URL || "https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app";
 app.set("trust proxy", true);
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Credentials", "true");
+  } else {
+    res.header("Access-Control-Allow-Origin", "*");
+  }
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie");
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -6236,6 +6554,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json({ limit: "10mb" }));
+app.use(cookieParser());
 app.use((req, res, next) => {
   const host = req.headers["x-forwarded-host"] || req.headers.host || "";
   if (host && !host.includes("localhost") && !host.includes("127.0.0.1") && !host.startsWith("10.") && !host.startsWith("172.") && !host.startsWith("192.168.")) {
@@ -6244,6 +6563,12 @@ app.use((req, res, next) => {
   }
   next();
 });
+function getRequestContext(req) {
+  const user = resolveAuthUser(req);
+  const userId = user ? user.id : PRIMARY_USER_ID;
+  const partition = getUserPartition(userId);
+  return { user, userId, partition };
+}
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
@@ -6253,20 +6578,226 @@ app.get("/api/health", (req, res) => {
     geminiKeyConfigured: Boolean(process.env.GEMINI_API_KEY)
   });
 });
+app.get("/api/auth/me", (req, res) => {
+  const user = resolveAuthUser(req);
+  if (!user) {
+    return res.json({
+      success: false,
+      authenticated: false,
+      user: null
+    });
+  }
+  res.json({
+    success: true,
+    authenticated: true,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.full_name || user.email.split("@")[0],
+      full_name: user.full_name,
+      created_at: user.created_at,
+      last_login_at: user.last_login_at,
+      avatar_url: user.avatar_url
+    }
+  });
+});
+app.post("/api/auth/register", async (req, res) => {
+  const { email, password, full_name, telegram_chat_id } = req.body;
+  if (!email || typeof email !== "string" || !email.includes("@")) {
+    return res.status(400).json({ error: "Please provide a valid email address." });
+  }
+  if (!password || typeof password !== "string" || password.length < 6) {
+    return res.status(400).json({ error: "Password must be at least 6 characters long." });
+  }
+  const cleanEmail = email.toLowerCase().trim();
+  if (userEmailIndex[cleanEmail]) {
+    return res.status(409).json({ error: "An account with this email address already exists. Please sign in instead." });
+  }
+  const userId = `usr_${crypto4.randomBytes(8).toString("hex")}`;
+  const { hash, salt } = hashPassword(password);
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  const cleanTelegramId = telegram_chat_id && typeof telegram_chat_id === "string" ? telegram_chat_id.trim() : "";
+  const newAccount = {
+    id: userId,
+    email: cleanEmail,
+    full_name: (full_name && typeof full_name === "string" ? full_name.trim() : "") || cleanEmail.split("@")[0],
+    password_hash: hash,
+    salt,
+    created_at: now,
+    last_login_at: now,
+    telegram_chat_id: cleanTelegramId || void 0
+  };
+  users[userId] = newAccount;
+  userEmailIndex[cleanEmail] = userId;
+  const partition = getUserPartition(userId);
+  if (cleanTelegramId) {
+    partition.appSettings.telegram_chat_id = cleanTelegramId;
+    partition.appSettings.telegram_configured = true;
+    partition.appSettings.auto_notify_telegram = true;
+    partition.workflowState.auto_notify_telegram = true;
+    const botToken = partition.appSettings.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN || "8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas";
+    const candFirst = escapeTelegramHtml(newAccount.full_name.split(" ")[0] || "Candidate");
+    const welcomeMsg = `\u{1F389} <b>Welcome to CareerOps AI, ${candFirst}!</b>
+
+Your personal job discovery & ATS intelligence workspace is active for <b>${escapeTelegramHtml(newAccount.email)}</b>.
+
+\u2705 <b>Telegram Push:</b> Synced to Chat ID <code>${escapeTelegramHtml(cleanTelegramId)}</code>
+\u26A1 <b>Fit Threshold:</b> &ge; 75% Score
+\u{1F552} <b>Pipeline:</b> Autonomous 4-hour scans
+
+You'll receive real-time push alerts right here whenever verified high-fit roles matching your profile are discovered! \u{1F680}`;
+    fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: cleanTelegramId,
+        text: welcomeMsg,
+        parse_mode: "HTML"
+      })
+    }).catch((err) => {
+      console.warn("[Telegram Alert] Initial welcome dispatch note:", err?.message || err);
+    });
+  }
+  const token = createSessionForUser(userId, req.headers["user-agent"]);
+  attachSessionCookie(res, req, token);
+  saveStoreToDisk(false);
+  res.status(201).json({
+    success: true,
+    message: "Account registered successfully",
+    token,
+    user: {
+      id: newAccount.id,
+      email: newAccount.email,
+      name: newAccount.full_name || newAccount.email.split("@")[0],
+      full_name: newAccount.full_name,
+      telegram_chat_id: newAccount.telegram_chat_id,
+      created_at: newAccount.created_at
+    }
+  });
+});
+app.post("/api/auth/login", (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: "Please provide both email and password." });
+  }
+  const cleanEmail = email.toLowerCase().trim();
+  const userId = userEmailIndex[cleanEmail];
+  if (!userId || !users[userId]) {
+    return res.status(401).json({ error: "Invalid email or password." });
+  }
+  const user = users[userId];
+  const isValid = verifyPassword(password, user.password_hash, user.salt);
+  if (!isValid) {
+    return res.status(401).json({ error: "Invalid email or password." });
+  }
+  user.last_login_at = (/* @__PURE__ */ new Date()).toISOString();
+  const token = createSessionForUser(userId, req.headers["user-agent"]);
+  attachSessionCookie(res, req, token);
+  saveStoreToDisk(false);
+  res.json({
+    success: true,
+    message: "Logged in successfully",
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.full_name || user.email.split("@")[0],
+      full_name: user.full_name,
+      created_at: user.created_at,
+      last_login_at: user.last_login_at
+    }
+  });
+});
+app.post("/api/auth/demo-login", (req, res) => {
+  const targetUserId = req.body?.user_id === "demo" || req.body?.user_id === DEMO_USER_ID ? DEMO_USER_ID : PRIMARY_USER_ID;
+  const user = users[targetUserId];
+  if (!user) {
+    return res.status(404).json({ error: "Demo user not found." });
+  }
+  user.last_login_at = (/* @__PURE__ */ new Date()).toISOString();
+  const token = createSessionForUser(targetUserId, req.headers["user-agent"]);
+  attachSessionCookie(res, req, token);
+  saveStoreToDisk(false);
+  res.json({
+    success: true,
+    message: `Signed in as ${user.full_name}`,
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.full_name || user.email.split("@")[0],
+      full_name: user.full_name,
+      created_at: user.created_at,
+      last_login_at: user.last_login_at
+    }
+  });
+});
+app.post("/api/auth/switch-account", (req, res) => {
+  const { user_id, email } = req.body;
+  let targetUserId = user_id;
+  if (!targetUserId && email) {
+    targetUserId = userEmailIndex[email.toLowerCase().trim()];
+  }
+  if (!targetUserId || !users[targetUserId]) {
+    return res.status(404).json({ error: "Account not found on this device." });
+  }
+  const user = users[targetUserId];
+  user.last_login_at = (/* @__PURE__ */ new Date()).toISOString();
+  const token = createSessionForUser(targetUserId, req.headers["user-agent"]);
+  attachSessionCookie(res, req, token);
+  saveStoreToDisk(false);
+  res.json({
+    success: true,
+    message: `Switched account to ${user.full_name}`,
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.full_name || user.email.split("@")[0],
+      full_name: user.full_name,
+      created_at: user.created_at,
+      last_login_at: user.last_login_at
+    }
+  });
+});
+app.post("/api/auth/logout", (req, res) => {
+  clearSessionCookie(res);
+  const token = req.cookies?.careerops_session || (req.headers.authorization ? req.headers.authorization.replace(/bearer /i, "").trim() : "");
+  if (token && sessions[token]) {
+    delete sessions[token];
+  }
+  saveStoreToDisk(false);
+  res.json({ success: true, message: "Logged out successfully." });
+});
+app.get("/api/auth/saved-accounts", (req, res) => {
+  res.json({
+    success: true,
+    accounts: getSavedAccountsList()
+  });
+});
 app.get("/api/profile", (req, res) => {
-  res.json(currentProfile);
+  const { partition } = getRequestContext(req);
+  res.json(partition.currentProfile);
 });
 app.post("/api/profile", (req, res) => {
   try {
-    currentProfile = { ...currentProfile, ...req.body };
-    res.json({ success: true, profile: currentProfile });
+    const { partition, userId } = getRequestContext(req);
+    partition.currentProfile = { ...partition.currentProfile, ...req.body };
+    partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+    if (userId === PRIMARY_USER_ID) currentProfile = partition.currentProfile;
+    saveStoreToDisk();
+    res.json({ success: true, profile: partition.currentProfile });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 app.post("/api/profile/reset", (req, res) => {
-  currentProfile = JSON.parse(JSON.stringify(INITIAL_PROFILE));
-  res.json({ success: true, profile: currentProfile });
+  const { partition, userId } = getRequestContext(req);
+  partition.currentProfile = JSON.parse(JSON.stringify(INITIAL_PROFILE));
+  partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+  if (userId === PRIMARY_USER_ID) currentProfile = partition.currentProfile;
+  saveStoreToDisk();
+  res.json({ success: true, profile: partition.currentProfile });
 });
 app.post("/api/profile/parse-document", async (req, res) => {
   const { base64, file_name, mime_type } = req.body;
@@ -6274,6 +6805,7 @@ app.post("/api/profile/parse-document", async (req, res) => {
     return res.status(400).json({ error: "Please provide valid base64 document data." });
   }
   try {
+    const { partition, userId } = getRequestContext(req);
     const buffer = Buffer.from(base64, "base64");
     const fileName = file_name || "Resume.pdf";
     console.log(`[Document Parser] Ingesting "${fileName}" (${buffer.length} bytes)...`);
@@ -6281,18 +6813,21 @@ app.post("/api/profile/parse-document", async (req, res) => {
       buffer,
       fileName,
       mimeType: mime_type,
-      existingProfile: currentProfile
+      existingProfile: partition.currentProfile
     });
-    currentProfile = result.profile;
+    partition.currentProfile = result.profile;
+    partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+    if (userId === PRIMARY_USER_ID) currentProfile = partition.currentProfile;
+    saveStoreToDisk();
     res.json({
       success: true,
-      profile: currentProfile,
+      profile: partition.currentProfile,
       scraped_sources: result.scrapedSources,
       links_found: result.linksFound,
       extracted_text_preview: result.extractedTextPreview,
       file_info: {
         file_name: fileName,
-        file_type: currentProfile.parsed_from_document?.file_type,
+        file_type: partition.currentProfile.parsed_from_document?.file_type,
         bytes: buffer.length
       }
     });
@@ -6307,15 +6842,19 @@ app.post("/api/profile/parse", async (req, res) => {
     return res.status(400).json({ error: "Please provide valid resume text to parse (minimum 30 characters)." });
   }
   try {
+    const { partition, userId } = getRequestContext(req);
     console.log(`[Resume Parse] Ingesting text resume (${raw_text.length} chars)...`);
     const result = await parseAndEnrichCandidateResume({
       rawText: raw_text,
-      existingProfile: currentProfile
+      existingProfile: partition.currentProfile
     });
-    currentProfile = result.profile;
+    partition.currentProfile = result.profile;
+    partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+    if (userId === PRIMARY_USER_ID) currentProfile = partition.currentProfile;
+    saveStoreToDisk();
     res.json({
       success: true,
-      profile: currentProfile,
+      profile: partition.currentProfile,
       scraped_sources: result.scrapedSources,
       links_found: result.linksFound,
       extracted_text_preview: result.extractedTextPreview
@@ -6326,31 +6865,34 @@ app.post("/api/profile/parse", async (req, res) => {
   }
 });
 app.get("/api/jobs", (req, res) => {
-  res.json(jobListings);
+  const { partition } = getRequestContext(req);
+  const activeJobs = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
+  res.json(activeJobs);
 });
 app.post("/api/jobs/search", async (req, res) => {
   const { query } = req.body;
+  const { partition, userId } = getRequestContext(req);
   try {
     const newJobs = await discoverJobsForProfile(
-      currentProfile,
+      partition.currentProfile,
       query,
-      jobListings,
-      seenJobs,
-      appSettings.serpapi_key || process.env.SERPAPI_KEY,
-      searchedRegistry
+      partition.jobListings,
+      partition.seenJobs,
+      partition.appSettings.serpapi_key || appSettings.serpapi_key || process.env.SERPAPI_KEY,
+      partition.searchedRegistry
     );
-    const existingIds = new Set(jobListings.map((j) => j.id));
+    const existingIds = new Set(partition.jobListings.map((j) => j.id));
     const existingSignatures = new Set(
-      jobListings.map((j) => `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`)
+      partition.jobListings.map((j) => `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`)
     );
     const added = [];
     for (const nj of newJobs) {
       const sig = `${nj.company_name.toLowerCase()}_${nj.title.toLowerCase()}`;
       const normLink = normalizeJobUrl(nj.apply_link);
-      seenJobs[nj.id] = (/* @__PURE__ */ new Date()).toISOString();
-      if (normLink) seenJobs[normLink] = (/* @__PURE__ */ new Date()).toISOString();
-      seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
-      searchedRegistry[nj.id] = {
+      partition.seenJobs[nj.id] = (/* @__PURE__ */ new Date()).toISOString();
+      if (normLink) partition.seenJobs[normLink] = (/* @__PURE__ */ new Date()).toISOString();
+      partition.seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
+      partition.searchedRegistry[nj.id] = {
         id: nj.id,
         signature: sig,
         normalized_url: normLink,
@@ -6361,14 +6903,20 @@ app.post("/api/jobs/search", async (req, res) => {
         last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
       };
       if (!existingIds.has(nj.id) && !existingSignatures.has(sig)) {
-        jobListings.unshift(nj);
+        partition.jobListings.unshift(nj);
         existingIds.add(nj.id);
         existingSignatures.add(sig);
         added.push(nj);
       }
     }
+    partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+    if (userId === PRIMARY_USER_ID) {
+      jobListings = partition.jobListings;
+      Object.assign(seenJobs, partition.seenJobs);
+      Object.assign(searchedRegistry, partition.searchedRegistry);
+    }
     saveStoreToDisk();
-    res.json({ success: true, added_count: added.length, jobs: jobListings, searched_registry: searchedRegistry });
+    res.json({ success: true, added_count: added.length, jobs: partition.jobListings, searched_registry: partition.searchedRegistry });
   } catch (err) {
     console.error("[Jobs Search] Error:", err);
     res.status(500).json({ error: err.message });
@@ -6379,7 +6927,7 @@ app.post("/api/jobs/add", async (req, res) => {
   if (!title || !company_name || !description) {
     return res.status(400).json({ error: "Title, company name, and job description are required." });
   }
-  const id = crypto3.createHash("sha256").update(title + company_name + Date.now()).digest("hex").substring(0, 16);
+  const id = crypto4.createHash("sha256").update(title + company_name + Date.now()).digest("hex").substring(0, 16);
   const expResolution = resolveExperienceYears(description, title, apply_link);
   const finalExpRange = experience_range_years || (expResolution ? expResolution.range : [2, 4]);
   let finalSalaryRange = salary_range_lpa || extractSalaryLpa(description);
@@ -6433,7 +6981,13 @@ app.post("/api/jobs/add", async (req, res) => {
     verified_at: verification.checkedAt,
     status: "discovered"
   };
-  jobListings.unshift(newJob);
+  const { partition, userId } = getRequestContext(req);
+  partition.jobListings.unshift(newJob);
+  partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+  if (userId === PRIMARY_USER_ID) {
+    jobListings = partition.jobListings;
+  }
+  saveStoreToDisk();
   res.json({ success: true, job: newJob });
 });
 app.post("/api/salary/estimate", (req, res) => {
@@ -6447,7 +7001,8 @@ app.post("/api/salary/estimate", (req, res) => {
 });
 app.post("/api/jobs/:id/verify-link", async (req, res) => {
   const { id } = req.params;
-  const target = jobListings.find((j) => j.id === id);
+  const { partition, userId } = getRequestContext(req);
+  const target = partition.jobListings.find((j) => j.id === id);
   if (!target) return res.status(404).json({ error: "Job listing not found." });
   const verification = await verifyJobPosting(target.apply_link, target.company_name, target.title);
   target.verification_status = verification.status;
@@ -6457,8 +7012,12 @@ app.post("/api/jobs/:id/verify-link", async (req, res) => {
   let autoRemoved = false;
   if (verification.status === "expired_or_invalid" || target.company_name.toLowerCase().includes("state street")) {
     target.status = "expired";
-    jobListings = jobListings.filter((j) => j.id !== id);
+    partition.jobListings = partition.jobListings.filter((j) => j.id !== id);
     autoRemoved = true;
+  }
+  partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+  if (userId === PRIMARY_USER_ID) {
+    jobListings = partition.jobListings;
   }
   saveStoreToDisk();
   res.json({
@@ -6466,13 +7025,14 @@ app.post("/api/jobs/:id/verify-link", async (req, res) => {
     verification,
     autoRemoved,
     job: autoRemoved ? null : target,
-    jobs: jobListings
+    jobs: partition.jobListings
   });
 });
 app.post("/api/jobs/verify-all", async (req, res) => {
+  const { partition, userId } = getRequestContext(req);
   const results = [];
-  const initialCount = jobListings.length;
-  for (const job of [...jobListings]) {
+  const initialCount = partition.jobListings.length;
+  for (const job of [...partition.jobListings]) {
     const verification = await verifyJobPosting(job.apply_link, job.company_name, job.title);
     job.verification_status = verification.status;
     job.verification_notes = verification.notes;
@@ -6483,42 +7043,57 @@ app.post("/api/jobs/verify-all", async (req, res) => {
     }
     results.push({ id: job.id, status: verification.status });
   }
-  jobListings = jobListings.filter(
+  partition.jobListings = partition.jobListings.filter(
     (j) => j.status !== "expired" && j.verification_status !== "expired_or_invalid" && !j.company_name.toLowerCase().includes("state street")
   );
-  const removedExpired = initialCount - jobListings.length;
+  const removedExpired = initialCount - partition.jobListings.length;
+  partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+  if (userId === PRIMARY_USER_ID) {
+    jobListings = partition.jobListings;
+  }
   saveStoreToDisk();
   res.json({
     success: true,
     verified_count: results.length,
     removed_expired_count: removedExpired,
-    remaining_count: jobListings.length,
-    jobs: jobListings
+    remaining_count: partition.jobListings.length,
+    jobs: partition.jobListings
   });
 });
 app.post("/api/jobs/remove-expired", (req, res) => {
-  const initialCount = jobListings.length;
-  const expired = jobListings.filter(
+  const { partition, userId } = getRequestContext(req);
+  const initialCount = partition.jobListings.length;
+  const expired = partition.jobListings.filter(
     (j) => j.status === "expired" || j.verification_status === "expired_or_invalid" || j.company_name.toLowerCase().includes("state street")
   );
   for (const j of expired) {
-    deletedJobIds.add(j.id);
+    if (!partition.deletedJobIds.includes(j.id)) {
+      partition.deletedJobIds.push(j.id);
+    }
   }
-  jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
-  const removedCount = initialCount - jobListings.length;
+  partition.jobListings = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
+  const removedCount = initialCount - partition.jobListings.length;
+  partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+  if (userId === PRIMARY_USER_ID) {
+    jobListings = partition.jobListings;
+    for (const j of expired) deletedJobIds.add(j.id);
+  }
   saveStoreToDisk();
-  console.log(`[Remove Expired] Purged ${removedCount} expired/invalid jobs. ${jobListings.length} remain.`);
-  res.json({ success: true, removedCount, remainingCount: jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds) });
+  console.log(`[Remove Expired] Purged ${removedCount} expired/invalid jobs. ${partition.jobListings.length} remain.`);
+  res.json({ success: true, removedCount, remainingCount: partition.jobListings.length, jobs: partition.jobListings, deleted_ids: partition.deletedJobIds });
 });
 app.delete("/api/jobs/:id", (req, res) => {
   const { id } = req.params;
+  const { partition, userId } = getRequestContext(req);
   if (id) {
-    deletedJobIds.add(id);
-    const target = jobListings.find((j) => j.id === id);
+    if (!partition.deletedJobIds.includes(id)) {
+      partition.deletedJobIds.push(id);
+    }
+    const target = partition.jobListings.find((j) => j.id === id);
     if (target) {
       const sig = `${target.company_name.toLowerCase()}_${target.title.toLowerCase()}`;
       const norm = normalizeJobUrl(target.apply_link);
-      searchedRegistry[id] = {
+      partition.searchedRegistry[id] = {
         id,
         signature: sig,
         normalized_url: norm,
@@ -6529,27 +7104,33 @@ app.delete("/api/jobs/:id", (req, res) => {
         rejected_at: (/* @__PURE__ */ new Date()).toISOString(),
         last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
       };
-      seenJobs[id] = (/* @__PURE__ */ new Date()).toISOString();
-      if (norm) seenJobs[norm] = (/* @__PURE__ */ new Date()).toISOString();
-      seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
+      partition.seenJobs[id] = (/* @__PURE__ */ new Date()).toISOString();
+      if (norm) partition.seenJobs[norm] = (/* @__PURE__ */ new Date()).toISOString();
+      partition.seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
     }
   }
-  const initialCount = jobListings.length;
-  jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
+  const initialCount = partition.jobListings.length;
+  partition.jobListings = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
+  partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+  if (userId === PRIMARY_USER_ID) {
+    jobListings = partition.jobListings;
+    if (id) deletedJobIds.add(id);
+  }
   saveStoreToDisk();
-  res.json({ success: true, deleted: initialCount > jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds), searched_registry: searchedRegistry });
+  res.json({ success: true, deleted: initialCount > partition.jobListings.length, jobs: partition.jobListings, deleted_ids: partition.deletedJobIds, searched_registry: partition.searchedRegistry });
 });
 app.get("/api/download-cover-letter", async (req, res) => {
   const id = req.query.id;
   const format = (req.query.format || "txt").toLowerCase();
-  const target = jobListings.find((j) => j.id === id);
+  const { partition } = getRequestContext(req);
+  const target = partition.jobListings.find((j) => j.id === id) || jobListings.find((j) => j.id === id);
   if (!target) {
     return res.status(404).send("Job listing not found");
   }
   if (!target.tailored) {
     try {
       target.tailored = await generateTailoredDocuments(
-        currentProfile,
+        partition.currentProfile,
         target.title,
         target.company_name,
         target.description
@@ -6559,10 +7140,10 @@ app.get("/api/download-cover-letter", async (req, res) => {
     }
   }
   const tailored = target.tailored;
-  const candName = currentProfile.full_name;
-  const candEmail = currentProfile.contact.email;
-  const candPhone = currentProfile.contact.phone;
-  const candLocation = currentProfile.contact.location;
+  const candName = partition.currentProfile.full_name;
+  const candEmail = partition.currentProfile.contact.email;
+  const candPhone = partition.currentProfile.contact.phone;
+  const candLocation = partition.currentProfile.contact.location;
   const today = (/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const paragraphs = tailored?.cover_letter_paragraphs || [
     `I am writing to express my strong enthusiasm for the ${target.title} position at ${target.company_name}. With my background in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.`,
@@ -6621,14 +7202,15 @@ ${candName}
 app.get("/api/download-resume", async (req, res) => {
   const id = req.query.id;
   const format = (req.query.format || "txt").toLowerCase();
-  const target = jobListings.find((j) => j.id === id);
+  const { partition } = getRequestContext(req);
+  const target = partition.jobListings.find((j) => j.id === id) || jobListings.find((j) => j.id === id);
   if (!target) {
     return res.status(404).send("Job listing not found");
   }
   if (!target.tailored) {
     try {
       target.tailored = await generateTailoredDocuments(
-        currentProfile,
+        partition.currentProfile,
         target.title,
         target.company_name,
         target.description
@@ -6638,13 +7220,13 @@ app.get("/api/download-resume", async (req, res) => {
     }
   }
   const tailored = target.tailored;
-  const candName = currentProfile.full_name;
-  const candEmail = currentProfile.contact.email;
-  const candPhone = currentProfile.contact.phone;
-  const candLocation = currentProfile.contact.location;
-  const summary = tailored?.summary || `${candName} - Experience: ${currentProfile.total_years_experience} Years. Core Skills: ${currentProfile.skills.slice(0, 6).join(", ")}.`;
-  const skills = (tailored?.skills_ordered || currentProfile.skills).join(", ");
-  const experiences = tailored?.experience || currentProfile.experience;
+  const candName = partition.currentProfile.full_name;
+  const candEmail = partition.currentProfile.contact.email;
+  const candPhone = partition.currentProfile.contact.phone;
+  const candLocation = partition.currentProfile.contact.location;
+  const summary = tailored?.summary || `${candName} - Experience: ${partition.currentProfile.total_years_experience} Years. Core Skills: ${partition.currentProfile.skills.slice(0, 6).join(", ")}.`;
+  const skills = (tailored?.skills_ordered || partition.currentProfile.skills).join(", ");
+  const experiences = tailored?.experience || partition.currentProfile.experience;
   const safeCompany = target.company_name.replace(/[^a-zA-Z0-9_-]/g, "_");
   const safeCand = candName.replace(/\s+/g, "_");
   if (format === "doc") {
@@ -6713,13 +7295,14 @@ app.get("/api/ats-view", async (req, res) => {
 });
 app.post("/api/jobs/status", (req, res) => {
   const { id, status } = req.body;
-  const target = jobListings.find((j) => j.id === id);
+  const { partition, userId } = getRequestContext(req);
+  const target = partition.jobListings.find((j) => j.id === id);
   if (!target) return res.status(404).json({ error: "Job listing not found." });
   target.status = status;
   if (status === "rejected") {
     const sig = `${target.company_name.toLowerCase()}_${target.title.toLowerCase()}`;
     const norm = normalizeJobUrl(target.apply_link);
-    searchedRegistry[id] = {
+    partition.searchedRegistry[id] = {
       id,
       signature: sig,
       normalized_url: norm,
@@ -6730,28 +7313,35 @@ app.post("/api/jobs/status", (req, res) => {
       rejected_at: (/* @__PURE__ */ new Date()).toISOString(),
       last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
     };
-    seenJobs[id] = (/* @__PURE__ */ new Date()).toISOString();
-    if (norm) seenJobs[norm] = (/* @__PURE__ */ new Date()).toISOString();
-    seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
+    partition.seenJobs[id] = (/* @__PURE__ */ new Date()).toISOString();
+    if (norm) partition.seenJobs[norm] = (/* @__PURE__ */ new Date()).toISOString();
+    partition.seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
+  }
+  partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+  if (userId === PRIMARY_USER_ID) {
+    jobListings = partition.jobListings;
+    Object.assign(searchedRegistry, partition.searchedRegistry);
+    Object.assign(seenJobs, partition.seenJobs);
   }
   saveStoreToDisk();
-  res.json({ success: true, job: target, jobs: jobListings, searched_registry: searchedRegistry });
+  res.json({ success: true, job: target, jobs: partition.jobListings, searched_registry: partition.searchedRegistry });
 });
 app.post("/api/jobs/batch-status", (req, res) => {
   const { ids, status } = req.body;
   if (!Array.isArray(ids) || !status) {
     return res.status(400).json({ error: "ids array and status required" });
   }
+  const { partition, userId } = getRequestContext(req);
   const idSet = new Set(ids);
   let updatedCount = 0;
-  jobListings.forEach((j) => {
+  partition.jobListings.forEach((j) => {
     if (idSet.has(j.id)) {
       j.status = status;
       updatedCount++;
       if (status === "rejected") {
         const sig = `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`;
         const norm = normalizeJobUrl(j.apply_link);
-        searchedRegistry[j.id] = {
+        partition.searchedRegistry[j.id] = {
           id: j.id,
           signature: sig,
           normalized_url: norm,
@@ -6762,28 +7352,37 @@ app.post("/api/jobs/batch-status", (req, res) => {
           rejected_at: (/* @__PURE__ */ new Date()).toISOString(),
           last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
         };
-        seenJobs[j.id] = (/* @__PURE__ */ new Date()).toISOString();
-        if (norm) seenJobs[norm] = (/* @__PURE__ */ new Date()).toISOString();
-        seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
+        partition.seenJobs[j.id] = (/* @__PURE__ */ new Date()).toISOString();
+        if (norm) partition.seenJobs[norm] = (/* @__PURE__ */ new Date()).toISOString();
+        partition.seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
       }
     }
   });
+  partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+  if (userId === PRIMARY_USER_ID) {
+    jobListings = partition.jobListings;
+    Object.assign(searchedRegistry, partition.searchedRegistry);
+    Object.assign(seenJobs, partition.seenJobs);
+  }
   saveStoreToDisk();
-  res.json({ success: true, updatedCount, jobs: jobListings, searched_registry: searchedRegistry });
+  res.json({ success: true, updatedCount, jobs: partition.jobListings, searched_registry: partition.searchedRegistry });
 });
 app.post("/api/jobs/batch-delete", (req, res) => {
   const { ids } = req.body;
   if (!Array.isArray(ids)) {
     return res.status(400).json({ error: "ids array required" });
   }
+  const { partition, userId } = getRequestContext(req);
   for (const id of ids) {
     if (id) {
-      deletedJobIds.add(id);
-      const target = jobListings.find((j) => j.id === id);
+      if (!partition.deletedJobIds.includes(id)) {
+        partition.deletedJobIds.push(id);
+      }
+      const target = partition.jobListings.find((j) => j.id === id);
       if (target) {
         const sig = `${target.company_name.toLowerCase()}_${target.title.toLowerCase()}`;
         const norm = normalizeJobUrl(target.apply_link);
-        searchedRegistry[id] = {
+        partition.searchedRegistry[id] = {
           id,
           signature: sig,
           normalized_url: norm,
@@ -6794,24 +7393,32 @@ app.post("/api/jobs/batch-delete", (req, res) => {
           rejected_at: (/* @__PURE__ */ new Date()).toISOString(),
           last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
         };
-        seenJobs[id] = (/* @__PURE__ */ new Date()).toISOString();
-        if (norm) seenJobs[norm] = (/* @__PURE__ */ new Date()).toISOString();
-        seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
+        partition.seenJobs[id] = (/* @__PURE__ */ new Date()).toISOString();
+        if (norm) partition.seenJobs[norm] = (/* @__PURE__ */ new Date()).toISOString();
+        partition.seenJobs[sig] = (/* @__PURE__ */ new Date()).toISOString();
       }
     }
   }
-  const initialCount = jobListings.length;
-  jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
+  const initialCount = partition.jobListings.length;
+  partition.jobListings = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
+  partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+  if (userId === PRIMARY_USER_ID) {
+    jobListings = partition.jobListings;
+    for (const id of ids) if (id) deletedJobIds.add(id);
+    Object.assign(searchedRegistry, partition.searchedRegistry);
+    Object.assign(seenJobs, partition.seenJobs);
+  }
   saveStoreToDisk();
-  res.json({ success: true, deletedCount: initialCount - jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds), searched_registry: searchedRegistry });
+  res.json({ success: true, deletedCount: initialCount - partition.jobListings.length, jobs: partition.jobListings, deleted_ids: partition.deletedJobIds, searched_registry: partition.searchedRegistry });
 });
 app.post("/api/match", async (req, res) => {
   const { id } = req.body;
-  const target = jobListings.find((j) => j.id === id);
+  const { partition, userId } = getRequestContext(req);
+  const target = partition.jobListings.find((j) => j.id === id);
   if (!target) return res.status(404).json({ error: "Job listing not found." });
   try {
     const fit = await evaluateJobFit(
-      currentProfile,
+      partition.currentProfile,
       target.title,
       target.company_name,
       target.description,
@@ -6820,11 +7427,16 @@ app.post("/api/match", async (req, res) => {
       target.experience_range_years
     );
     target.fit = fit;
-    if (fit.is_viable && fit.match_score >= appSettings.min_match_score) {
+    if (fit.is_viable && fit.match_score >= partition.appSettings.min_match_score) {
       if (target.status === "new") target.status = "viable";
     } else if (!fit.is_viable) {
       if (target.status === "new") target.status = "rejected";
     }
+    partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+    if (userId === PRIMARY_USER_ID) {
+      jobListings = partition.jobListings;
+    }
+    saveStoreToDisk();
     res.json({ success: true, fit, job: target });
   } catch (err) {
     console.error("[Match] Error:", err);
@@ -7211,6 +7823,22 @@ app.post("/api/workflow/run", async (req, res) => {
     jobs: jobListings
   });
 });
+function computePipelineStatsForPartition(p) {
+  const total = p.jobListings.length;
+  const viable = p.jobListings.filter((j) => j.fit?.is_viable).length;
+  const highFit = p.jobListings.filter((j) => (j.fit?.match_score || 0) >= p.appSettings.min_match_score).length;
+  const notified = p.jobListings.filter((j) => j.status === "notified").length;
+  const applied = p.jobListings.filter((j) => j.status === "applied").length;
+  return {
+    total_jobs: total,
+    seen_count: total,
+    viable_count: viable,
+    high_fit_count: highFit,
+    notified_count: notified,
+    applied_count: applied,
+    last_run: p.workflowState.last_run || (/* @__PURE__ */ new Date()).toISOString()
+  };
+}
 function computePipelineStats() {
   const total = jobListings.length;
   const viable = jobListings.filter((j) => j.fit?.is_viable).length;
@@ -7272,7 +7900,7 @@ app.post("/api/workflow/config", (req, res) => {
   if (typeof enabled === "boolean") workflowState.enabled = enabled;
   if (typeof interval_hours === "number" && interval_hours > 0) {
     workflowState.interval_hours = interval_hours;
-    workflowState.next_run = getCanonicalNextRun(interval_hours);
+    workflowState.next_run = getCanonicalNextRun2(interval_hours);
   }
   if (typeof auto_notify_telegram === "boolean") {
     workflowState.auto_notify_telegram = auto_notify_telegram;
@@ -7282,26 +7910,85 @@ app.post("/api/workflow/config", (req, res) => {
   saveStoreToDisk();
   res.json({ success: true, workflow: workflowState });
 });
+app.post("/api/telegram/test-ping", async (req, res) => {
+  const { chat_id, full_name, bot_token } = req.body || {};
+  const targetChatId = (chat_id || "").toString().trim();
+  if (!targetChatId) {
+    return res.status(400).json({
+      success: false,
+      error: "Please enter a valid Telegram Chat ID.",
+      hint: "You can obtain your numerical Chat ID via @userinfobot on Telegram."
+    });
+  }
+  const token = (bot_token || process.env.TELEGRAM_BOT_TOKEN || "8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas").trim();
+  const candName = full_name && typeof full_name === "string" ? full_name.trim() : "Candidate";
+  const testMessage = `\u{1F514} <b>CareerOps AI \u2022 Telegram Connection Verified!</b>
+
+Hello <b>${escapeTelegramHtml(candName)}</b>! \u{1F44B}
+
+Your Telegram destination is successfully connected to your CareerOps workspace (Chat ID: <code>${escapeTelegramHtml(targetChatId)}</code>).
+
+Whenever autonomous discovery finds high-fit roles (&ge;75%), you will receive instant push alerts right here with direct application links and tailored ATS resumes.`;
+  try {
+    const telegramRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: targetChatId,
+        text: testMessage,
+        parse_mode: "HTML"
+      })
+    });
+    const data = await telegramRes.json();
+    if (data.ok) {
+      return res.json({
+        success: true,
+        message: "Test alert successfully sent to Telegram!",
+        chat_id: targetChatId
+      });
+    } else {
+      let hint = "Telegram rejected the message.";
+      if (data.description?.includes("chat not found") || data.description?.includes("bot was blocked") || data.error_code === 400 || data.error_code === 403) {
+        hint = 'Chat not found. Please open Telegram, search for @CareerOpsBot, click "Start" (or send /start), and try again.';
+      }
+      return res.status(400).json({
+        success: false,
+        error: data.description || "Could not deliver to this Chat ID.",
+        hint
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: err?.message || "Network error communicating with Telegram."
+    });
+  }
+});
 app.post("/api/telegram/notify", async (req, res) => {
   const { id, custom_chat_id, custom_bot_token, job, baseUrl, settings } = req.body;
+  const authUser = resolveAuthUser(req);
+  const partition = authUser ? getUserPartition(authUser.id) : void 0;
   if (baseUrl && typeof baseUrl === "string" && !baseUrl.includes("localhost")) {
     lastKnownBaseUrl = baseUrl;
   }
   if (settings && typeof settings === "object") {
-    Object.assign(appSettings, settings);
+    Object.assign(partition?.appSettings || appSettings, settings);
   }
-  let target = jobListings.find((j) => j.id === id);
+  const currentList = partition ? partition.jobListings : jobListings;
+  let target = currentList.find((j) => j.id === id);
   if (!target && job) {
     target = job;
-    jobListings.unshift(job);
+    currentList.unshift(job);
     saveStoreToDisk();
   }
   if (!target) return res.status(404).json({ error: "Job listing not found." });
-  const sendResult = await sendTelegramAlertForJob(target, custom_chat_id, custom_bot_token);
+  const effectiveChatId = custom_chat_id || partition?.appSettings.telegram_chat_id || appSettings.telegram_chat_id;
+  const effectiveBotToken = custom_bot_token || partition?.appSettings.telegram_bot_token || appSettings.telegram_bot_token;
+  const sendResult = await sendTelegramAlertForJob(target, effectiveChatId, effectiveBotToken);
   res.json({
     success: sendResult.delivered || sendResult.simulated,
     ...sendResult,
-    chat_id: custom_chat_id || appSettings.telegram_chat_id || "1368681854"
+    chat_id: effectiveChatId || "1368681854"
   });
 });
 app.get("/api/registry/stats", (req, res) => {
@@ -7354,67 +8041,69 @@ app.post("/api/registry/reset", (req, res) => {
   res.json({ success: true, remaining_count: Object.keys(searchedRegistry).length });
 });
 app.get("/api/state/sync", (req, res) => {
-  workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
-  const activeJobs = jobListings.filter((j) => !deletedJobIds.has(j.id));
+  const { partition } = getRequestContext(req);
+  partition.workflowState.next_run = getCanonicalNextRun2(partition.workflowState.interval_hours || 4);
+  const activeJobs = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
   res.json({
     success: true,
-    profile: currentProfile,
+    profile: partition.currentProfile,
     jobs: activeJobs,
-    stats: computePipelineStats(),
-    workflow: workflowState,
-    settings: appSettings,
-    searched_registry: searchedRegistry,
-    deleted_ids: Array.from(deletedJobIds),
-    last_updated: storeLastUpdated || (/* @__PURE__ */ new Date()).toISOString()
+    stats: computePipelineStatsForPartition(partition),
+    workflow: partition.workflowState,
+    settings: partition.appSettings,
+    searched_registry: partition.searchedRegistry,
+    deleted_ids: partition.deletedJobIds,
+    last_updated: partition.lastUpdated || storeLastUpdated || (/* @__PURE__ */ new Date()).toISOString()
   });
 });
 app.post("/api/state/sync", async (req, res) => {
+  const { partition, userId } = getRequestContext(req);
   const { jobs, profile, settings, workflow, deleted_ids, searched_registry, _replicated } = req.body;
   let modified = false;
   if (Array.isArray(deleted_ids)) {
     for (const id of deleted_ids) {
-      if (id && !deletedJobIds.has(id)) {
-        deletedJobIds.add(id);
+      if (id && !partition.deletedJobIds.includes(id)) {
+        partition.deletedJobIds.push(id);
         modified = true;
       }
     }
-    if (deletedJobIds.size > 0) {
-      const prevCount = jobListings.length;
-      jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
-      if (jobListings.length !== prevCount) {
+    if (partition.deletedJobIds.length > 0) {
+      const prevCount = partition.jobListings.length;
+      partition.jobListings = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
+      if (partition.jobListings.length !== prevCount) {
         modified = true;
       }
     }
   }
   if (profile && profile.full_name) {
-    currentProfile = { ...currentProfile, ...profile };
+    partition.currentProfile = { ...partition.currentProfile, ...profile };
     modified = true;
   }
   if (settings && typeof settings === "object") {
-    Object.assign(appSettings, settings);
+    Object.assign(partition.appSettings, settings);
     modified = true;
   }
   if (workflow && typeof workflow === "object") {
-    Object.assign(workflowState, workflow);
-    workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
+    Object.assign(partition.workflowState, workflow);
+    partition.workflowState.next_run = getCanonicalNextRun2(partition.workflowState.interval_hours || 4);
     modified = true;
   }
   if (searched_registry && typeof searched_registry === "object") {
-    Object.assign(searchedRegistry, searched_registry);
+    Object.assign(partition.searchedRegistry, searched_registry);
     for (const [k, v] of Object.entries(searched_registry)) {
       if (v && typeof v === "object") {
         const item = v;
-        if (item.id) seenJobs[item.id] = item.last_seen_at || (/* @__PURE__ */ new Date()).toISOString();
-        if (item.signature) seenJobs[item.signature] = item.last_seen_at || (/* @__PURE__ */ new Date()).toISOString();
-        if (item.normalized_url) seenJobs[item.normalized_url] = item.last_seen_at || (/* @__PURE__ */ new Date()).toISOString();
+        if (item.id) partition.seenJobs[item.id] = item.last_seen_at || (/* @__PURE__ */ new Date()).toISOString();
+        if (item.signature) partition.seenJobs[item.signature] = item.last_seen_at || (/* @__PURE__ */ new Date()).toISOString();
+        if (item.normalized_url) partition.seenJobs[item.normalized_url] = item.last_seen_at || (/* @__PURE__ */ new Date()).toISOString();
       }
     }
     modified = true;
   }
   if (Array.isArray(jobs) && jobs.length > 0) {
-    const validJobs = jobs.filter((j) => j && j.id && !deletedJobIds.has(j.id));
+    const validJobs = jobs.filter((j) => j && j.id && !partition.deletedJobIds.includes(j.id));
     const existingMap = /* @__PURE__ */ new Map();
-    for (const j of jobListings) {
+    for (const j of partition.jobListings) {
       existingMap.set(j.id, j);
     }
     for (const incJob of validJobs) {
@@ -7439,12 +8128,12 @@ app.post("/api/state/sync", async (req, res) => {
           modified = true;
         }
       } else {
-        jobListings.unshift(incJob);
+        partition.jobListings.unshift(incJob);
         existingMap.set(incJob.id, incJob);
-        seenJobs[incJob.id] = (/* @__PURE__ */ new Date()).toISOString();
+        partition.seenJobs[incJob.id] = (/* @__PURE__ */ new Date()).toISOString();
         const sig = `${incJob.company_name.toLowerCase()}_${incJob.title.toLowerCase()}`;
         const normLink = normalizeJobUrl(incJob.apply_link);
-        searchedRegistry[incJob.id] = {
+        partition.searchedRegistry[incJob.id] = {
           id: incJob.id,
           signature: sig,
           normalized_url: normLink,
@@ -7459,20 +8148,27 @@ app.post("/api/state/sync", async (req, res) => {
     }
   }
   if (modified) {
+    partition.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+    if (userId === PRIMARY_USER_ID) {
+      currentProfile = partition.currentProfile;
+      jobListings = partition.jobListings;
+      Object.assign(appSettings, partition.appSettings);
+      Object.assign(workflowState, partition.workflowState);
+    }
     saveStoreToDisk(!_replicated);
   }
-  workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
-  const activeJobs = jobListings.filter((j) => !deletedJobIds.has(j.id));
+  partition.workflowState.next_run = getCanonicalNextRun2(partition.workflowState.interval_hours || 4);
+  const activeJobs = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
   res.json({
     success: true,
-    profile: currentProfile,
+    profile: partition.currentProfile,
     jobs: activeJobs,
-    stats: computePipelineStats(),
-    workflow: workflowState,
-    settings: appSettings,
-    searched_registry: searchedRegistry,
-    deleted_ids: Array.from(deletedJobIds),
-    last_updated: storeLastUpdated || (/* @__PURE__ */ new Date()).toISOString()
+    stats: computePipelineStatsForPartition(partition),
+    workflow: partition.workflowState,
+    settings: partition.appSettings,
+    searched_registry: partition.searchedRegistry,
+    deleted_ids: partition.deletedJobIds,
+    last_updated: partition.lastUpdated || storeLastUpdated || (/* @__PURE__ */ new Date()).toISOString()
   });
 });
 app.post("/api/telegram/webhook", async (req, res) => {
@@ -7563,7 +8259,7 @@ app.post("/api/telegram/webhook", async (req, res) => {
   res.json({ ok: true });
 });
 app.get("/api/state", (req, res) => {
-  workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
+  workflowState.next_run = getCanonicalNextRun2(workflowState.interval_hours || 4);
   res.json({
     profile: currentProfile,
     stats: computePipelineStats(),
@@ -7638,6 +8334,6 @@ var server_default = app;
 export {
   app,
   server_default as default,
-  getCanonicalNextRun
+  getCanonicalNextRun2 as getCanonicalNextRun
 };
 //# sourceMappingURL=server.js.map

@@ -206,14 +206,14 @@ export function App() {
     const deleted = getDeletedJobIds();
     try {
       const cached = localStorage.getItem('careerops_jobs');
-      if (cached) {
+      if (cached !== null) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed.filter((j: JobListing) => !deleted.has(j.id));
         }
       }
     } catch {}
-    return INITIAL_JOBS.filter((j) => !deleted.has(j.id));
+    return [];
   });
 
   const [stats, setStats] = useState<PipelineStats>(() => {
@@ -346,7 +346,7 @@ export function App() {
   });
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authModalInitialTab, setAuthModalInitialTab] = useState<'login' | 'register' | 'saved'>('login');
+  const [authModalInitialTab, setAuthModalInitialTab] = useState<'login' | 'register'>('login');
 
   const updateSavedAccount = (user: UserAccount) => {
     const norm = normalizeUserRecord(user);
@@ -410,12 +410,38 @@ export function App() {
     }
   };
 
-  const handleRegister = async (email: string, pass: string, fullName: string, headline?: string, telegramChatId?: string) => {
+  const handleRegister = async (
+    email: string,
+    pass: string,
+    fullName: string,
+    headline?: string,
+    telegramChatId?: string,
+    details?: {
+      target_roles?: string[];
+      salary_expectation?: { min_lpa: number; max_lpa: number };
+      preferred_locations?: string[];
+      total_years_experience?: number;
+      seniority_tier?: string;
+      skills?: string[];
+    }
+  ) => {
     try {
       const res = await safeFetchJson<any>('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pass, full_name: fullName, headline, telegram_chat_id: telegramChatId }),
+        body: JSON.stringify({
+          email,
+          password: pass,
+          full_name: fullName,
+          headline,
+          telegram_chat_id: telegramChatId,
+          target_roles: details?.target_roles,
+          salary_expectation: details?.salary_expectation,
+          preferred_locations: details?.preferred_locations,
+          total_years_experience: details?.total_years_experience,
+          seniority_tier: details?.seniority_tier,
+          skills: details?.skills,
+        }),
       });
       if (res && res.success && res.user) {
         const norm = normalizeUserRecord(res.user);
@@ -492,8 +518,14 @@ export function App() {
     try {
       localStorage.removeItem('careerops_auth_token');
       localStorage.removeItem('careerops_user');
+      localStorage.removeItem('careerops_jobs');
+      localStorage.removeItem('careerops_profile');
+      localStorage.removeItem('careerops_stats');
+      localStorage.removeItem('careerops_workflow');
+      localStorage.removeItem('careerops_settings');
     } catch {}
     setCurrentUser(null);
+    setJobs([]);
     setIsAuthModalOpen(false);
     showToast('Signed out of workspace.', 'success');
   };
@@ -531,34 +563,11 @@ export function App() {
           }
           const deleted = getDeletedJobIds();
 
-          // Merge with any jobs already in local cache so user's discovered jobs are NEVER rolled back
-          const cachedJobsRaw = localStorage.getItem('careerops_jobs');
-          let localJobs: JobListing[] = [];
-          try {
-            if (cachedJobsRaw) localJobs = JSON.parse(cachedJobsRaw);
-          } catch {}
-
+          // Use server partition as authority for the authenticated user session
           const serverJobs = syncRes.jobs.filter((j: JobListing) => !deleted.has(j.id));
-          const mergedJobsMap = new Map<string, JobListing>();
-
-          for (const lj of localJobs) {
-            if (lj && lj.id && !deleted.has(lj.id)) {
-              mergedJobsMap.set(lj.id, lj);
-            }
-          }
-          for (const sj of serverJobs) {
-            if (sj && sj.id && !deleted.has(sj.id)) {
-              if (mergedJobsMap.has(sj.id)) {
-                mergedJobsMap.set(sj.id, { ...mergedJobsMap.get(sj.id)!, ...sj });
-              } else {
-                mergedJobsMap.set(sj.id, sj);
-              }
-            }
-          }
-          const finalJobs = Array.from(mergedJobsMap.values());
-          setJobs(finalJobs);
+          setJobs(serverJobs);
           setIsBackendConnected(true);
-          try { localStorage.setItem('careerops_jobs', JSON.stringify(finalJobs)); } catch {}
+          try { localStorage.setItem('careerops_jobs', JSON.stringify(serverJobs)); } catch {}
 
           if (syncRes.searched_registry && typeof syncRes.searched_registry === 'object') {
             const currentReg = getSearchedRegistry();
@@ -602,7 +611,7 @@ export function App() {
 
             // If local state had newer cadence or jobs, heal the cloud server
             if (localWorkflow && localTime > serverTime) {
-              syncStateToCloud({ workflow: effectiveWf, jobs: finalJobs }).catch(() => {});
+              syncStateToCloud({ workflow: effectiveWf, jobs: serverJobs }).catch(() => {});
             }
           }
           if (syncRes.settings) {

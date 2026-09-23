@@ -607,7 +607,20 @@ app.use((req, res, next) => {
 
   // Register new user account
   app.post('/api/auth/register', async (req, res) => {
-    const { email, password, full_name, telegram_chat_id } = req.body;
+    const {
+      email,
+      password,
+      full_name,
+      headline,
+      target_roles,
+      salary_expectation,
+      preferred_locations,
+      total_years_experience,
+      seniority_tier,
+      skills,
+      telegram_chat_id,
+    } = req.body;
+
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       return res.status(400).json({ error: 'Please provide a valid email address.' });
     }
@@ -639,8 +652,44 @@ app.use((req, res, next) => {
     users[userId] = newAccount;
     userEmailIndex[cleanEmail] = userId;
 
-    // Initialize personal data partition for this user with their Telegram configuration
-    const partition = getUserPartition(userId);
+    // Build initial preferences from registration
+    const initialPrefs = {
+      target_roles: Array.isArray(target_roles) && target_roles.length > 0 ? target_roles.filter(Boolean) : undefined,
+      preferred_locations: Array.isArray(preferred_locations) && preferred_locations.length > 0 ? preferred_locations.filter(Boolean) : undefined,
+      salary_expectation: salary_expectation && typeof salary_expectation === 'object' ? {
+        min_lpa: Number(salary_expectation.min_lpa) || 12,
+        max_lpa: Number(salary_expectation.max_lpa) || 25,
+      } : undefined,
+      total_years_experience: total_years_experience !== undefined ? Number(total_years_experience) : undefined,
+      seniority_tier: seniority_tier && typeof seniority_tier === 'string' ? seniority_tier : undefined,
+      skills: Array.isArray(skills) && skills.length > 0 ? skills.filter(Boolean) : undefined,
+      headline: headline && typeof headline === 'string' ? headline.trim() : undefined,
+    };
+
+    // Initialize personal data partition for this user with their career preferences & Telegram config
+    const partition = getUserPartition(userId, initialPrefs);
+
+    // Apply any explicit overrides to currentProfile
+    if (initialPrefs.target_roles?.length) {
+      partition.currentProfile.target_roles = initialPrefs.target_roles;
+    }
+    if (initialPrefs.preferred_locations?.length) {
+      partition.currentProfile.preferred_locations = initialPrefs.preferred_locations;
+      partition.currentProfile.contact.location = initialPrefs.preferred_locations[0] || 'Remote';
+    }
+    if (initialPrefs.salary_expectation) {
+      partition.currentProfile.salary_expectation = initialPrefs.salary_expectation;
+    }
+    if (initialPrefs.total_years_experience !== undefined) {
+      partition.currentProfile.total_years_experience = initialPrefs.total_years_experience;
+    }
+    if (initialPrefs.seniority_tier) {
+      partition.currentProfile.seniority_tier = initialPrefs.seniority_tier;
+    }
+    if (initialPrefs.skills?.length) {
+      partition.currentProfile.skills = Array.from(new Set([...initialPrefs.skills, ...partition.currentProfile.skills]));
+    }
+
     if (cleanTelegramId) {
       partition.appSettings.telegram_chat_id = cleanTelegramId;
       partition.appSettings.telegram_configured = true;
@@ -650,13 +699,21 @@ app.use((req, res, next) => {
       // Asynchronously send a welcome push alert to the user's specific Telegram ID
       const botToken = partition.appSettings.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN || '8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas';
       const candFirst = escapeTelegramHtml(newAccount.full_name.split(' ')[0] || 'Candidate');
+      const rolesStr = (partition.currentProfile.target_roles || []).slice(0, 3).join(', ');
+      const locStr = (partition.currentProfile.preferred_locations || []).slice(0, 3).join(', ');
+      const salStr = partition.currentProfile.salary_expectation
+        ? `₹${partition.currentProfile.salary_expectation.min_lpa} – ₹${partition.currentProfile.salary_expectation.max_lpa} LPA`
+        : 'Market Competitive';
+
       const welcomeMsg =
         `🎉 <b>Welcome to CareerOps AI, ${candFirst}!</b>\n\n` +
-        `Your personal job discovery & ATS intelligence workspace is active for <b>${escapeTelegramHtml(newAccount.email)}</b>.\n\n` +
-        `✅ <b>Telegram Push:</b> Synced to Chat ID <code>${escapeTelegramHtml(cleanTelegramId)}</code>\n` +
-        `⚡ <b>Fit Threshold:</b> &ge; 75% Score\n` +
-        `🕒 <b>Pipeline:</b> Autonomous 4-hour scans\n\n` +
-        `You'll receive real-time push alerts right here whenever verified high-fit roles matching your profile are discovered! 🚀`;
+        `Your personalized job discovery workspace is configured and ready:\n\n` +
+        `🎯 <b>Target Roles:</b> ${escapeTelegramHtml(rolesStr || 'Software Engineering / Tech')}\n` +
+        `💰 <b>Expected Package:</b> ${escapeTelegramHtml(salStr)}\n` +
+        `📍 <b>Locations:</b> ${escapeTelegramHtml(locStr || 'Remote / Hybrid')}\n` +
+        `⚡ <b>Fit Threshold:</b> &ge; 75% Match\n` +
+        `🕒 <b>Pipeline:</b> Autonomous 4-hour background scans\n\n` +
+        `✅ <b>Zero-Setup Alerts:</b> All your career preferences are stored in your workspace. You do <b>not</b> need to configure anything here on Telegram. Whenever matching opportunities are discovered, you'll receive real-time push alerts right here with direct application links and tailored ATS resumes! 🚀`;
 
       fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',

@@ -226,6 +226,57 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         })}
       </div>
 
+      {/* Empty State Banner for New User Accounts (Pristine Feed) */}
+      {jobs.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.15 }}
+          className="glass-panel border border-blue-500/30 rounded-2xl p-6 sm:p-8 text-center space-y-4 bg-gradient-to-b from-blue-950/20 to-black/40 shadow-xl"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 mx-auto shadow-inner">
+            <Search className="w-7 h-7" />
+          </div>
+          <div className="max-w-xl mx-auto space-y-1.5">
+            <h3 className="text-base sm:text-lg font-semibold text-white">
+              Ready to Discover Verified Openings for {profile.full_name}
+            </h3>
+            <p className="text-xs text-zinc-300">
+              Your career targets are active: <span className="text-white font-medium">{(profile.target_roles || []).join(', ') || 'Tech Roles'}</span> in <span className="text-blue-300 font-medium">{(profile.preferred_locations || []).join(', ') || 'Remote'}</span> ({profile.salary_expectation ? `₹${profile.salary_expectation.min_lpa}–₹${profile.salary_expectation.max_lpa} LPA` : 'Market Competitive'}).
+            </p>
+            <p className="text-xs text-zinc-400">
+              Your dashboard starts clean with zero old mock jobs. Run your first autonomous ATS discovery scan to find live opportunities!
+            </p>
+          </div>
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={onDiscoverJobs}
+              disabled={isDiscovering || isPipelineRunning}
+              className="py-2.5 px-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-blue-600/25 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {isDiscovering || isPipelineRunning ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Scanning ATS Portals...</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4" />
+                  <span>Run First Autonomous Scan Now</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={onOpenAddJob}
+              className="py-2.5 px-4 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white text-xs font-medium rounded-xl transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4 text-zinc-400" />
+              <span>Paste Job Description Manually</span>
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       {/* Top High-Fit Opportunities Spotlight (≥75% Match) */}
       {highFitJobs.length > 0 && (
         <motion.div

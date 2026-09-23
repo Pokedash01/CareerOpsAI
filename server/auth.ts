@@ -75,34 +75,62 @@ export function getCanonicalNextRun(intervalHours = 4): string {
   return new Date(nextTimestamp).toISOString();
 }
 
+export interface InitialCareerPreferences {
+  target_roles?: string[];
+  salary_expectation?: { min_lpa: number; max_lpa: number };
+  preferred_locations?: string[];
+  total_years_experience?: number;
+  seniority_tier?: string;
+  skills?: string[];
+  headline?: string;
+}
+
 /**
  * Creates a clean isolated partition for a new user with fresh profile and sample ATS listings
  */
-export function createDefaultPartitionForUser(user?: Partial<UserAccountRecord>): UserPartitionData {
+export function createDefaultPartitionForUser(
+  user?: Partial<UserAccountRecord>,
+  preferences?: InitialCareerPreferences
+): UserPartitionData {
+  const chosenRoles = preferences?.target_roles?.length
+    ? preferences.target_roles
+    : ['Software Engineer', 'Full Stack Developer', 'Data Analyst', 'Solutions Architect'];
+
+  const chosenLocations = preferences?.preferred_locations?.length
+    ? preferences.preferred_locations
+    : ['Remote', 'Bengaluru', 'Delhi NCR', 'Hybrid'];
+
+  const chosenSalary = preferences?.salary_expectation || { min_lpa: 12, max_lpa: 25 };
+  const chosenExp = preferences?.total_years_experience !== undefined ? preferences.total_years_experience : 2.5;
+  const chosenTier = preferences?.seniority_tier || (chosenExp >= 5 ? 'Senior' : chosenExp >= 2 ? 'Mid' : 'Entry');
+
   const userProfile: UserProfile = {
     full_name: user?.full_name || 'Candidate',
     contact: {
       email: user?.email || '',
       phone: '',
-      location: 'Remote / India',
+      location: chosenLocations[0] || 'Remote',
       links: '',
     },
-    total_years_experience: 2.5,
-    seniority_tier: 'Mid',
+    total_years_experience: chosenExp,
+    seniority_tier: chosenTier,
     education: [
       {
         institution: 'University / Institute',
         degree: 'Bachelor of Science / Technology',
-        details: 'Majors: Computer Science, Top 5%',
+        details: 'Engineering / Computer Science',
         dates: '2020 – 2024',
       },
     ],
     experience: [],
-    skills: ['Python', 'SQL', 'Data Analytics', 'TypeScript', 'React', 'Power BI', 'Automation'],
+    skills: preferences?.skills?.length
+      ? preferences.skills
+      : ['Python', 'SQL', 'TypeScript', 'React', 'Node.js', 'System Design'],
     certifications: [],
-    target_roles: ['Data Analyst', 'Software Engineer', 'AI/BI Developer', 'Solutions Analyst'],
+    target_roles: chosenRoles,
     anti_targets: ['Telemarketing', 'Cold Calling Sales', 'Unpaid Internships'],
-    preferred_locations: ['Remote', 'Gurugram', 'Bengaluru', 'Delhi NCR', 'Hybrid'],
+    preferred_locations: chosenLocations,
+    salary_expectation: chosenSalary,
   };
 
   const defaultChatId = user?.telegram_chat_id || (user?.id === PRIMARY_USER_ID ? (process.env.TELEGRAM_CHAT_ID || '1368681854') : '');
@@ -136,12 +164,16 @@ export function createDefaultPartitionForUser(user?: Partial<UserAccountRecord>)
     runs: [],
   };
 
-  // Provide initial baseline seed jobs so user has high-quality items to test immediately
-  const sampleJobs = INITIAL_JOBS.slice(0, 8).map((j, idx) => ({
-    ...j,
-    id: computeSafeJobId(j.title, `${j.company_name}_${user?.id || 'sample'}_${idx}`),
-    status: (idx === 0 ? 'discovered' : idx === 1 ? 'notified' : 'discovered') as any,
-  }));
+  // For new registered users, start with a pristine empty job feed so the dashboard does not show pre-seeded dummy jobs.
+  // Only the baseline demo account receives sample jobs.
+  const isDemoAccount = (user?.id === PRIMARY_USER_ID || user?.email === 'demo@careerops.ai') && !preferences;
+  const sampleJobs = isDemoAccount
+    ? INITIAL_JOBS.slice(0, 8).map((j, idx) => ({
+        ...j,
+        id: computeSafeJobId(j.title, `${j.company_name}_${user?.id || 'sample'}_${idx}`),
+        status: (idx === 0 ? 'discovered' : idx === 1 ? 'notified' : 'discovered') as any,
+      }))
+    : [];
 
   const partitionRegistry: Record<string, any> = {};
   for (const j of sampleJobs) {
@@ -246,9 +278,9 @@ export function resolveAuthUser(req: express.Request): UserAccountRecord | null 
 /**
  * Retrieves or lazily creates a data partition for a given user ID
  */
-export function getUserPartition(userId: string): UserPartitionData {
+export function getUserPartition(userId: string, initialPreferences?: InitialCareerPreferences): UserPartitionData {
   if (!userPartitions[userId]) {
-    userPartitions[userId] = createDefaultPartitionForUser(users[userId]);
+    userPartitions[userId] = createDefaultPartitionForUser(users[userId], initialPreferences);
   }
   return userPartitions[userId];
 }

@@ -26,7 +26,7 @@ interface NavbarProps {
   isPipelineRunning: boolean;
   candidateName: string;
   currentUser?: UserAccount | null;
-  onOpenAuth: (initialTab?: 'login' | 'register' | 'saved') => void;
+  onOpenAuth: (initialTab?: 'login' | 'register') => void;
   onLogout: () => void;
   onExploreDemo?: () => void;
 }
@@ -270,22 +270,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                                   <button
                                     onClick={() => {
                                       setShowUserDropdown(false);
-                                      onOpenAuth('saved');
-                                    }}
-                                    className="w-full text-left px-3 py-2 text-xs hover:bg-white/[0.06] rounded-xl flex items-center gap-2 text-zinc-300 hover:text-white transition-colors cursor-pointer"
-                                  >
-                                    <Laptop className="w-3.5 h-3.5 text-blue-400" />
-                                    <span>Switch / Manage Accounts</span>
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setShowUserDropdown(false);
                                       setActiveTab('profile');
                                     }}
                                     className="w-full text-left px-3 py-2 text-xs hover:bg-white/[0.06] rounded-xl flex items-center gap-2 text-zinc-300 hover:text-white transition-colors cursor-pointer"
                                   >
                                     <User className="w-3.5 h-3.5 text-blue-400" />
-                                    <span>Edit Candidate Profile</span>
+                                    <span>Profile & Career Preferences</span>
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setShowUserDropdown(false);
+                                      setActiveTab('automation');
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs hover:bg-white/[0.06] rounded-xl flex items-center gap-2 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                                  >
+                                    <Send className="w-3.5 h-3.5 text-emerald-400" />
+                                    <span>Telegram Push & Alerts</span>
                                   </button>
                                 </div>
 
