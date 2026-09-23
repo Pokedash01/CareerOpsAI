@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Briefcase,
   LayoutDashboard,
@@ -8,10 +8,15 @@ import {
   Sparkles,
   PlayCircle,
   Loader2,
-  Cloud,
+  Lock,
+  User,
+  LogOut,
+  ChevronDown,
+  Laptop,
+  Zap,
 } from 'lucide-react';
-import { motion } from 'motion/react';
-import { PipelineStats } from '../types.js';
+import { motion, AnimatePresence } from 'motion/react';
+import { PipelineStats, UserAccount } from '../types.js';
 
 interface NavbarProps {
   activeTab: 'dashboard' | 'jobs' | 'tailor' | 'profile' | 'automation';
@@ -20,6 +25,10 @@ interface NavbarProps {
   onRunPipeline: () => void;
   isPipelineRunning: boolean;
   candidateName: string;
+  currentUser?: UserAccount | null;
+  onOpenAuth: (initialTab?: 'login' | 'register' | 'saved') => void;
+  onLogout: () => void;
+  onExploreDemo?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -29,8 +38,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   onRunPipeline,
   isPipelineRunning,
   candidateName,
+  currentUser,
+  onOpenAuth,
+  onLogout,
+  onExploreDemo,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -39,6 +54,16 @@ export const Navbar: React.FC<NavbarProps> = ({
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   interface NavTabItem {
@@ -87,79 +112,232 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </span>
                 </div>
                 <p className="text-[11px] text-zinc-400 hidden sm:block">
-                  Candidate: <span className="text-zinc-200 font-medium">{candidateName}</span>
+                  {currentUser ? (
+                    <>
+                      Candidate: <span className="text-zinc-200 font-medium">{candidateName}</span>
+                    </>
+                  ) : (
+                    <span className="text-zinc-400">Autonomous Job & Alert Engine</span>
+                  )}
                 </p>
               </div>
             </div>
 
-            {/* Center Navigation Tabs with Animated Spring Pill (Desktop only) */}
-            <nav className="hidden md:flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.07] backdrop-blur-sm shadow-inner shadow-black/20">
-              {navTabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <motion.button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className={`relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer select-none ${
-                      isActive ? 'text-white font-semibold' : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.02]'
-                    }`}
-                  >
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeTabIndicator"
-                        className="absolute inset-0 bg-blue-600 rounded-lg shadow-md shadow-blue-600/30 border border-blue-400/30"
-                        transition={{ type: 'spring', bounce: 0.15, duration: 0.4 }}
-                      />
-                    )}
-                    <span className="relative z-10 flex items-center gap-1.5">
-                      <Icon className="w-3.5 h-3.5" />
-                      <span
-                        className={
-                          tab.id === 'automation'
-                            ? 'hidden lg:inline'
-                            : tab.id === 'profile'
-                            ? 'hidden sm:inline'
-                            : ''
-                        }
-                      >
-                        {tab.label}
+            {/* Center Navigation: Tabs for authenticated users, Solution links for visitors */}
+            {currentUser ? (
+              <nav className="hidden md:flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.07] backdrop-blur-sm shadow-inner shadow-black/20">
+                {navTabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <motion.button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className={`relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer select-none ${
+                        isActive ? 'text-white font-semibold' : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.02]'
+                      }`}
+                    >
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeTabIndicator"
+                          className="absolute inset-0 bg-blue-600 rounded-lg shadow-md shadow-blue-600/30 border border-blue-400/30"
+                          transition={{ type: 'spring', bounce: 0.15, duration: 0.4 }}
+                        />
+                      )}
+                      <span className="relative z-10 flex items-center gap-1.5">
+                        <Icon className="w-3.5 h-3.5" />
+                        <span
+                          className={
+                            tab.id === 'automation'
+                              ? 'hidden lg:inline'
+                              : tab.id === 'profile'
+                              ? 'hidden sm:inline'
+                              : ''
+                          }
+                        >
+                          {tab.label}
+                        </span>
                       </span>
-                    </span>
-                  </motion.button>
-                );
-              })}
-            </nav>
+                    </motion.button>
+                  );
+                })}
+              </nav>
+            ) : (
+              <nav className="hidden md:flex items-center gap-1.5">
+                <a
+                  href="#solution"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.04] transition-colors"
+                >
+                  The Solution
+                </a>
+                <a
+                  href="#telegram-alerts"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors flex items-center gap-1.5"
+                >
+                  <Send className="w-3 h-3" />
+                  <span>Telegram Alerts</span>
+                </a>
+              </nav>
+            )}
 
-            {/* Right Action: Run Pipeline & AI status */}
+            {/* Right Action: Authenticated Controls or Visitor Auth Actions */}
             <div className="flex items-center gap-2 sm:gap-2.5">
-              <div className="hidden xl:flex items-center gap-1.5 text-[11px] font-medium text-zinc-400 bg-white/[0.03] px-2.5 py-1.5 rounded-lg border border-white/[0.06]">
-                <Sparkles className="w-3 h-3 text-blue-400" />
-                <span>Gemini 3.8 Flash</span>
-              </div>
+              {currentUser ? (
+                <>
+                  <div className="hidden xl:flex items-center gap-1.5 text-[11px] font-medium text-zinc-400 bg-white/[0.03] px-2.5 py-1.5 rounded-lg border border-white/[0.06]">
+                    <Sparkles className="w-3 h-3 text-blue-400" />
+                    <span>Gemini 3.8 Flash</span>
+                  </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onRunPipeline}
-                disabled={isPipelineRunning}
-                className="flex items-center justify-center gap-1.5 sm:gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-semibold px-3 sm:px-3.5 py-2 min-h-[38px] rounded-xl transition-all shadow-md shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border border-blue-400/20"
-              >
-                {isPipelineRunning ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
-                    <span className="hidden sm:inline">Executing...</span>
-                  </>
-                ) : (
-                  <>
-                    <PlayCircle className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Trigger Automation</span>
-                    <span className="sm:hidden font-bold">Run</span>
-                  </>
-                )}
-              </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={onRunPipeline}
+                    disabled={isPipelineRunning}
+                    className="flex items-center justify-center gap-1.5 sm:gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-semibold px-3 sm:px-3.5 py-2 min-h-[38px] rounded-xl transition-all shadow-md shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border border-blue-400/20"
+                  >
+                    {isPipelineRunning ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                        <span className="hidden sm:inline">Executing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <PlayCircle className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Trigger Automation</span>
+                        <span className="sm:hidden font-bold">Run</span>
+                      </>
+                    )}
+                  </motion.button>
+
+                  {/* User Account / Device Session Control */}
+                  <div className="relative" ref={userMenuRef}>
+                    {(() => {
+                      const displayName = (currentUser.name || currentUser.full_name || currentUser.email?.split('@')[0] || 'User').trim();
+                      const initials = (displayName.length >= 2 ? displayName.slice(0, 2) : displayName || 'US').toUpperCase();
+                      const firstName = displayName.split(' ')[0] || displayName;
+
+                      return (
+                        <>
+                          <motion.button
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => setShowUserDropdown((prev) => !prev)}
+                            className="flex items-center gap-2 pl-2 pr-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white text-xs font-medium transition-all cursor-pointer shadow-sm"
+                          >
+                            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-[11px] font-bold shadow">
+                              {initials}
+                            </div>
+                            <span className="max-w-[90px] truncate hidden sm:inline">
+                              {firstName}
+                            </span>
+                            <ChevronDown className="w-3 h-3 text-zinc-400" />
+                          </motion.button>
+
+                          {/* Dropdown Menu */}
+                          <AnimatePresence>
+                            {showUserDropdown && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                                transition={{ duration: 0.15 }}
+                                className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#0D1117] border border-white/[0.12] shadow-2xl p-2 z-50 text-zinc-200"
+                              >
+                                <div className="p-2.5 pb-2 border-b border-white/[0.07]">
+                                  <div className="flex items-center gap-2.5 mb-1">
+                                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+                                      {initials}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-semibold text-white truncate">
+                                        {displayName}
+                                      </p>
+                                      <p className="text-[11px] text-zinc-400 truncate">
+                                        {currentUser.email}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-medium mt-2 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                                    <Lock className="w-2.5 h-2.5" />
+                                    <span>Saved on device via encrypted cookie</span>
+                                  </div>
+                                </div>
+
+                                <div className="py-1">
+                                  <button
+                                    onClick={() => {
+                                      setShowUserDropdown(false);
+                                      onOpenAuth('saved');
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs hover:bg-white/[0.06] rounded-xl flex items-center gap-2 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                                  >
+                                    <Laptop className="w-3.5 h-3.5 text-blue-400" />
+                                    <span>Switch / Manage Accounts</span>
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setShowUserDropdown(false);
+                                      setActiveTab('profile');
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs hover:bg-white/[0.06] rounded-xl flex items-center gap-2 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                                  >
+                                    <User className="w-3.5 h-3.5 text-blue-400" />
+                                    <span>Edit Candidate Profile</span>
+                                  </button>
+                                </div>
+
+                                <div className="pt-1 border-t border-white/[0.07]">
+                                  <button
+                                    onClick={() => {
+                                      setShowUserDropdown(false);
+                                      onLogout();
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs hover:bg-rose-500/15 rounded-xl flex items-center gap-2 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
+                                  >
+                                    <LogOut className="w-3.5 h-3.5" />
+                                    <span>Sign Out</span>
+                                  </button>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {onExploreDemo && (
+                    <button
+                      onClick={onExploreDemo}
+                      className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-medium text-zinc-300 hover:text-white transition-all cursor-pointer"
+                    >
+                      <Laptop className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Live Demo</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => onOpenAuth('login')}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] text-xs font-semibold text-zinc-200 hover:text-white transition-all cursor-pointer"
+                  >
+                    <Lock className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Sign In</span>
+                  </button>
+
+                  <button
+                    onClick={() => onOpenAuth('register')}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all cursor-pointer border border-blue-400/25"
+                  >
+                    <Zap className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Get Started</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

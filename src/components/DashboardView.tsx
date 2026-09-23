@@ -253,7 +253,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {highFitJobs.slice(0, 3).map((job) => {
+            {(highFitJobs || []).slice(0, 3).map((job) => {
               const score = job.fit?.match_score || 0;
               return (
                 <div

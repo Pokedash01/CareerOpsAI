@@ -325,7 +325,7 @@ export const DocumentStudioView: React.FC<DocumentStudioViewProps> = ({
               </h3>
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed bg-white/[0.02] p-3.5 rounded-lg border border-white/[0.06]">
                 {tailored?.summary ||
-                  `${profile.full_name} is a results-driven professional with ${profile.total_years_experience} years of hands-on experience specializing in ${profile.skills.slice(0, 5).join(', ')}. Demonstrated success delivering high-impact automation and cross-functional solutions.`}
+                  `${profile.full_name || 'Candidate'} is a results-driven professional with ${profile.total_years_experience || 3} years of hands-on experience specializing in ${(profile?.skills || ['Power Platform', 'Data Analytics', 'Automation']).slice(0, 5).join(', ')}. Demonstrated success delivering high-impact automation and cross-functional solutions.`}
               </p>
             </div>
 
@@ -454,7 +454,7 @@ export const DocumentStudioView: React.FC<DocumentStudioViewProps> = ({
                     During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.
                   </p>
                   <p>
-                    My technical foundation spans {profile.skills.slice(0, 6).join(', ')}, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at {activeJob.company_name}.
+                    My technical foundation spans {(profile?.skills || ['Power Platform', 'Data Analytics', 'Automation']).slice(0, 6).join(', ')}, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at {activeJob.company_name}.
                   </p>
                   <p>
                     Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for {activeJob.company_name}.

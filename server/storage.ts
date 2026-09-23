@@ -2,15 +2,20 @@ import fs from 'fs';
 import path from 'path';
 
 export interface StorageData {
-  currentProfile: any;
-  jobListings: any[];
-  notifiedJobIds: string[];
-  seenJobs: Record<string, string>;
+  currentProfile?: any;
+  jobListings?: any[];
+  notifiedJobIds?: string[];
+  seenJobs?: Record<string, string>;
   searchedRegistry?: Record<string, any>;
-  appSettings: any;
-  workflowState: any;
+  appSettings?: any;
+  workflowState?: any;
   deletedJobIds?: string[];
   lastUpdated?: string;
+
+  // Multi-user authentication & data partitions
+  users?: Record<string, any>;
+  sessions?: Record<string, any>;
+  userPartitions?: Record<string, any>;
 }
 
 const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'data');
@@ -94,7 +99,7 @@ export function loadFromDisk(): StorageData | null {
         try {
           const raw = fs.readFileSync(filePath, 'utf-8');
           const data = JSON.parse(raw);
-          if (data && Array.isArray(data.jobListings) && data.jobListings.length > 0) {
+          if (data && ((Array.isArray(data.jobListings) && data.jobListings.length > 0) || (data.users && Object.keys(data.users).length > 0))) {
             const fileTime = data.lastUpdated ? new Date(data.lastUpdated).getTime() : 0;
             if (!bestData || fileTime > latestTime) {
               bestData = data;

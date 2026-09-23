@@ -174,7 +174,7 @@ function evaluateCandidateFit(job: typeof ENTERPRISE_JOB_TEMPLATES[0], profile: 
   const overall_score = Math.round(technical_fit * 0.45 + experience_fit * 0.3 + role_relevance * 0.25);
   const viability = overall_score >= 82 ? 'high' : overall_score >= 70 ? 'medium' : 'low';
 
-  const reasoning = `Strong ${overall_score}% ATS match for ${profile.full_name}. Verified proficiency in ${strengths.slice(0, 3).join(', ')} directly aligns with ${job.company_name}'s requirements. Experience level (${yearsExp} yrs) matches the requested [${minReq}-${maxReq} yrs] bracket.`;
+  const reasoning = `Strong ${overall_score}% ATS match for ${profile?.full_name || 'Candidate'}. Verified proficiency in ${(strengths || []).slice(0, 3).join(', ') || 'core automation tools'} directly aligns with ${job.company_name}'s requirements. Experience level (${yearsExp} yrs) matches the requested [${minReq}-${maxReq} yrs] bracket.`;
 
   return {
     overall_score,
@@ -182,8 +182,8 @@ function evaluateCandidateFit(job: typeof ENTERPRISE_JOB_TEMPLATES[0], profile: 
     experience_fit,
     role_relevance,
     viability,
-    key_strengths: strengths.length > 0 ? strengths : ['Power Platform', 'Business Analysis', 'SQL'],
-    skill_gaps: gaps.slice(0, 2),
+    key_strengths: strengths && strengths.length > 0 ? strengths : ['Power Platform', 'Business Analysis', 'SQL'],
+    skill_gaps: (gaps || []).slice(0, 2),
     reasoning,
   };
 }

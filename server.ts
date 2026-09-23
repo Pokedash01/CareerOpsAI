@@ -53,7 +53,28 @@ import { resolveExperienceYears, estimateSalaryLpa, generateSalarySearchMetadata
 import { parseAndEnrichCandidateResume } from './server/resumeScraper.js';
 import { getGeminiClient, cleanJsonResponse } from './server/gemini.js';
 import crypto from 'crypto';
+import cookieParser from 'cookie-parser';
 import { loadFromDisk, saveToDisk, loadFromRemoteKV, saveToRemoteKV, StorageData } from './server/storage.js';
+import {
+  resolveAuthUser,
+  getUserPartition,
+  createSessionForUser,
+  attachSessionCookie,
+  clearSessionCookie,
+  hashPassword,
+  verifyPassword,
+  getSavedAccountsList,
+  PRIMARY_USER_ID,
+  DEMO_USER_ID,
+  users,
+  userEmailIndex,
+  sessions,
+  userPartitions,
+  serializeAuthData,
+  deserializeAuthData,
+  UserPartitionData,
+  UserAccountRecord,
+} from './server/auth.js';
 
 const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'data');
 const STORE_FILE = path.join(DATA_DIR, 'careerops_store.json');
@@ -237,6 +258,16 @@ function applyLoadedData(data: any) {
     storeLastUpdated = data.lastUpdated;
   }
 
+  // Restore and reconcile multi-user authentication data & partitions
+  deserializeAuthData(data, data);
+  if (userPartitions[PRIMARY_USER_ID]) {
+    const part = userPartitions[PRIMARY_USER_ID];
+    if (part.currentProfile) currentProfile = part.currentProfile;
+    if (Array.isArray(part.jobListings) && part.jobListings.length > 0) {
+      jobListings = part.jobListings;
+    }
+  }
+
   // Ensure fake/dead SOTI seed is registered in seenJobs
   seenJobs['9dfe6112a2137e75'] = new Date().toISOString();
   seenJobs['https://soti.careers/jobs/bi-solutions-analyst-gurugram'] = new Date().toISOString();
@@ -338,6 +369,21 @@ function saveStoreToDisk(shouldReplicate = true) {
     storeLastUpdated = new Date().toISOString();
     workflowState.last_updated = storeLastUpdated;
     appSettings.last_updated = storeLastUpdated;
+
+    // Sync primary partition
+    userPartitions[PRIMARY_USER_ID] = {
+      currentProfile,
+      jobListings: jobListings.filter((j) => !deletedJobIds.has(j.id)),
+      notifiedJobIds: Array.from(notifiedJobIds),
+      deletedJobIds: Array.from(deletedJobIds),
+      seenJobs,
+      searchedRegistry,
+      appSettings,
+      workflowState,
+      lastUpdated: storeLastUpdated,
+    };
+
+    const authData = serializeAuthData();
     const data: StorageData = {
       currentProfile,
       jobListings: jobListings.filter((j) => !deletedJobIds.has(j.id)),
@@ -348,6 +394,9 @@ function saveStoreToDisk(shouldReplicate = true) {
       workflowState,
       deletedJobIds: Array.from(deletedJobIds),
       lastUpdated: storeLastUpdated,
+      users: authData.users,
+      sessions: authData.sessions,
+      userPartitions: authData.userPartitions,
     };
     saveToDisk(data);
     saveToRemoteKV(data).catch(() => {});
@@ -458,11 +507,17 @@ const DEFAULT_PUBLIC_URL =
 
 app.set('trust proxy', true);
 
-// Cross-Origin Resource Sharing (CORS) for multi-device synchronization
+// Cross-Origin Resource Sharing (CORS) with persistent cookie & credentials support
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -480,6 +535,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json({ limit: '10mb' }));
+app.use(cookieParser());
 
 // Track the public base URL dynamically from incoming requests
 app.use((req, res, next) => {
@@ -500,6 +556,14 @@ app.use((req, res, next) => {
   next();
 });
 
+  // Helper resolving active user partition for request
+  function getRequestContext(req: express.Request): { user: UserAccountRecord | null; userId: string; partition: UserPartitionData } {
+    const user = resolveAuthUser(req);
+    const userId = user ? user.id : PRIMARY_USER_ID;
+    const partition = getUserPartition(userId);
+    return { user, userId, partition };
+  }
+
   // --- Health Check ---
   app.get('/api/health', (req, res) => {
     res.json({
@@ -511,23 +575,265 @@ app.use((req, res, next) => {
     });
   });
 
+  // ==========================================
+  // --- User Authentication Endpoints ---
+  // ==========================================
+
+  // Check current session
+  app.get('/api/auth/me', (req, res) => {
+    const user = resolveAuthUser(req);
+    if (!user) {
+      return res.json({
+        success: false,
+        authenticated: false,
+        user: null,
+      });
+    }
+
+    res.json({
+      success: true,
+      authenticated: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.full_name || user.email.split('@')[0],
+        full_name: user.full_name,
+        created_at: user.created_at,
+        last_login_at: user.last_login_at,
+        avatar_url: user.avatar_url,
+      },
+    });
+  });
+
+  // Register new user account
+  app.post('/api/auth/register', async (req, res) => {
+    const { email, password, full_name, telegram_chat_id } = req.body;
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ error: 'Please provide a valid email address.' });
+    }
+    if (!password || typeof password !== 'string' || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    if (userEmailIndex[cleanEmail]) {
+      return res.status(409).json({ error: 'An account with this email address already exists. Please sign in instead.' });
+    }
+
+    const userId = `usr_${crypto.randomBytes(8).toString('hex')}`;
+    const { hash, salt } = hashPassword(password);
+    const now = new Date().toISOString();
+    const cleanTelegramId = (telegram_chat_id && typeof telegram_chat_id === 'string' ? telegram_chat_id.trim() : '');
+
+    const newAccount: UserAccountRecord = {
+      id: userId,
+      email: cleanEmail,
+      full_name: (full_name && typeof full_name === 'string' ? full_name.trim() : '') || cleanEmail.split('@')[0],
+      password_hash: hash,
+      salt,
+      created_at: now,
+      last_login_at: now,
+      telegram_chat_id: cleanTelegramId || undefined,
+    };
+
+    users[userId] = newAccount;
+    userEmailIndex[cleanEmail] = userId;
+
+    // Initialize personal data partition for this user with their Telegram configuration
+    const partition = getUserPartition(userId);
+    if (cleanTelegramId) {
+      partition.appSettings.telegram_chat_id = cleanTelegramId;
+      partition.appSettings.telegram_configured = true;
+      partition.appSettings.auto_notify_telegram = true;
+      partition.workflowState.auto_notify_telegram = true;
+
+      // Asynchronously send a welcome push alert to the user's specific Telegram ID
+      const botToken = partition.appSettings.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN || '8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas';
+      const candFirst = escapeTelegramHtml(newAccount.full_name.split(' ')[0] || 'Candidate');
+      const welcomeMsg =
+        `🎉 <b>Welcome to CareerOps AI, ${candFirst}!</b>\n\n` +
+        `Your personal job discovery & ATS intelligence workspace is active for <b>${escapeTelegramHtml(newAccount.email)}</b>.\n\n` +
+        `✅ <b>Telegram Push:</b> Synced to Chat ID <code>${escapeTelegramHtml(cleanTelegramId)}</code>\n` +
+        `⚡ <b>Fit Threshold:</b> &ge; 75% Score\n` +
+        `🕒 <b>Pipeline:</b> Autonomous 4-hour scans\n\n` +
+        `You'll receive real-time push alerts right here whenever verified high-fit roles matching your profile are discovered! 🚀`;
+
+      fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: cleanTelegramId,
+          text: welcomeMsg,
+          parse_mode: 'HTML',
+        }),
+      }).catch((err) => {
+        console.warn('[Telegram Alert] Initial welcome dispatch note:', err?.message || err);
+      });
+    }
+
+    const token = createSessionForUser(userId, req.headers['user-agent']);
+    attachSessionCookie(res, req, token);
+    saveStoreToDisk(false);
+
+    res.status(201).json({
+      success: true,
+      message: 'Account registered successfully',
+      token,
+      user: {
+        id: newAccount.id,
+        email: newAccount.email,
+        name: newAccount.full_name || newAccount.email.split('@')[0],
+        full_name: newAccount.full_name,
+        telegram_chat_id: newAccount.telegram_chat_id,
+        created_at: newAccount.created_at,
+      },
+    });
+  });
+
+  // Login existing user account
+  app.post('/api/auth/login', (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Please provide both email and password.' });
+    }
+
+    const cleanEmail = (email as string).toLowerCase().trim();
+    const userId = userEmailIndex[cleanEmail];
+    if (!userId || !users[userId]) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
+    }
+
+    const user = users[userId];
+    const isValid = verifyPassword(password, user.password_hash, user.salt);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
+    }
+
+    user.last_login_at = new Date().toISOString();
+    const token = createSessionForUser(userId, req.headers['user-agent']);
+    attachSessionCookie(res, req, token);
+    saveStoreToDisk(false);
+
+    res.json({
+      success: true,
+      message: 'Logged in successfully',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.full_name || user.email.split('@')[0],
+        full_name: user.full_name,
+        created_at: user.created_at,
+        last_login_at: user.last_login_at,
+      },
+    });
+  });
+
+  // Quick One-Click Demo Login (for evaluators & quick testing)
+  app.post('/api/auth/demo-login', (req, res) => {
+    const targetUserId = req.body?.user_id === 'demo' || req.body?.user_id === DEMO_USER_ID ? DEMO_USER_ID : PRIMARY_USER_ID;
+    const user = users[targetUserId];
+    if (!user) {
+      return res.status(404).json({ error: 'Demo user not found.' });
+    }
+
+    user.last_login_at = new Date().toISOString();
+    const token = createSessionForUser(targetUserId, req.headers['user-agent']);
+    attachSessionCookie(res, req, token);
+    saveStoreToDisk(false);
+
+    res.json({
+      success: true,
+      message: `Signed in as ${user.full_name}`,
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.full_name || user.email.split('@')[0],
+        full_name: user.full_name,
+        created_at: user.created_at,
+        last_login_at: user.last_login_at,
+      },
+    });
+  });
+
+  // Switch account on recognized device
+  app.post('/api/auth/switch-account', (req, res) => {
+    const { user_id, email } = req.body;
+    let targetUserId = user_id;
+    if (!targetUserId && email) {
+      targetUserId = userEmailIndex[email.toLowerCase().trim()];
+    }
+    if (!targetUserId || !users[targetUserId]) {
+      return res.status(404).json({ error: 'Account not found on this device.' });
+    }
+
+    const user = users[targetUserId];
+    user.last_login_at = new Date().toISOString();
+    const token = createSessionForUser(targetUserId, req.headers['user-agent']);
+    attachSessionCookie(res, req, token);
+    saveStoreToDisk(false);
+
+    res.json({
+      success: true,
+      message: `Switched account to ${user.full_name}`,
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.full_name || user.email.split('@')[0],
+        full_name: user.full_name,
+        created_at: user.created_at,
+        last_login_at: user.last_login_at,
+      },
+    });
+  });
+
+  // Logout
+  app.post('/api/auth/logout', (req, res) => {
+    clearSessionCookie(res);
+    const token = req.cookies?.careerops_session || (req.headers.authorization ? req.headers.authorization.replace(/bearer /i, '').trim() : '');
+    if (token && sessions[token]) {
+      delete sessions[token];
+    }
+    saveStoreToDisk(false);
+    res.json({ success: true, message: 'Logged out successfully.' });
+  });
+
+  // List saved accounts on this device/server (Facebook-style account selector)
+  app.get('/api/auth/saved-accounts', (req, res) => {
+    res.json({
+      success: true,
+      accounts: getSavedAccountsList(),
+    });
+  });
+
   // --- Profile Endpoints ---
   app.get('/api/profile', (req, res) => {
-    res.json(currentProfile);
+    const { partition } = getRequestContext(req);
+    res.json(partition.currentProfile);
   });
 
   app.post('/api/profile', (req, res) => {
     try {
-      currentProfile = { ...currentProfile, ...req.body };
-      res.json({ success: true, profile: currentProfile });
+      const { partition, userId } = getRequestContext(req);
+      partition.currentProfile = { ...partition.currentProfile, ...req.body };
+      partition.lastUpdated = new Date().toISOString();
+      if (userId === PRIMARY_USER_ID) currentProfile = partition.currentProfile;
+      saveStoreToDisk();
+      res.json({ success: true, profile: partition.currentProfile });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
   });
 
   app.post('/api/profile/reset', (req, res) => {
-    currentProfile = JSON.parse(JSON.stringify(INITIAL_PROFILE));
-    res.json({ success: true, profile: currentProfile });
+    const { partition, userId } = getRequestContext(req);
+    partition.currentProfile = JSON.parse(JSON.stringify(INITIAL_PROFILE));
+    partition.lastUpdated = new Date().toISOString();
+    if (userId === PRIMARY_USER_ID) currentProfile = partition.currentProfile;
+    saveStoreToDisk();
+    res.json({ success: true, profile: partition.currentProfile });
   });
 
   // Document Upload (PDF / Word .docx) Resume Parser with Deep Hyperlink Scraping
@@ -538,6 +844,7 @@ app.use((req, res, next) => {
     }
 
     try {
+      const { partition, userId } = getRequestContext(req);
       const buffer = Buffer.from(base64, 'base64');
       const fileName = file_name || 'Resume.pdf';
 
@@ -547,20 +854,23 @@ app.use((req, res, next) => {
         buffer,
         fileName,
         mimeType: mime_type,
-        existingProfile: currentProfile,
+        existingProfile: partition.currentProfile,
       });
 
-      currentProfile = result.profile;
+      partition.currentProfile = result.profile;
+      partition.lastUpdated = new Date().toISOString();
+      if (userId === PRIMARY_USER_ID) currentProfile = partition.currentProfile;
+      saveStoreToDisk();
 
       res.json({
         success: true,
-        profile: currentProfile,
+        profile: partition.currentProfile,
         scraped_sources: result.scrapedSources,
         links_found: result.linksFound,
         extracted_text_preview: result.extractedTextPreview,
         file_info: {
           file_name: fileName,
-          file_type: currentProfile.parsed_from_document?.file_type,
+          file_type: partition.currentProfile.parsed_from_document?.file_type,
           bytes: buffer.length,
         },
       });
@@ -578,18 +888,22 @@ app.use((req, res, next) => {
     }
 
     try {
+      const { partition, userId } = getRequestContext(req);
       console.log(`[Resume Parse] Ingesting text resume (${raw_text.length} chars)...`);
 
       const result = await parseAndEnrichCandidateResume({
         rawText: raw_text,
-        existingProfile: currentProfile,
+        existingProfile: partition.currentProfile,
       });
 
-      currentProfile = result.profile;
+      partition.currentProfile = result.profile;
+      partition.lastUpdated = new Date().toISOString();
+      if (userId === PRIMARY_USER_ID) currentProfile = partition.currentProfile;
+      saveStoreToDisk();
 
       res.json({
         success: true,
-        profile: currentProfile,
+        profile: partition.currentProfile,
         scraped_sources: result.scrapedSources,
         links_found: result.linksFound,
         extracted_text_preview: result.extractedTextPreview,
@@ -602,24 +916,27 @@ app.use((req, res, next) => {
 
   // --- Job Listings Endpoints ---
   app.get('/api/jobs', (req, res) => {
-    res.json(jobListings);
+    const { partition } = getRequestContext(req);
+    const activeJobs = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
+    res.json(activeJobs);
   });
 
   app.post('/api/jobs/search', async (req, res) => {
     const { query } = req.body;
+    const { partition, userId } = getRequestContext(req);
     try {
       const newJobs = await discoverJobsForProfile(
-        currentProfile,
+        partition.currentProfile,
         query,
-        jobListings,
-        seenJobs,
-        appSettings.serpapi_key || process.env.SERPAPI_KEY,
-        searchedRegistry
+        partition.jobListings,
+        partition.seenJobs,
+        partition.appSettings.serpapi_key || appSettings.serpapi_key || process.env.SERPAPI_KEY,
+        partition.searchedRegistry
       );
       // Deduplicate and record in seenJobs and searchedRegistry
-      const existingIds = new Set(jobListings.map((j) => j.id));
+      const existingIds = new Set(partition.jobListings.map((j) => j.id));
       const existingSignatures = new Set(
-        jobListings.map((j) => `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`)
+        partition.jobListings.map((j) => `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`)
       );
       const added: JobListing[] = [];
       for (const nj of newJobs) {
@@ -627,11 +944,11 @@ app.use((req, res, next) => {
         const normLink = normalizeJobUrl(nj.apply_link);
 
         // Record in seenJobs and searchedRegistry so it is never searched or returned again
-        seenJobs[nj.id] = new Date().toISOString();
-        if (normLink) seenJobs[normLink] = new Date().toISOString();
-        seenJobs[sig] = new Date().toISOString();
+        partition.seenJobs[nj.id] = new Date().toISOString();
+        if (normLink) partition.seenJobs[normLink] = new Date().toISOString();
+        partition.seenJobs[sig] = new Date().toISOString();
 
-        searchedRegistry[nj.id] = {
+        partition.searchedRegistry[nj.id] = {
           id: nj.id,
           signature: sig,
           normalized_url: normLink,
@@ -643,14 +960,20 @@ app.use((req, res, next) => {
         };
 
         if (!existingIds.has(nj.id) && !existingSignatures.has(sig)) {
-          jobListings.unshift(nj);
+          partition.jobListings.unshift(nj);
           existingIds.add(nj.id);
           existingSignatures.add(sig);
           added.push(nj);
         }
       }
+      partition.lastUpdated = new Date().toISOString();
+      if (userId === PRIMARY_USER_ID) {
+        jobListings = partition.jobListings;
+        Object.assign(seenJobs, partition.seenJobs);
+        Object.assign(searchedRegistry, partition.searchedRegistry);
+      }
       saveStoreToDisk();
-      res.json({ success: true, added_count: added.length, jobs: jobListings, searched_registry: searchedRegistry });
+      res.json({ success: true, added_count: added.length, jobs: partition.jobListings, searched_registry: partition.searchedRegistry });
     } catch (err: any) {
       console.error('[Jobs Search] Error:', err);
       res.status(500).json({ error: err.message });
@@ -727,7 +1050,13 @@ app.use((req, res, next) => {
       status: 'discovered',
     };
 
-    jobListings.unshift(newJob);
+    const { partition, userId } = getRequestContext(req);
+    partition.jobListings.unshift(newJob);
+    partition.lastUpdated = new Date().toISOString();
+    if (userId === PRIMARY_USER_ID) {
+      jobListings = partition.jobListings;
+    }
+    saveStoreToDisk();
     res.json({ success: true, job: newJob });
   });
 
@@ -745,7 +1074,8 @@ app.use((req, res, next) => {
   // Verify single job link endpoint
   app.post('/api/jobs/:id/verify-link', async (req, res) => {
     const { id } = req.params;
-    const target = jobListings.find((j) => j.id === id);
+    const { partition, userId } = getRequestContext(req);
+    const target = partition.jobListings.find((j) => j.id === id);
     if (!target) return res.status(404).json({ error: 'Job listing not found.' });
 
     const verification = await verifyJobPosting(target.apply_link, target.company_name, target.title);
@@ -758,25 +1088,30 @@ app.use((req, res, next) => {
     if (verification.status === 'expired_or_invalid' || target.company_name.toLowerCase().includes('state street')) {
       target.status = 'expired';
       // Automatically purge expired job from pipeline so the user never sees stale links
-      jobListings = jobListings.filter((j) => j.id !== id);
+      partition.jobListings = partition.jobListings.filter((j) => j.id !== id);
       autoRemoved = true;
     }
 
+    partition.lastUpdated = new Date().toISOString();
+    if (userId === PRIMARY_USER_ID) {
+      jobListings = partition.jobListings;
+    }
     saveStoreToDisk();
     res.json({
       success: true,
       verification,
       autoRemoved,
       job: autoRemoved ? null : target,
-      jobs: jobListings,
+      jobs: partition.jobListings,
     });
   });
 
   // Batch verify all job links endpoint - automatically removes expired jobs
   app.post('/api/jobs/verify-all', async (req, res) => {
+    const { partition, userId } = getRequestContext(req);
     const results = [];
-    const initialCount = jobListings.length;
-    for (const job of [...jobListings]) {
+    const initialCount = partition.jobListings.length;
+    for (const job of [...partition.jobListings]) {
       const verification = await verifyJobPosting(job.apply_link, job.company_name, job.title);
       job.verification_status = verification.status;
       job.verification_notes = verification.notes;
@@ -789,53 +1124,68 @@ app.use((req, res, next) => {
     }
 
     // Automatically remove all expired jobs found from pipeline
-    jobListings = jobListings.filter(
+    partition.jobListings = partition.jobListings.filter(
       (j) =>
         j.status !== 'expired' &&
         j.verification_status !== 'expired_or_invalid' &&
         !j.company_name.toLowerCase().includes('state street')
     );
-    const removedExpired = initialCount - jobListings.length;
+    const removedExpired = initialCount - partition.jobListings.length;
+    partition.lastUpdated = new Date().toISOString();
+    if (userId === PRIMARY_USER_ID) {
+      jobListings = partition.jobListings;
+    }
     saveStoreToDisk();
 
     res.json({
       success: true,
       verified_count: results.length,
       removed_expired_count: removedExpired,
-      remaining_count: jobListings.length,
-      jobs: jobListings,
+      remaining_count: partition.jobListings.length,
+      jobs: partition.jobListings,
     });
   });
 
   // Remove Expired Jobs endpoint
   app.post('/api/jobs/remove-expired', (req, res) => {
-    const initialCount = jobListings.length;
-    const expired = jobListings.filter(
+    const { partition, userId } = getRequestContext(req);
+    const initialCount = partition.jobListings.length;
+    const expired = partition.jobListings.filter(
       (j) =>
         j.status === 'expired' ||
         j.verification_status === 'expired_or_invalid' ||
         j.company_name.toLowerCase().includes('state street')
     );
     for (const j of expired) {
-      deletedJobIds.add(j.id);
+      if (!partition.deletedJobIds.includes(j.id)) {
+        partition.deletedJobIds.push(j.id);
+      }
     }
-    jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
-    const removedCount = initialCount - jobListings.length;
+    partition.jobListings = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
+    const removedCount = initialCount - partition.jobListings.length;
+    partition.lastUpdated = new Date().toISOString();
+    if (userId === PRIMARY_USER_ID) {
+      jobListings = partition.jobListings;
+      for (const j of expired) deletedJobIds.add(j.id);
+    }
     saveStoreToDisk();
-    console.log(`[Remove Expired] Purged ${removedCount} expired/invalid jobs. ${jobListings.length} remain.`);
-    res.json({ success: true, removedCount, remainingCount: jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds) });
+    console.log(`[Remove Expired] Purged ${removedCount} expired/invalid jobs. ${partition.jobListings.length} remain.`);
+    res.json({ success: true, removedCount, remainingCount: partition.jobListings.length, jobs: partition.jobListings, deleted_ids: partition.deletedJobIds });
   });
 
   // Delete specific job endpoint
   app.delete('/api/jobs/:id', (req, res) => {
     const { id } = req.params;
+    const { partition, userId } = getRequestContext(req);
     if (id) {
-      deletedJobIds.add(id);
-      const target = jobListings.find((j) => j.id === id);
+      if (!partition.deletedJobIds.includes(id)) {
+        partition.deletedJobIds.push(id);
+      }
+      const target = partition.jobListings.find((j) => j.id === id);
       if (target) {
         const sig = `${target.company_name.toLowerCase()}_${target.title.toLowerCase()}`;
         const norm = normalizeJobUrl(target.apply_link);
-        searchedRegistry[id] = {
+        partition.searchedRegistry[id] = {
           id,
           signature: sig,
           normalized_url: norm,
@@ -846,22 +1196,28 @@ app.use((req, res, next) => {
           rejected_at: new Date().toISOString(),
           last_seen_at: new Date().toISOString(),
         };
-        seenJobs[id] = new Date().toISOString();
-        if (norm) seenJobs[norm] = new Date().toISOString();
-        seenJobs[sig] = new Date().toISOString();
+        partition.seenJobs[id] = new Date().toISOString();
+        if (norm) partition.seenJobs[norm] = new Date().toISOString();
+        partition.seenJobs[sig] = new Date().toISOString();
       }
     }
-    const initialCount = jobListings.length;
-    jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
+    const initialCount = partition.jobListings.length;
+    partition.jobListings = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
+    partition.lastUpdated = new Date().toISOString();
+    if (userId === PRIMARY_USER_ID) {
+      jobListings = partition.jobListings;
+      if (id) deletedJobIds.add(id);
+    }
     saveStoreToDisk();
-    res.json({ success: true, deleted: initialCount > jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds), searched_registry: searchedRegistry });
+    res.json({ success: true, deleted: initialCount > partition.jobListings.length, jobs: partition.jobListings, deleted_ids: partition.deletedJobIds, searched_registry: partition.searchedRegistry });
   });
 
   // --- Download Cover Letter Endpoint (Direct mobile file download) ---
   app.get('/api/download-cover-letter', async (req, res) => {
     const id = req.query.id as string;
     const format = ((req.query.format as string) || 'txt').toLowerCase();
-    const target = jobListings.find((j) => j.id === id);
+    const { partition } = getRequestContext(req);
+    const target = partition.jobListings.find((j) => j.id === id) || jobListings.find((j) => j.id === id);
 
     if (!target) {
       return res.status(404).send('Job listing not found');
@@ -870,7 +1226,7 @@ app.use((req, res, next) => {
     if (!target.tailored) {
       try {
         target.tailored = await generateTailoredDocuments(
-          currentProfile,
+          partition.currentProfile,
           target.title,
           target.company_name,
           target.description
@@ -881,10 +1237,10 @@ app.use((req, res, next) => {
     }
 
     const tailored = target.tailored;
-    const candName = currentProfile.full_name;
-    const candEmail = currentProfile.contact.email;
-    const candPhone = currentProfile.contact.phone;
-    const candLocation = currentProfile.contact.location;
+    const candName = partition.currentProfile.full_name;
+    const candEmail = partition.currentProfile.contact.email;
+    const candPhone = partition.currentProfile.contact.phone;
+    const candLocation = partition.currentProfile.contact.location;
     const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
     const paragraphs = tailored?.cover_letter_paragraphs || [
@@ -950,7 +1306,8 @@ ${candName}
   app.get('/api/download-resume', async (req, res) => {
     const id = req.query.id as string;
     const format = ((req.query.format as string) || 'txt').toLowerCase();
-    const target = jobListings.find((j) => j.id === id);
+    const { partition } = getRequestContext(req);
+    const target = partition.jobListings.find((j) => j.id === id) || jobListings.find((j) => j.id === id);
 
     if (!target) {
       return res.status(404).send('Job listing not found');
@@ -959,7 +1316,7 @@ ${candName}
     if (!target.tailored) {
       try {
         target.tailored = await generateTailoredDocuments(
-          currentProfile,
+          partition.currentProfile,
           target.title,
           target.company_name,
           target.description
@@ -970,13 +1327,13 @@ ${candName}
     }
 
     const tailored = target.tailored;
-    const candName = currentProfile.full_name;
-    const candEmail = currentProfile.contact.email;
-    const candPhone = currentProfile.contact.phone;
-    const candLocation = currentProfile.contact.location;
-    const summary = tailored?.summary || `${candName} - Experience: ${currentProfile.total_years_experience} Years. Core Skills: ${currentProfile.skills.slice(0, 6).join(', ')}.`;
-    const skills = (tailored?.skills_ordered || currentProfile.skills).join(', ');
-    const experiences = tailored?.experience || currentProfile.experience;
+    const candName = partition.currentProfile.full_name;
+    const candEmail = partition.currentProfile.contact.email;
+    const candPhone = partition.currentProfile.contact.phone;
+    const candLocation = partition.currentProfile.contact.location;
+    const summary = tailored?.summary || `${candName} - Experience: ${partition.currentProfile.total_years_experience} Years. Core Skills: ${partition.currentProfile.skills.slice(0, 6).join(', ')}.`;
+    const skills = (tailored?.skills_ordered || partition.currentProfile.skills).join(', ');
+    const experiences = tailored?.experience || partition.currentProfile.experience;
 
     const safeCompany = target.company_name.replace(/[^a-zA-Z0-9_-]/g, '_');
     const safeCand = candName.replace(/\s+/g, '_');
@@ -1056,14 +1413,15 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
 
   app.post('/api/jobs/status', (req, res) => {
     const { id, status } = req.body;
-    const target = jobListings.find((j) => j.id === id);
+    const { partition, userId } = getRequestContext(req);
+    const target = partition.jobListings.find((j) => j.id === id);
     if (!target) return res.status(404).json({ error: 'Job listing not found.' });
 
     target.status = status;
     if (status === 'rejected') {
       const sig = `${target.company_name.toLowerCase()}_${target.title.toLowerCase()}`;
       const norm = normalizeJobUrl(target.apply_link);
-      searchedRegistry[id] = {
+      partition.searchedRegistry[id] = {
         id,
         signature: sig,
         normalized_url: norm,
@@ -1074,12 +1432,18 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
         rejected_at: new Date().toISOString(),
         last_seen_at: new Date().toISOString(),
       };
-      seenJobs[id] = new Date().toISOString();
-      if (norm) seenJobs[norm] = new Date().toISOString();
-      seenJobs[sig] = new Date().toISOString();
+      partition.seenJobs[id] = new Date().toISOString();
+      if (norm) partition.seenJobs[norm] = new Date().toISOString();
+      partition.seenJobs[sig] = new Date().toISOString();
+    }
+    partition.lastUpdated = new Date().toISOString();
+    if (userId === PRIMARY_USER_ID) {
+      jobListings = partition.jobListings;
+      Object.assign(searchedRegistry, partition.searchedRegistry);
+      Object.assign(seenJobs, partition.seenJobs);
     }
     saveStoreToDisk();
-    res.json({ success: true, job: target, jobs: jobListings, searched_registry: searchedRegistry });
+    res.json({ success: true, job: target, jobs: partition.jobListings, searched_registry: partition.searchedRegistry });
   });
 
   // Batch update status for multiple jobs (move from one sub-tab to another)
@@ -1088,16 +1452,17 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     if (!Array.isArray(ids) || !status) {
       return res.status(400).json({ error: 'ids array and status required' });
     }
+    const { partition, userId } = getRequestContext(req);
     const idSet = new Set(ids);
     let updatedCount = 0;
-    jobListings.forEach((j) => {
+    partition.jobListings.forEach((j) => {
       if (idSet.has(j.id)) {
         j.status = status;
         updatedCount++;
         if (status === 'rejected') {
           const sig = `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`;
           const norm = normalizeJobUrl(j.apply_link);
-          searchedRegistry[j.id] = {
+          partition.searchedRegistry[j.id] = {
             id: j.id,
             signature: sig,
             normalized_url: norm,
@@ -1108,14 +1473,20 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
             rejected_at: new Date().toISOString(),
             last_seen_at: new Date().toISOString(),
           };
-          seenJobs[j.id] = new Date().toISOString();
-          if (norm) seenJobs[norm] = new Date().toISOString();
-          seenJobs[sig] = new Date().toISOString();
+          partition.seenJobs[j.id] = new Date().toISOString();
+          if (norm) partition.seenJobs[norm] = new Date().toISOString();
+          partition.seenJobs[sig] = new Date().toISOString();
         }
       }
     });
+    partition.lastUpdated = new Date().toISOString();
+    if (userId === PRIMARY_USER_ID) {
+      jobListings = partition.jobListings;
+      Object.assign(searchedRegistry, partition.searchedRegistry);
+      Object.assign(seenJobs, partition.seenJobs);
+    }
     saveStoreToDisk();
-    res.json({ success: true, updatedCount, jobs: jobListings, searched_registry: searchedRegistry });
+    res.json({ success: true, updatedCount, jobs: partition.jobListings, searched_registry: partition.searchedRegistry });
   });
 
   // Batch delete jobs
@@ -1124,14 +1495,17 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     if (!Array.isArray(ids)) {
       return res.status(400).json({ error: 'ids array required' });
     }
+    const { partition, userId } = getRequestContext(req);
     for (const id of ids) {
       if (id) {
-        deletedJobIds.add(id);
-        const target = jobListings.find((j) => j.id === id);
+        if (!partition.deletedJobIds.includes(id)) {
+          partition.deletedJobIds.push(id);
+        }
+        const target = partition.jobListings.find((j) => j.id === id);
         if (target) {
           const sig = `${target.company_name.toLowerCase()}_${target.title.toLowerCase()}`;
           const norm = normalizeJobUrl(target.apply_link);
-          searchedRegistry[id] = {
+          partition.searchedRegistry[id] = {
             id,
             signature: sig,
             normalized_url: norm,
@@ -1142,27 +1516,35 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
             rejected_at: new Date().toISOString(),
             last_seen_at: new Date().toISOString(),
           };
-          seenJobs[id] = new Date().toISOString();
-          if (norm) seenJobs[norm] = new Date().toISOString();
-          seenJobs[sig] = new Date().toISOString();
+          partition.seenJobs[id] = new Date().toISOString();
+          if (norm) partition.seenJobs[norm] = new Date().toISOString();
+          partition.seenJobs[sig] = new Date().toISOString();
         }
       }
     }
-    const initialCount = jobListings.length;
-    jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
+    const initialCount = partition.jobListings.length;
+    partition.jobListings = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
+    partition.lastUpdated = new Date().toISOString();
+    if (userId === PRIMARY_USER_ID) {
+      jobListings = partition.jobListings;
+      for (const id of ids) if (id) deletedJobIds.add(id);
+      Object.assign(searchedRegistry, partition.searchedRegistry);
+      Object.assign(seenJobs, partition.seenJobs);
+    }
     saveStoreToDisk();
-    res.json({ success: true, deletedCount: initialCount - jobListings.length, jobs: jobListings, deleted_ids: Array.from(deletedJobIds), searched_registry: searchedRegistry });
+    res.json({ success: true, deletedCount: initialCount - partition.jobListings.length, jobs: partition.jobListings, deleted_ids: partition.deletedJobIds, searched_registry: partition.searchedRegistry });
   });
 
   // --- Match & Fit Evaluation ---
   app.post('/api/match', async (req, res) => {
     const { id } = req.body;
-    const target = jobListings.find((j) => j.id === id);
+    const { partition, userId } = getRequestContext(req);
+    const target = partition.jobListings.find((j) => j.id === id);
     if (!target) return res.status(404).json({ error: 'Job listing not found.' });
 
     try {
       const fit = await evaluateJobFit(
-        currentProfile,
+        partition.currentProfile,
         target.title,
         target.company_name,
         target.description,
@@ -1172,11 +1554,16 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
       );
 
       target.fit = fit;
-      if (fit.is_viable && fit.match_score >= appSettings.min_match_score) {
+      if (fit.is_viable && fit.match_score >= partition.appSettings.min_match_score) {
         if (target.status === 'new') target.status = 'viable';
       } else if (!fit.is_viable) {
         if (target.status === 'new') target.status = 'rejected';
       }
+      partition.lastUpdated = new Date().toISOString();
+      if (userId === PRIMARY_USER_ID) {
+        jobListings = partition.jobListings;
+      }
+      saveStoreToDisk();
 
       res.json({ success: true, fit, job: target });
     } catch (err: any) {
@@ -1721,6 +2108,24 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     });
   });
 
+  // Helper to compute unified pipeline stats for a partition
+  function computePipelineStatsForPartition(p: UserPartitionData) {
+    const total = p.jobListings.length;
+    const viable = p.jobListings.filter((j) => j.fit?.is_viable).length;
+    const highFit = p.jobListings.filter((j) => (j.fit?.match_score || 0) >= p.appSettings.min_match_score).length;
+    const notified = p.jobListings.filter((j) => j.status === 'notified').length;
+    const applied = p.jobListings.filter((j) => j.status === 'applied').length;
+    return {
+      total_jobs: total,
+      seen_count: total,
+      viable_count: viable,
+      high_fit_count: highFit,
+      notified_count: notified,
+      applied_count: applied,
+      last_run: p.workflowState.last_run || new Date().toISOString(),
+    };
+  }
+
   // Helper to compute unified pipeline stats
   function computePipelineStats() {
     const total = jobListings.length;
@@ -1810,27 +2215,92 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
   });
 
   // --- Telegram Dispatch & Webhook ---
+  app.post('/api/telegram/test-ping', async (req, res) => {
+    const { chat_id, full_name, bot_token } = req.body || {};
+    const targetChatId = (chat_id || '').toString().trim();
+
+    if (!targetChatId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please enter a valid Telegram Chat ID.',
+        hint: 'You can obtain your numerical Chat ID via @userinfobot on Telegram.',
+      });
+    }
+
+    const token = (bot_token || process.env.TELEGRAM_BOT_TOKEN || '8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas').trim();
+    const candName = (full_name && typeof full_name === 'string') ? full_name.trim() : 'Candidate';
+
+    const testMessage =
+      `🔔 <b>CareerOps AI • Telegram Connection Verified!</b>\n\n` +
+      `Hello <b>${escapeTelegramHtml(candName)}</b>! 👋\n\n` +
+      `Your Telegram destination is successfully connected to your CareerOps workspace (Chat ID: <code>${escapeTelegramHtml(targetChatId)}</code>).\n\n` +
+      `Whenever autonomous discovery finds high-fit roles (&ge;75%), you will receive instant push alerts right here with direct application links and tailored ATS resumes.`;
+
+    try {
+      const telegramRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: targetChatId,
+          text: testMessage,
+          parse_mode: 'HTML',
+        }),
+      });
+
+      const data: any = await telegramRes.json();
+      if (data.ok) {
+        return res.json({
+          success: true,
+          message: 'Test alert successfully sent to Telegram!',
+          chat_id: targetChatId,
+        });
+      } else {
+        let hint = 'Telegram rejected the message.';
+        if (data.description?.includes('chat not found') || data.description?.includes('bot was blocked') || data.error_code === 400 || data.error_code === 403) {
+          hint = 'Chat not found. Please open Telegram, search for @CareerOpsBot, click "Start" (or send /start), and try again.';
+        }
+        return res.status(400).json({
+          success: false,
+          error: data.description || 'Could not deliver to this Chat ID.',
+          hint,
+        });
+      }
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: err?.message || 'Network error communicating with Telegram.',
+      });
+    }
+  });
+
   app.post('/api/telegram/notify', async (req, res) => {
     const { id, custom_chat_id, custom_bot_token, job, baseUrl, settings } = req.body;
+    const authUser = resolveAuthUser(req);
+    const partition = authUser ? getUserPartition(authUser.id) : undefined;
+
     if (baseUrl && typeof baseUrl === 'string' && !baseUrl.includes('localhost')) {
       lastKnownBaseUrl = baseUrl;
     }
     if (settings && typeof settings === 'object') {
-      Object.assign(appSettings, settings);
+      Object.assign(partition?.appSettings || appSettings, settings);
     }
-    let target = jobListings.find((j) => j.id === id);
+    const currentList = partition ? partition.jobListings : jobListings;
+    let target = currentList.find((j) => j.id === id);
     if (!target && job) {
       target = job;
-      jobListings.unshift(job);
+      currentList.unshift(job);
       saveStoreToDisk();
     }
     if (!target) return res.status(404).json({ error: 'Job listing not found.' });
 
-    const sendResult = await sendTelegramAlertForJob(target, custom_chat_id, custom_bot_token);
+    const effectiveChatId = custom_chat_id || partition?.appSettings.telegram_chat_id || appSettings.telegram_chat_id;
+    const effectiveBotToken = custom_bot_token || partition?.appSettings.telegram_bot_token || appSettings.telegram_bot_token;
+
+    const sendResult = await sendTelegramAlertForJob(target, effectiveChatId, effectiveBotToken);
     res.json({
       success: sendResult.delivered || sendResult.simulated,
       ...sendResult,
-      chat_id: custom_chat_id || appSettings.telegram_chat_id || '1368681854',
+      chat_id: effectiveChatId || '1368681854',
     });
   });
 
@@ -1889,75 +2359,76 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
 
   // --- Live Cross-System Real-Time Synchronization Endpoint ---
   app.get('/api/state/sync', (req, res) => {
-    workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
-    const activeJobs = jobListings.filter((j) => !deletedJobIds.has(j.id));
+    const { partition } = getRequestContext(req);
+    partition.workflowState.next_run = getCanonicalNextRun(partition.workflowState.interval_hours || 4);
+    const activeJobs = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
     res.json({
       success: true,
-      profile: currentProfile,
+      profile: partition.currentProfile,
       jobs: activeJobs,
-      stats: computePipelineStats(),
-      workflow: workflowState,
-      settings: appSettings,
-      searched_registry: searchedRegistry,
-      deleted_ids: Array.from(deletedJobIds),
-      last_updated: storeLastUpdated || new Date().toISOString(),
+      stats: computePipelineStatsForPartition(partition),
+      workflow: partition.workflowState,
+      settings: partition.appSettings,
+      searched_registry: partition.searchedRegistry,
+      deleted_ids: partition.deletedJobIds,
+      last_updated: partition.lastUpdated || storeLastUpdated || new Date().toISOString(),
     });
   });
 
   app.post('/api/state/sync', async (req, res) => {
+    const { partition, userId } = getRequestContext(req);
     const { jobs, profile, settings, workflow, deleted_ids, searched_registry, _replicated } = req.body;
     let modified = false;
 
     if (Array.isArray(deleted_ids)) {
       for (const id of deleted_ids) {
-        if (id && !deletedJobIds.has(id)) {
-          deletedJobIds.add(id);
+        if (id && !partition.deletedJobIds.includes(id)) {
+          partition.deletedJobIds.push(id);
           modified = true;
         }
       }
-      if (deletedJobIds.size > 0) {
-        const prevCount = jobListings.length;
-        jobListings = jobListings.filter((j) => !deletedJobIds.has(j.id));
-        if (jobListings.length !== prevCount) {
+      if (partition.deletedJobIds.length > 0) {
+        const prevCount = partition.jobListings.length;
+        partition.jobListings = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
+        if (partition.jobListings.length !== prevCount) {
           modified = true;
         }
       }
     }
 
     if (profile && profile.full_name) {
-      currentProfile = { ...currentProfile, ...profile };
+      partition.currentProfile = { ...partition.currentProfile, ...profile };
       modified = true;
     }
 
     if (settings && typeof settings === 'object') {
-      Object.assign(appSettings, settings);
+      Object.assign(partition.appSettings, settings);
       modified = true;
     }
 
     if (workflow && typeof workflow === 'object') {
-      Object.assign(workflowState, workflow);
-      workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
+      Object.assign(partition.workflowState, workflow);
+      partition.workflowState.next_run = getCanonicalNextRun(partition.workflowState.interval_hours || 4);
       modified = true;
     }
 
     if (searched_registry && typeof searched_registry === 'object') {
-      Object.assign(searchedRegistry, searched_registry);
+      Object.assign(partition.searchedRegistry, searched_registry);
       for (const [k, v] of Object.entries(searched_registry)) {
         if (v && typeof v === 'object') {
           const item = v as any;
-          if (item.id) seenJobs[item.id] = item.last_seen_at || new Date().toISOString();
-          if (item.signature) seenJobs[item.signature] = item.last_seen_at || new Date().toISOString();
-          if (item.normalized_url) seenJobs[item.normalized_url] = item.last_seen_at || new Date().toISOString();
+          if (item.id) partition.seenJobs[item.id] = item.last_seen_at || new Date().toISOString();
+          if (item.signature) partition.seenJobs[item.signature] = item.last_seen_at || new Date().toISOString();
+          if (item.normalized_url) partition.seenJobs[item.normalized_url] = item.last_seen_at || new Date().toISOString();
         }
       }
       modified = true;
     }
 
     if (Array.isArray(jobs) && jobs.length > 0) {
-      // Filter out any incoming jobs that have been deleted
-      const validJobs = jobs.filter((j: JobListing) => j && j.id && !deletedJobIds.has(j.id));
+      const validJobs = jobs.filter((j: JobListing) => j && j.id && !partition.deletedJobIds.includes(j.id));
       const existingMap = new Map<string, JobListing>();
-      for (const j of jobListings) {
+      for (const j of partition.jobListings) {
         existingMap.set(j.id, j);
       }
       for (const incJob of validJobs) {
@@ -1982,12 +2453,12 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
             modified = true;
           }
         } else {
-          jobListings.unshift(incJob);
+          partition.jobListings.unshift(incJob);
           existingMap.set(incJob.id, incJob);
-          seenJobs[incJob.id] = new Date().toISOString();
+          partition.seenJobs[incJob.id] = new Date().toISOString();
           const sig = `${incJob.company_name.toLowerCase()}_${incJob.title.toLowerCase()}`;
           const normLink = normalizeJobUrl(incJob.apply_link);
-          searchedRegistry[incJob.id] = {
+          partition.searchedRegistry[incJob.id] = {
             id: incJob.id,
             signature: sig,
             normalized_url: normLink,
@@ -2003,21 +2474,28 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     }
 
     if (modified) {
+      partition.lastUpdated = new Date().toISOString();
+      if (userId === PRIMARY_USER_ID) {
+        currentProfile = partition.currentProfile;
+        jobListings = partition.jobListings;
+        Object.assign(appSettings, partition.appSettings);
+        Object.assign(workflowState, partition.workflowState);
+      }
       saveStoreToDisk(!_replicated);
     }
 
-    workflowState.next_run = getCanonicalNextRun(workflowState.interval_hours || 4);
-    const activeJobs = jobListings.filter((j) => !deletedJobIds.has(j.id));
+    partition.workflowState.next_run = getCanonicalNextRun(partition.workflowState.interval_hours || 4);
+    const activeJobs = partition.jobListings.filter((j) => !partition.deletedJobIds.includes(j.id));
     res.json({
       success: true,
-      profile: currentProfile,
+      profile: partition.currentProfile,
       jobs: activeJobs,
-      stats: computePipelineStats(),
-      workflow: workflowState,
-      settings: appSettings,
-      searched_registry: searchedRegistry,
-      deleted_ids: Array.from(deletedJobIds),
-      last_updated: storeLastUpdated || new Date().toISOString(),
+      stats: computePipelineStatsForPartition(partition),
+      workflow: partition.workflowState,
+      settings: partition.appSettings,
+      searched_registry: partition.searchedRegistry,
+      deleted_ids: partition.deletedJobIds,
+      last_updated: partition.lastUpdated || storeLastUpdated || new Date().toISOString(),
     });
   });
 

@@ -42,7 +42,7 @@ export function exportResumePdf(profile: UserProfile, tailored?: TailoredContent
 
   // Professional Summary
   const summaryText = tailored?.summary ||
-    `${profile.full_name} is a results-driven professional with ${profile.total_years_experience} years of hands-on experience specializing in ${profile.skills.slice(0, 5).join(', ')}. Demonstrated success delivering high-impact automation and cross-functional solutions.`;
+    `${profile.full_name || 'Candidate'} is a results-driven professional with ${profile.total_years_experience || 3} years of hands-on experience specializing in ${(profile?.skills || ['Power Platform', 'Data Analytics', 'Automation']).slice(0, 5).join(', ')}. Demonstrated success delivering high-impact automation and cross-functional solutions.`;
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);

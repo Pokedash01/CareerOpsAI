@@ -210,3 +210,30 @@ export interface SearchedRegistryStats {
   retention_days: number;
   last_truncated_at?: string;
 }
+
+export interface UserAccount {
+  id: string;
+  email: string;
+  name: string;
+  full_name?: string;
+  headline?: string;
+  created_at: string;
+  last_login_at?: string;
+  avatar_url?: string;
+}
+
+export interface AuthSessionResponse {
+  success: boolean;
+  user: UserAccount | null;
+  token?: string;
+  message?: string;
+}
+
+export interface SavedDeviceAccount {
+  id: string;
+  email: string;
+  name: string;
+  full_name?: string;
+  last_active_at: string;
+}
+

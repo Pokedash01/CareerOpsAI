@@ -7,7 +7,9 @@ import { ProfileView } from './components/ProfileView.js';
 import { AutomationView } from './components/AutomationView.js';
 import { AddJobModal } from './components/AddJobModal.js';
 import { MobileBottomNav } from './components/MobileBottomNav.js';
-import { UserProfile, JobListing, PipelineStats, AppSettings, WorkflowState, JobStatus } from './types.js';
+import { AuthModal } from './components/AuthModal.js';
+import { HomeLandingView } from './components/HomeLandingView.js';
+import { UserProfile, JobListing, PipelineStats, AppSettings, WorkflowState, JobStatus, UserAccount, SavedDeviceAccount } from './types.js';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { INITIAL_PROFILE, INITIAL_JOBS, INITIAL_SETTINGS, INITIAL_WORKFLOW, INITIAL_STATS } from './seedData.js';
@@ -37,6 +39,12 @@ async function safeFetchJson<T>(url: string, init?: RequestInit, timeoutMs = 200
     }
   }
 
+  const token = typeof window !== 'undefined' ? localStorage.getItem('careerops_auth_token') : null;
+  const authHeaders: Record<string, string> = {};
+  if (token) {
+    authHeaders['Authorization'] = `Bearer ${token}`;
+  }
+
   for (const candidate of candidateUrls) {
     try {
       const controller = new AbortController();
@@ -47,6 +55,7 @@ async function safeFetchJson<T>(url: string, init?: RequestInit, timeoutMs = 200
         credentials: isCross ? 'omit' : 'include',
         headers: {
           Accept: 'application/json',
+          ...authHeaders,
           ...(init?.headers || {}),
         },
         signal: controller.signal,
@@ -125,6 +134,12 @@ export async function syncStateToCloud(snapshot: {
     endpoints.push(`${LIVE_PREVIEW_ORIGIN}/api/state/sync`);
   }
 
+  const token = typeof window !== 'undefined' ? localStorage.getItem('careerops_auth_token') : null;
+  const authHeaders: Record<string, string> = {};
+  if (token) {
+    authHeaders['Authorization'] = `Bearer ${token}`;
+  }
+
   const payload = JSON.stringify({
     ...snapshot,
     searched_registry: snapshot.searched_registry || getSearchedRegistry(),
@@ -135,7 +150,8 @@ export async function syncStateToCloud(snapshot: {
     endpoints.map((endpoint) =>
       fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...authHeaders },
         body: payload,
         keepalive: true,
       }).catch(() => {})
@@ -271,6 +287,217 @@ export function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const normalizeUserRecord = (u: any): UserAccount => {
+    if (!u) {
+      return {
+        id: 'usr_guest',
+        email: 'user@careerops.ai',
+        name: 'User',
+        full_name: 'User',
+        created_at: new Date().toISOString(),
+      };
+    }
+    const derivedName = (u.name || u.full_name || u.email?.split('@')[0] || 'User').trim();
+    return {
+      id: u.id || 'usr_guest',
+      email: u.email || 'user@careerops.ai',
+      name: derivedName,
+      full_name: (u.full_name || derivedName).trim(),
+      headline: u.headline || '',
+      created_at: u.created_at || new Date().toISOString(),
+      last_login_at: u.last_login_at,
+      avatar_url: u.avatar_url,
+    };
+  };
+
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
+    try {
+      const cached = localStorage.getItem('careerops_user');
+      if (cached) return normalizeUserRecord(JSON.parse(cached));
+    } catch {}
+    return null;
+  });
+
+  const [savedAccounts, setSavedAccounts] = useState<SavedDeviceAccount[]>(() => {
+    try {
+      const cached = localStorage.getItem('careerops_device_users');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          return parsed.map((a: any) => ({
+            id: a.id,
+            email: a.email,
+            name: a.name || a.full_name || a.email?.split('@')[0] || 'User',
+            full_name: a.full_name || a.name || 'User',
+            last_active_at: a.last_active_at || new Date().toISOString(),
+          }));
+        }
+      }
+    } catch {}
+    return [
+      {
+        id: 'user_kartik_primary',
+        email: 'kb270102@gmail.com',
+        name: 'Kartik Bhatt',
+        full_name: 'Kartik Bhatt',
+        last_active_at: new Date().toISOString(),
+      },
+    ];
+  });
+
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalInitialTab, setAuthModalInitialTab] = useState<'login' | 'register' | 'saved'>('login');
+
+  const updateSavedAccount = (user: UserAccount) => {
+    const norm = normalizeUserRecord(user);
+    setSavedAccounts((prev) => {
+      const filtered = prev.filter((a) => a.id !== norm.id && a.email.toLowerCase() !== norm.email.toLowerCase());
+      const updated = [
+        {
+          id: norm.id,
+          email: norm.email,
+          name: norm.name,
+          full_name: norm.full_name,
+          last_active_at: new Date().toISOString(),
+        },
+        ...filtered,
+      ];
+      try {
+        localStorage.setItem('careerops_device_users', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const checkAuthSession = async () => {
+    try {
+      const data = await safeFetchJson<any>('/api/auth/me');
+      if (data && data.authenticated && data.user) {
+        const norm = normalizeUserRecord(data.user);
+        setCurrentUser(norm);
+        try { localStorage.setItem('careerops_user', JSON.stringify(norm)); } catch {}
+        updateSavedAccount(norm);
+        return norm;
+      }
+    } catch (err) {
+      console.warn('[Auth] Check session note:', err);
+    }
+    return null;
+  };
+
+  const handleLogin = async (email: string, pass: string, remember = true) => {
+    try {
+      const res = await safeFetchJson<any>('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass, remember_device: remember }),
+      });
+      if (res && res.success && res.user) {
+        const norm = normalizeUserRecord(res.user);
+        setCurrentUser(norm);
+        if (res.session_token) {
+          try { localStorage.setItem('careerops_auth_token', res.session_token); } catch {}
+        }
+        try { localStorage.setItem('careerops_user', JSON.stringify(norm)); } catch {}
+        updateSavedAccount(norm);
+        showToast(`Welcome back, ${norm.name}! Your workspace partition is active.`, 'success');
+        await loadUserData();
+        return { success: true };
+      }
+      return { success: false, error: res?.error || 'Invalid credentials' };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Login error' };
+    }
+  };
+
+  const handleRegister = async (email: string, pass: string, fullName: string, headline?: string, telegramChatId?: string) => {
+    try {
+      const res = await safeFetchJson<any>('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass, full_name: fullName, headline, telegram_chat_id: telegramChatId }),
+      });
+      if (res && res.success && res.user) {
+        const norm = normalizeUserRecord(res.user);
+        setCurrentUser(norm);
+        if (res.session_token) {
+          try { localStorage.setItem('careerops_auth_token', res.session_token); } catch {}
+        }
+        try { localStorage.setItem('careerops_user', JSON.stringify(norm)); } catch {}
+        updateSavedAccount(norm);
+        showToast(`Workspace initialized for ${norm.name}.`, 'success');
+        await loadUserData();
+        return { success: true };
+      }
+      return { success: false, error: res?.error || 'Registration failed' };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Registration error' };
+    }
+  };
+
+  const handleDemoLogin = async (targetEmail = 'kb270102@gmail.com') => {
+    try {
+      const res = await safeFetchJson<any>('/api/auth/demo-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: targetEmail }),
+      });
+      if (res && res.success && res.user) {
+        const norm = normalizeUserRecord(res.user);
+        setCurrentUser(norm);
+        if (res.session_token) {
+          try { localStorage.setItem('careerops_auth_token', res.session_token); } catch {}
+        }
+        try { localStorage.setItem('careerops_user', JSON.stringify(norm)); } catch {}
+        updateSavedAccount(norm);
+        showToast(`Signed into verified workspace for ${norm.name}.`, 'success');
+        await loadUserData();
+        return { success: true };
+      }
+      return { success: false, error: res?.error || 'Demo login failed' };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  const handleQuickSwitch = async (accountId: string) => {
+    try {
+      const res = await safeFetchJson<any>('/api/auth/switch-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: accountId }),
+      });
+      if (res && res.success && res.user) {
+        const norm = normalizeUserRecord(res.user);
+        setCurrentUser(norm);
+        if (res.session_token) {
+          try { localStorage.setItem('careerops_auth_token', res.session_token); } catch {}
+        }
+        try { localStorage.setItem('careerops_user', JSON.stringify(norm)); } catch {}
+        updateSavedAccount(norm);
+        showToast(`Switched account to ${norm.name}.`, 'success');
+        await loadUserData();
+        return { success: true };
+      }
+      return { success: false, error: res?.error || 'Account switch failed' };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await safeFetchJson('/api/auth/logout', { method: 'POST' });
+    } catch {}
+    try {
+      localStorage.removeItem('careerops_auth_token');
+      localStorage.removeItem('careerops_user');
+    } catch {}
+    setCurrentUser(null);
+    setIsAuthModalOpen(false);
+    showToast('Signed out of workspace.', 'success');
+  };
+
   // BroadcastChannel for instant zero-latency multi-tab synchronization on same device
   useEffect(() => {
     if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return;
@@ -291,12 +518,12 @@ export function App() {
     return () => channel.close();
   }, []);
 
-  // Initial load: sync with backend if available, otherwise stay gracefully active
-  useEffect(() => {
-    async function loadData() {
-      try {
-        // Attempt atomic single-request synchronization first
-        const syncRes = await safeFetchJson<any>('/api/state/sync', undefined, 12000);
+  // User data loader partitioned per authenticated user
+  const loadUserData = async () => {
+    try {
+      await checkAuthSession();
+      // Attempt atomic single-request synchronization first
+      const syncRes = await safeFetchJson<any>('/api/state/sync', undefined, 12000);
 
         if (syncRes && Array.isArray(syncRes.jobs)) {
           if (Array.isArray(syncRes.deleted_ids)) {
@@ -436,9 +663,11 @@ export function App() {
         console.warn('Running in client offline mode:', err);
         setIsBackendConnected(false);
       }
-    }
-    loadData();
-  }, []);
+    };
+
+    useEffect(() => {
+      loadUserData();
+    }, []);
 
   // Simultaneous Real-Time Dashboard Updates & Polling Across Multiple Devices/Systems
   useEffect(() => {
@@ -1024,7 +1253,7 @@ export function App() {
           localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs));
         } catch {}
       }
-      const statusTitle = status.charAt(0).toUpperCase() + status.slice(1);
+      const statusTitle = status ? (status.charAt(0).toUpperCase() + status.slice(1)) : 'Updated';
       showToast(`Moved ${jobIds.length} ${jobIds.length === 1 ? 'job' : 'jobs'} to "${statusTitle}"`);
     } catch (err: any) {
       showToast(err.message || 'Error updating status for selected jobs', 'error');
@@ -1393,149 +1622,186 @@ export function App() {
         onRunPipeline={handleRunPipeline}
         isPipelineRunning={isPipelineRunning}
         candidateName={profile.full_name}
+        currentUser={currentUser}
+        onOpenAuth={(tab = 'login') => {
+          setAuthModalInitialTab(tab);
+          setIsAuthModalOpen(true);
+        }}
+        onLogout={handleLogout}
+        onExploreDemo={() => handleDemoLogin('demo@careerops.ai')}
       />
 
       {/* Main Content Area */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-28 md:pb-10">
-        <AnimatePresence mode="wait">
-          {activeTab === 'dashboard' && (
-            <motion.div
-              key="dashboard"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <DashboardView
-                profile={profile}
-                jobs={jobs}
-                stats={computedStats}
-                workflow={workflow}
-                onTriggerWorkflow={handleTriggerWorkflow}
-                isWorkflowRunning={isWorkflowRunning}
-                onSelectJobForTailor={handleSelectJobForTailor}
-                onRunPipeline={handleRunPipeline}
-                isPipelineRunning={isPipelineRunning}
-                onOpenAddJob={() => setIsAddJobOpen(true)}
-                onDiscoverJobs={handleDiscoverJobs}
-                isDiscovering={isDiscovering}
-                onNotifyTelegram={handleNotifyTelegram}
-                setActiveTab={setActiveTab}
-              />
-            </motion.div>
-          )}
+        {!currentUser ? (
+          <HomeLandingView
+            onOpenRegister={() => {
+              setAuthModalInitialTab('register');
+              setIsAuthModalOpen(true);
+            }}
+            onOpenLogin={() => {
+              setAuthModalInitialTab('login');
+              setIsAuthModalOpen(true);
+            }}
+            onExploreDemo={() => handleDemoLogin('demo@careerops.ai')}
+          />
+        ) : (
+          <AnimatePresence mode="wait">
+            {activeTab === 'dashboard' && (
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <DashboardView
+                  profile={profile}
+                  jobs={jobs}
+                  stats={computedStats}
+                  workflow={workflow}
+                  onTriggerWorkflow={handleTriggerWorkflow}
+                  isWorkflowRunning={isWorkflowRunning}
+                  onSelectJobForTailor={handleSelectJobForTailor}
+                  onRunPipeline={handleRunPipeline}
+                  isPipelineRunning={isPipelineRunning}
+                  onOpenAddJob={() => setIsAddJobOpen(true)}
+                  onDiscoverJobs={handleDiscoverJobs}
+                  isDiscovering={isDiscovering}
+                  onNotifyTelegram={handleNotifyTelegram}
+                  setActiveTab={setActiveTab}
+                />
+              </motion.div>
+            )}
 
-          {activeTab === 'jobs' && (
-            <motion.div
-              key="jobs"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <JobFeedView
-                jobs={jobs}
-                profile={profile}
-                onEvaluateFit={handleEvaluateFit}
-                onSelectForTailoring={handleSelectJobForTailor}
-                onNotifyTelegram={handleNotifyTelegram}
-                onUpdateStatus={handleUpdateStatus}
-                onOpenAddJob={() => setIsAddJobOpen(true)}
-                onDiscoverJobs={handleDiscoverJobs}
-                isDiscovering={isDiscovering}
-                isEvaluatingId={isEvaluatingId}
-                onVerifyJobLink={handleVerifyJobLink}
-                onBatchVerifyLinks={handleBatchVerifyLinks}
-                onRemoveExpiredJobs={handleRemoveExpiredJobs}
-                onDeleteJob={handleDeleteJob}
-                onBatchUpdateStatus={handleBatchUpdateStatus}
-                onBatchDeleteJobs={handleBatchDeleteJobs}
-                onBatchNotifyTelegram={handleBatchNotifyTelegram}
-              />
-            </motion.div>
-          )}
+            {activeTab === 'jobs' && (
+              <motion.div
+                key="jobs"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <JobFeedView
+                  jobs={jobs}
+                  profile={profile}
+                  onEvaluateFit={handleEvaluateFit}
+                  onSelectForTailoring={handleSelectJobForTailor}
+                  onNotifyTelegram={handleNotifyTelegram}
+                  onUpdateStatus={handleUpdateStatus}
+                  onOpenAddJob={() => setIsAddJobOpen(true)}
+                  onDiscoverJobs={handleDiscoverJobs}
+                  isDiscovering={isDiscovering}
+                  isEvaluatingId={isEvaluatingId}
+                  onVerifyJobLink={handleVerifyJobLink}
+                  onBatchVerifyLinks={handleBatchVerifyLinks}
+                  onRemoveExpiredJobs={handleRemoveExpiredJobs}
+                  onDeleteJob={handleDeleteJob}
+                  onBatchUpdateStatus={handleBatchUpdateStatus}
+                  onBatchDeleteJobs={handleBatchDeleteJobs}
+                  onBatchNotifyTelegram={handleBatchNotifyTelegram}
+                />
+              </motion.div>
+            )}
 
-          {activeTab === 'tailor' && (
-            <motion.div
-              key="tailor"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <DocumentStudioView
-                jobs={jobs}
-                selectedJobId={selectedJobId}
-                onSelectJob={(id) => setSelectedJobId(id)}
-                profile={profile}
-                onTailorJob={handleTailorJob}
-                isTailoring={isTailoring}
-              />
-            </motion.div>
-          )}
+            {activeTab === 'tailor' && (
+              <motion.div
+                key="tailor"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <DocumentStudioView
+                  jobs={jobs}
+                  selectedJobId={selectedJobId}
+                  onSelectJob={(id) => setSelectedJobId(id)}
+                  profile={profile}
+                  onTailorJob={handleTailorJob}
+                  isTailoring={isTailoring}
+                />
+              </motion.div>
+            )}
 
-          {activeTab === 'profile' && (
-            <motion.div
-              key="profile"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <ProfileView
-                profile={profile}
-                onUpdateProfile={handleUpdateProfile}
-                onResetProfile={handleResetProfile}
-                onParseResumeText={handleParseResumeText}
-                onParseResumeDocument={handleParseResumeDocument}
-                isParsingResume={isParsingResume}
-              />
-            </motion.div>
-          )}
+            {activeTab === 'profile' && (
+              <motion.div
+                key="profile"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <ProfileView
+                  profile={profile}
+                  onUpdateProfile={handleUpdateProfile}
+                  onResetProfile={handleResetProfile}
+                  onParseResumeText={handleParseResumeText}
+                  onParseResumeDocument={handleParseResumeDocument}
+                  isParsingResume={isParsingResume}
+                />
+              </motion.div>
+            )}
 
-          {activeTab === 'automation' && (
-            <motion.div
-              key="automation"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <AutomationView
-                settings={settings}
-                jobs={jobs}
-                profile={profile}
-                workflow={workflow}
-                onTriggerWorkflow={handleTriggerWorkflow}
-                onUpdateWorkflowConfig={handleUpdateWorkflowConfig}
-                isWorkflowRunning={isWorkflowRunning}
-                onUpdateSettings={handleUpdateSettings}
-                onTestNotify={async (jobId, customChatId) => {
-                  const targetJob = jobs.find((j) => j.id === jobId);
-                  if (!targetJob) return { delivered: false, error: 'Job not found' };
-                  const res = await dispatchJobNotification({
-                    job: targetJob,
-                    candidateName: profile.full_name,
-                    settings,
-                    customChatId,
-                  });
-                  await refreshState();
-                  return res;
-                }}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+            {activeTab === 'automation' && (
+              <motion.div
+                key="automation"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <AutomationView
+                  settings={settings}
+                  jobs={jobs}
+                  profile={profile}
+                  workflow={workflow}
+                  onTriggerWorkflow={handleTriggerWorkflow}
+                  onUpdateWorkflowConfig={handleUpdateWorkflowConfig}
+                  isWorkflowRunning={isWorkflowRunning}
+                  onUpdateSettings={handleUpdateSettings}
+                  onTestNotify={async (jobId, customChatId) => {
+                    const targetJob = jobs.find((j) => j.id === jobId);
+                    if (!targetJob) return { delivered: false, error: 'Job not found' };
+                    const res = await dispatchJobNotification({
+                      job: targetJob,
+                      candidateName: profile.full_name,
+                      settings,
+                      customChatId,
+                    });
+                    await refreshState();
+                    return res;
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
       </main>
 
-      {/* Mobile Bottom Navigation Bar (Phone Friendly, Zero-Jitter) */}
-      <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      {/* Mobile Bottom Navigation Bar (Phone Friendly, Zero-Jitter) - Authenticated Only */}
+      {currentUser && (
+        <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      )}
 
       {/* Add Job Modal */}
       <AddJobModal
         isOpen={isAddJobOpen}
         onClose={() => setIsAddJobOpen(false)}
         onAddJob={handleAddJob}
+      />
+
+      {/* User Authentication & Device Partition Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        currentUser={currentUser}
+        savedAccounts={savedAccounts}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
+        onDemoLogin={handleDemoLogin}
+        onQuickSwitch={handleQuickSwitch}
+        onLogout={handleLogout}
+        initialTab={authModalInitialTab}
       />
 
       {/* Toast Feedback Notification */}

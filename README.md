@@ -280,15 +280,30 @@ To avoid race conditions across multiple open browser tabs or ephemeral cloud co
 
 ## 📡 API Reference
 
+### Authentication & Multi-Tenant Partitioning
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/auth/me` | `GET` | Verifies current session from encrypted cookie or Bearer token |
+| `/api/auth/login` | `POST` | Authenticates user credentials, sets 90-day device cookie, returns session |
+| `/api/auth/register` | `POST` | Provisions new user account with dedicated partitioned workspace |
+| `/api/auth/demo-login`| `POST` | 1-click workspace access for verified candidate |
+| `/api/auth/switch-account`| `POST` | Switches active user partition on recognized device |
+| `/api/auth/logout` | `POST` | Clears device session cookie and invalidates session token |
+
+### Career Pipeline & Jobs
 | Endpoint | Method | Description |
 |---|---|---|
 | `/api/health` | `GET` | Health check returning service status and Gemini API key configuration |
-| `/api/jobs` | `GET` | Returns all active job listings in the user's pipeline |
+| `/api/jobs` | `GET` | Returns all active job listings in the authenticated user's pipeline |
 | `/api/jobs` | `POST` | Discovers and indexes fresh positions matching candidate profile |
-| `/api/match` | `POST` | Evaluates a single position against the candidate profile using Gemini |
+| `/api/jobs/status` | `POST` | Updates job review status (new, viable, applied, rejected) |
+| `/api/jobs/:id` | `DELETE` | Removes listing and indexes signature into deduplication memory |
+| `/api/match` | `POST` | Evaluates a single position against the user profile using Gemini AI |
 | `/api/tailor` | `POST` | Generates tailored resume bullets and cover letters |
+| `/api/download-resume`| `GET` | Downloads ATS resume in `.doc` or `.txt` format |
+| `/api/download-cover-letter`| `GET` | Downloads tailored cover letter in `.doc` or `.txt` format |
 | `/api/cron/trigger` | `GET / POST` | Triggers the autonomous 24/7 discovery, scoring, and alert workflow |
-| `/api/state/sync` | `GET / POST` | Bidirectional state sync endpoint with anti-rollback merging |
+| `/api/state/sync` | `GET / POST` | Bidirectional state sync endpoint with anti-rollback merging per user partition |
 | `/api/registry/stats` | `GET` | Returns count of tracked, rejected, and active deduplication entries |
 | `/api/registry/truncate`| `POST` | Prunes stale deduplication entries exceeding retention TTL |
 
