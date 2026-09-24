@@ -210,7 +210,7 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
     if (selectedIds.length === 0 || isBatchProcessing) return;
     const count = selectedIds.length;
     const confirmed = window.confirm(
-      `Are you sure you want to delete ${count} selected ${count === 1 ? 'job' : 'jobs'} from your pipeline?`
+      `Are you sure you want to delete ${count} selected ${count === 1 ? 'job' : 'jobs'}?`
     );
     if (confirmed) {
       setIsBatchProcessing(true);
@@ -232,7 +232,7 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
   const handleSingleDelete = async (jobId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!onDeleteJob) return;
-    if (window.confirm('Are you sure you want to remove this job from your pipeline?')) {
+    if (window.confirm('Are you sure you want to remove this job?')) {
       await onDeleteJob(jobId);
       setSelectedIds((prev) => prev.filter((id) => id !== jobId));
     }
@@ -780,7 +780,7 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
                       <button
                         type="button"
                         onClick={(e) => handleSingleDelete(job.id, e)}
-                        title="Delete this job from pipeline"
+                        title="Remove job"
                         aria-label="Delete this job"
                         className="text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 p-2 min-h-[38px] min-w-[38px] flex items-center justify-center rounded-xl transition cursor-pointer bg-white/[0.02] border border-white/[0.06] hover:border-rose-500/25"
                       >

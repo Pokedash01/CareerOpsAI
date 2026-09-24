@@ -413,7 +413,7 @@ export function App() {
         }
         try { localStorage.setItem('careerops_user', JSON.stringify(norm)); } catch {}
         updateSavedAccount(norm);
-        showToast(`Welcome back, ${norm.name}! Your workspace partition is active.`, 'success');
+        showToast(`Welcome back, ${norm.name}!`, 'success');
         await loadUserData(sessionToken, norm.id);
         return { success: true };
       }
@@ -497,7 +497,7 @@ export function App() {
         }
         try { localStorage.setItem('careerops_user', JSON.stringify(norm)); } catch {}
         updateSavedAccount(norm);
-        showToast(`Signed into verified workspace for ${norm.name}.`, 'success');
+        showToast(`Signed in as ${norm.name}.`, 'success');
         await loadUserData(sessionToken, norm.id);
         return { success: true };
       }
@@ -1068,7 +1068,7 @@ export function App() {
 
         showToast(`Scanned ATS portals: Found ${res.added_count || 0} new opportunities!`);
       } else {
-        showToast('Active job pipeline is up to date.');
+        showToast('Job list is up to date.');
       }
     } catch (err: any) {
       showToast(err.message || 'Error discovering jobs', 'error');
@@ -1292,7 +1292,7 @@ export function App() {
           localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs));
         } catch {}
       }
-      showToast('Job removed from pipeline.');
+      showToast('Job removed.');
     } catch (err: any) {
       showToast(err.message || 'Error deleting job', 'error');
     }
@@ -1430,7 +1430,7 @@ export function App() {
         } catch {}
       }
       await refreshState();
-      showToast('Cleaned expired jobs from pipeline.');
+      showToast('Cleaned expired jobs.');
     } catch (err: any) {
       showToast(err.message || 'Error removing expired jobs', 'error');
     }

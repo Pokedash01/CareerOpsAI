@@ -436,7 +436,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       );
 
       if (res.success) {
-        setSuccessMessage('Account created! Your dedicated partition is initialized with a clean feed.');
+        setSuccessMessage('Account created successfully! Loading your job feed...');
         setTimeout(() => {
           if (onClose) onClose();
         }, 600);
@@ -602,8 +602,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </h2>
               <p className="text-[11px] text-zinc-400">
                 {tab === 'forgot-password'
-                  ? 'Recover access to your private workspace partition'
-                  : '1 Account per candidate • Isolated partition & alerts'}
+                  ? 'Recover access to your account'
+                  : 'Personalized job matches and real-time alerts'}
               </p>
             </div>
           </div>
@@ -1095,7 +1095,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               <div>
                 <label className="block text-xs font-medium text-zinc-300 mb-1">
-                  Email Address * (Strictly 1 account per email)
+                  Email Address *
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
@@ -1129,7 +1129,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-300 flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 shrink-0 text-blue-400" />
-                <span>Each candidate account creates a private, isolated workspace partition.</span>
+                <span>Your job search profile and preferences are kept strictly private.</span>
               </div>
             </form>
           )}

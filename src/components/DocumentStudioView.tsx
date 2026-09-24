@@ -147,7 +147,7 @@ export const DocumentStudioView: React.FC<DocumentStudioViewProps> = ({
               {isTailoring ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
-                  <span>Tailoring with Gemini...</span>
+                  <span>Tailoring Resume & Letter...</span>
                 </>
               ) : (
                 <>

@@ -168,7 +168,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         if (nextToken) {
           try { localStorage.setItem('careerops_auth_token', nextToken); } catch {}
         }
-        setPwSuccess('Password successfully updated! Your session and partition are secure.');
+        setPwSuccess('Password successfully updated!');
         setNewPassword('');
         setConfirmPassword('');
         setCurrentPassword('');
@@ -431,7 +431,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   </span>
                 </h3>
                 <p className="text-xs text-neutral-400">
-                  External links extracted from the resume and actively scraped to verify candidate engineering claims.
+                  Portfolio, GitHub, and professional links extracted from your resume.
                 </p>
               </div>
             </div>
@@ -655,7 +655,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
 
             <p className="text-[11px] text-neutral-400 leading-relaxed">
-              Your partitioned workspace, searched jobs catalog, and cadences are tied to your account. You can update your password below at any time.
+              Your saved jobs, search settings, and notification preferences are tied to your account. You can update your password below at any time.
             </p>
 
             {pwSuccess && (
@@ -1563,7 +1563,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     {parsingStage || 'Parsing document & scraping external links...'}
                   </p>
                   <p className="text-[11px] text-blue-300/80">
-                    Visiting discovered portfolio sites, extracting GitHub repo insights, and structuring with Gemini 3.8 Flash...
+                    Analyzing resume details, skills, and portfolio links...
                   </p>
                 </div>
               </div>

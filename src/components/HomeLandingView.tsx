@@ -62,12 +62,12 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
     },
     {
       step: '03',
-      title: 'Gemini Fit Engine',
-      badge: 'Multi-Modal ATS',
-      desc: 'Evaluates hard constraints: tech stack overlap, verified experience brackets, and CTC expectations. Only roles scoring ≥75% are prioritized.',
+      title: 'Precision Fit Engine',
+      badge: 'Smart Matching',
+      desc: 'Evaluates role alignment: technical skills match, verified experience, and compensation criteria. Only roles scoring ≥75% are prioritized.',
       sampleData: {
-        model: 'Gemini 3.8 Flash',
-        criteria: 'Tech Stack (40%), Experience (30%), CTC (20%), Location (10%)',
+        accuracy: 'Skills & Seniority Match',
+        criteria: 'Skills (40%), Experience (30%), Salary (20%), Location (10%)',
         fitScore: '94% Viable Match',
       },
     },
@@ -95,11 +95,11 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
     },
     {
       q: 'How does CareerOps AI prevent ghost jobs and dead links?',
-      a: 'Unlike traditional job boards that aggregate months-old reposts, our pipeline performs real-time HTTP link verification before ever presenting a job to you. Any requisition returning a 404, an expired posting page, or a closed career portal is pruned automatically.',
+      a: 'Unlike traditional job boards that aggregate months-old reposts, our pipeline performs real-time link verification before ever presenting a job to you. Any position that has expired, closed, or been removed is filtered out automatically.',
     },
     {
-      q: 'How does the Gemini ATS fit scoring work?',
-      a: 'We pass your verified resume profile and target parameters through Gemini 3.8 Flash along with the employer job description. The model checks tech stack overlap, required years of experience, and salary alignment. It generates transparent reasoning and notes any skill gaps so you know exactly why a role matched.',
+      q: 'How does the role fit scoring work?',
+      a: 'We evaluate your resume profile and career preferences against the job description. The system analyzes skill overlap, required years of experience, and compensation alignment, generating clear match scores and explaining why the role is a good fit.',
     },
     {
       q: 'Can I export tailored resumes and cover letters for each job?',
@@ -142,7 +142,7 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-sm sm:text-lg text-zinc-300 max-w-3xl mx-auto leading-relaxed"
         >
-          Stop spending hours skimming stale job boards. CareerOps AI continuously scans direct company ATS portals 24/7, eliminates ghost links with HTTP verification, evaluates deep fit using Gemini 3.8 Flash, and sends instant high-fit alerts straight to your personal Telegram.
+          Stop spending hours skimming stale job boards. CareerOps AI continuously scans direct company career portals 24/7, eliminates expired links with active verification, evaluates role fit against your profile, and sends instant alerts straight to your personal Telegram.
         </motion.p>
 
         {/* Action Buttons */}
@@ -185,13 +185,13 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
                   <span className="w-3 h-3 rounded-full bg-amber-500/80" />
                   <span className="w-3 h-3 rounded-full bg-emerald-500/80" />
                 </div>
-                <span className="text-xs font-mono text-zinc-400 pl-2">
-                  careerops-agent --cadence=4h --notifications=telegram
+                <span className="text-xs text-zinc-300 font-medium pl-2">
+                  Automated Search & Alerts
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-[11px] text-emerald-400 font-mono bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+              <div className="flex items-center gap-2 text-[11px] text-emerald-400 font-medium bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Autonomous Engine Online</span>
+                <span>Search Service Active</span>
               </div>
             </div>
 
@@ -228,9 +228,9 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
             {/* Active Stage Simulation Inspector */}
             <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] font-mono text-xs text-zinc-300 space-y-2.5">
               <div className="flex items-center justify-between text-[11px] text-zinc-400 pb-2 border-b border-white/[0.06]">
-                <span className="flex items-center gap-1.5 text-blue-400">
+                <span className="flex items-center gap-1.5 text-blue-400 font-sans font-medium">
                   <Terminal className="w-3.5 h-3.5" />
-                  Stage Inspector: {pipelineStages[activePipelineStep].title}
+                  Stage Details: {pipelineStages[activePipelineStep].title}
                 </span>
                 <span className="text-zinc-500 text-[10px]">Click any stage above to inspect</span>
               </div>
@@ -263,7 +263,7 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
               <Zap className="w-3.5 h-3.5 text-blue-400" />
               <span>24/7 Autonomous</span>
             </div>
-            <p className="text-[11px] text-zinc-400">Background cadence scans every 4 hours automatically</p>
+            <p className="text-[11px] text-zinc-400">Automatically checks for new jobs every 4 hours</p>
           </div>
 
           <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
@@ -287,7 +287,7 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
               <Lock className="w-3.5 h-3.5 text-indigo-400" />
               <span>Private Workspace</span>
             </div>
-            <p className="text-[11px] text-zinc-400">Isolated partition and custom candidate preferences</p>
+            <p className="text-[11px] text-zinc-400">Your profile, preferences, and matched jobs are kept private</p>
           </div>
         </motion.div>
       </section>
@@ -335,9 +335,9 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
               <Cpu className="w-5 h-5" />
             </div>
             <span className="text-[10px] font-mono font-bold text-purple-400 uppercase tracking-wider">Step 03</span>
-            <h3 className="font-bold text-white text-base">Gemini ATS Fit Scoring</h3>
+            <h3 className="font-bold text-white text-base">Precision Fit Scoring</h3>
             <p className="text-xs text-zinc-300 leading-relaxed">
-              Calculates tech stack overlap, verified experience brackets, and CTC constraints. Only roles with match score ≥75% trigger alerts.
+              Calculates tech stack overlap, verified experience brackets, and salary requirements. Only roles with match score ≥75% trigger alerts.
             </p>
           </div>
 
@@ -437,14 +437,14 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
           <div className="max-w-2xl space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-semibold border border-blue-500/20">
               <Clock className="w-3.5 h-3.5" />
-              <span>Independent 4-Hour Background Cadence</span>
+              <span>Automated Background Search</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Personal Schedules Per Candidate.<br />
-              <span className="text-blue-400">No Shared Clocks. No Server Lag.</span>
+              Hands-Free Job Search.<br />
+              <span className="text-blue-400">Fresh opportunities delivered on schedule.</span>
             </h2>
             <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-              When candidate A registers at 9:27 AM, their next autonomous cycle runs at 1:27 PM. When candidate B registers at 10:15 AM, their next cycle runs at 2:15 PM. Every candidate gets their own isolated background runner that continuously checks verified job portals and pushes matching opportunities.
+              Set your preferred search schedule and let CareerOps AI handle the discovery. It continuously checks verified company career portals for your target roles and alerts you as soon as matching openings are posted.
             </p>
           </div>
 
@@ -455,7 +455,7 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
                 <span>Runs in the Cloud</span>
               </div>
               <p className="text-[11px] text-zinc-400 leading-relaxed">
-                You do not need to keep a browser tab open. Server-side schedulers execute continuously in the background.
+                You do not need to keep a browser tab open. Schedulers run automatically in the background.
               </p>
             </div>
 
@@ -465,17 +465,17 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
                 <span>Manual Trigger Anytime</span>
               </div>
               <p className="text-[11px] text-zinc-400 leading-relaxed">
-                Need fresh jobs immediately? Click "Trigger Automation" in your navbar at any time to run an instant on-demand cycle.
+                Need fresh jobs immediately? Click "Trigger Search" in your top navigation bar at any time to run an instant on-demand scan.
               </p>
             </div>
 
             <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
               <div className="flex items-center gap-2 text-xs font-semibold text-white mb-1">
                 <Lock className="w-4 h-4 text-indigo-400" />
-                <span>Data Isolation</span>
+                <span>Private & Secure</span>
               </div>
               <p className="text-[11px] text-zinc-400 leading-relaxed">
-                Your target roles, salary criteria, notified history, and tailored resumes are saved exclusively in your private partition.
+                Your target roles, salary criteria, notification history, and tailored resumes are saved strictly to your personal account.
               </p>
             </div>
           </div>
@@ -585,7 +585,7 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
                   </div>
 
                   <p className="text-[9px] text-zinc-400 italic pt-1">
-                    Automated workflow dispatch via CareerOps-AI.
+                    Alert sent via CareerOps AI.
                   </p>
                 </div>
               </div>
@@ -632,7 +632,7 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
                   <td className="py-3 px-4 text-zinc-400">High (30%+ expired requisitions)</td>
                   <td className="py-3 px-4 text-zinc-400">No link validation performed</td>
                   <td className="py-3 px-4 font-semibold text-emerald-400 bg-blue-500/5">
-                    100% Verified active HTTP links
+                    100% Verified active links
                   </td>
                 </tr>
                 <tr>
@@ -640,7 +640,7 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
                   <td className="py-3 px-4 text-zinc-400">Subjective manual skimming</td>
                   <td className="py-3 px-4 text-zinc-400">Broad keyword match (low relevance)</td>
                   <td className="py-3 px-4 font-semibold text-emerald-400 bg-blue-500/5">
-                    Gemini 3.8 Flash multi-factor match (&ge;75%)
+                    Precision multi-factor match (&ge;75%)
                   </td>
                 </tr>
                 <tr>
@@ -672,7 +672,7 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
             Frequently Asked Questions
           </h3>
           <p className="text-xs sm:text-sm text-zinc-400">
-            Everything you need to know about the CareerOps AI autonomous pipeline.
+            Everything you need to know about CareerOps AI.
           </p>
         </div>
 
@@ -748,11 +748,11 @@ export const HomeLandingView: React.FC<HomeLandingViewProps> = ({
           </div>
           <span className="font-semibold text-white">CareerOps AI</span>
           <span className="text-zinc-600">&bull;</span>
-          <span className="text-zinc-400">Autonomous Career Operations Engine</span>
+          <span className="text-zinc-400">Automated Job Search & Matching</span>
         </div>
         <div className="flex items-center gap-4 text-[11px]">
           <a href="#how-it-works" className="hover:text-white transition">How It Works</a>
-          <a href="#ats-engine" className="hover:text-white transition">ATS Engine</a>
+          <a href="#ats-engine" className="hover:text-white transition">Resume Studio</a>
           <a href="#cadence" className="hover:text-white transition">Automation</a>
           <a href="#telegram-alerts" className="hover:text-white transition">Telegram</a>
           <a href="#faq" className="hover:text-white transition">FAQ</a>

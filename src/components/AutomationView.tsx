@@ -138,7 +138,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   };
 
   const handleResetSearchHistory = async () => {
-    if (!window.confirm('Reset search deduplication registry? Active pipeline jobs will be preserved, but previously dismissed/rejected jobs may reappear in fresh searches.')) {
+    if (!window.confirm('Clear dismissed search history? Saved jobs will be preserved, but previously dismissed jobs may reappear in future searches.')) {
       return;
     }
     setIsTruncating(true);
@@ -146,11 +146,11 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     try {
       const res = await fetch('/api/registry/reset', { method: 'POST' });
       if (res.ok) {
-        setTruncateMessage('Registry reset to current pipeline jobs.');
+        setTruncateMessage('Search history cleared.');
         await loadRegistryStats();
       }
     } catch {
-      setTruncateMessage('Registry reset locally.');
+      setTruncateMessage('Search history cleared locally.');
     } finally {
       setIsTruncating(false);
     }
@@ -280,7 +280,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-white text-sm uppercase tracking-wider flex items-center gap-2">
                 <Clock className="w-4 h-4 text-emerald-400" />
-                <span>Workflow Engine</span>
+                <span>Search Schedule</span>
               </h3>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[11px] font-medium border border-emerald-500/25 shadow-sm shadow-emerald-500/10">
                 <span className="relative flex h-1.5 w-1.5">
@@ -301,7 +301,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
               </div>
 
               <div>
-                <label className="font-semibold text-zinc-300 block mb-1.5">Execution Frequency</label>
+                <label className="font-semibold text-zinc-300 block mb-1.5">Search Frequency</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[2, 4, 8, 12].map((hrs) => (
                     <button
@@ -328,7 +328,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                     onChange={(e) => handleToggleWorkflow(e.target.checked)}
                     className="w-4 h-4 rounded text-blue-600 bg-white/[0.03] border-white/[0.1] accent-blue-600 cursor-pointer"
                   />
-                  <span className="font-semibold text-zinc-200">Enable Recurring Autonomous Workflow</span>
+                  <span className="font-semibold text-zinc-200">Enable Automatic Job Search</span>
                 </label>
 
                 <label className="flex items-center gap-2.5 cursor-pointer">
@@ -339,14 +339,14 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                     className="w-4 h-4 rounded text-blue-600 bg-white/[0.03] border-white/[0.1] accent-blue-600 cursor-pointer"
                   />
                   <span className="font-semibold text-zinc-200">
-                    Auto-Dispatch Telegram Alerts for High-Fit Roles (≥ {minScore}%)
+                    Send Telegram Alerts for High-Fit Roles (≥ {minScore}%)
                   </span>
                 </label>
 
                 <div className="p-3 bg-blue-500/[0.06] rounded-xl border border-blue-500/20 flex items-start gap-2.5 text-[11px] text-blue-300">
                   <RefreshCw className="w-3.5 h-3.5 shrink-0 animate-spin text-blue-400 mt-0.5" />
                   <span className="leading-relaxed">
-                    <strong className="text-blue-200">Continuous Sync:</strong> Newly discovered jobs and suitability scores automatically stream directly into the Dashboard and Job Feed.
+                    <strong className="text-blue-200">Automatic Updates:</strong> Newly discovered jobs and match scores are automatically updated in your feed.
                   </span>
                 </div>
               </div>
@@ -361,76 +361,24 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   {isWorkflowRunning ? (
                     <>
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Executing Workflow Cycle...</span>
+                      <span>Searching for Jobs...</span>
                     </>
                   ) : (
                     <>
                       <Zap className="w-3.5 h-3.5 text-amber-300" />
-                      <span>Trigger Workflow Run Now</span>
+                      <span>Run Job Search Now</span>
                     </>
                   )}
                 </button>
               )}
 
-              {/* Vercel Hobby & Cloud Webhook Notice */}
-              <div className="pt-3 border-t border-white/[0.07] space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-zinc-200 text-xs flex items-center gap-1.5">
-                    <Globe className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Vercel & Cloud Cron Setup</span>
-                  </span>
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                    Vercel Hobby Ready (Daily)
-                  </span>
-                </div>
-
-                <p className="text-zinc-400 text-[11px] leading-relaxed">
-                  Vercel Hobby accounts allow <strong>1 cron execution per day</strong> (configured as <code className="text-zinc-300 bg-white/[0.06] px-1 py-0.5 rounded font-mono">0 4 * * *</code> / 09:30 AM IST).
-                </p>
-
-                {/* GitHub Actions 24/7 Setup */}
-                <div className="p-2.5 bg-black/40 rounded-xl border border-white/[0.06] space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-zinc-300 font-medium flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-                      <span>GitHub Actions App URL:</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={copyBaseAppUrl}
-                      className="text-[11px] text-cyan-400 hover:text-cyan-300 font-medium inline-flex items-center gap-1 cursor-pointer transition-colors"
-                    >
-                      {copiedAppUrl ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedAppUrl ? 'Copied' : 'Copy Secret Value'}</span>
-                    </button>
-                  </div>
-                  <div className="font-mono text-[10px] text-zinc-400 truncate bg-white/[0.02] p-1.5 rounded border border-white/[0.04]">
-                    {getBaseAppUrl()}
-                  </div>
-                  <p className="text-[10px] text-zinc-400 leading-normal">
-                    ⚙️ <strong>GitHub Actions Secret:</strong> Add as secret <code className="text-cyan-300 bg-white/[0.06] px-1 py-0.5 rounded font-mono">CAREEROPS_APP_URL</code> under <em>Repo Settings &gt; Secrets and variables &gt; Actions</em> to enable 24/7 autonomous triggers every 4 hours.
-                  </p>
-                </div>
-
-                <div className="p-2.5 bg-black/40 rounded-xl border border-white/[0.06] space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-zinc-300 font-medium">Free 4-Hour Webhook URL:</span>
-                    <button
-                      type="button"
-                      onClick={copyWebhookUrl}
-                      className="text-[11px] text-blue-400 hover:text-blue-300 font-medium inline-flex items-center gap-1 cursor-pointer transition-colors"
-                    >
-                      {copiedWebhook ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedWebhook ? 'Copied' : 'Copy URL'}</span>
-                    </button>
-                  </div>
-                  <div className="font-mono text-[10px] text-zinc-400 truncate bg-white/[0.02] p-1.5 rounded border border-white/[0.04]">
-                    {getWebhookUrl()}
-                  </div>
-                  <p className="text-[10px] text-zinc-500 leading-normal">
-                    💡 <strong>Run every 4h or 1h for free:</strong> Set up a free schedule on <a href="https://cron-job.org" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">cron-job.org</a> or BetterStack pointing to this URL (GET or POST) to scan without upgrading to Vercel Pro!
-                  </p>
-                </div>
+              {/* Status footer */}
+              <div className="pt-3 border-t border-white/[0.07] flex items-center justify-between text-xs text-zinc-400">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span>Automated Background Search Active</span>
+                </span>
+                <span className="text-[11px] text-zinc-500 font-medium">Cloud Sync Enabled</span>
               </div>
             </div>
           </div>
@@ -487,31 +435,31 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-white text-sm uppercase tracking-wider flex items-center gap-2">
                 <Database className="w-4 h-4 text-purple-400" />
-                <span>Search Deduplication & Anti-Requery Memory</span>
+                <span>Search Memory & Duplicate Filter</span>
               </h3>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-300 text-[11px] font-medium border border-purple-500/25">
-                Active Memory
+                Active
               </span>
             </div>
 
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Every job that has been discovered, reviewed, rejected, or deleted is permanently remembered in this registry. When new search queries or automated background cycles run, these positions are automatically excluded so you never waste time seeing or re-evaluating the same job twice.
+              Jobs you have reviewed, dismissed, or applied to are remembered so you never see the same position multiple times.
             </p>
 
             <div className="grid grid-cols-2 gap-3 pt-1">
               <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
-                <span className="text-[11px] text-zinc-400 block mb-0.5 font-medium">Tracked In Registry</span>
+                <span className="text-[11px] text-zinc-400 block mb-0.5 font-medium">Jobs In Memory</span>
                 <span className="text-lg font-mono font-bold text-white">
                   {registryStats ? registryStats.total_tracked : jobs.length}
                 </span>
-                <span className="text-[10px] text-zinc-500 block mt-0.5">Known signatures & links</span>
+                <span className="text-[10px] text-zinc-500 block mt-0.5">Tracked positions</span>
               </div>
               <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
-                <span className="text-[11px] text-zinc-400 block mb-0.5 font-medium">Blocked Rejected / Deleted</span>
+                <span className="text-[11px] text-zinc-400 block mb-0.5 font-medium">Dismissed Jobs Filtered</span>
                 <span className="text-lg font-mono font-bold text-rose-400">
                   {registryStats ? registryStats.rejected_count : jobs.filter((j) => j.status === 'rejected').length}
                 </span>
-                <span className="text-[10px] text-zinc-500 block mt-0.5">Will never be re-searched</span>
+                <span className="text-[10px] text-zinc-500 block mt-0.5">Will not reappear in feed</span>
               </div>
             </div>
 
@@ -529,7 +477,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50"
               >
                 {isTruncating ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5 text-zinc-400" />}
-                <span>Prune Stale Entries (&gt;{ttlDays}d)</span>
+                <span>Clean Old History (&gt;{ttlDays}d)</span>
               </button>
 
               <button
@@ -538,7 +486,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 onClick={handleResetSearchHistory}
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/25 rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50"
               >
-                <span>Reset Registry to Active Jobs</span>
+                <span>Clear Dismissed History</span>
               </button>
             </div>
           </div>
@@ -548,7 +496,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
             <div className="flex items-center justify-between border-b border-white/[0.07] pb-3">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-blue-400" />
-                <span className="font-semibold text-white text-sm">Workflow Execution History</span>
+                <span className="font-semibold text-white text-sm">Recent Search History</span>
               </div>
               <span className="text-[11px] text-zinc-400 font-mono font-medium">
                 Runs: {workflow?.total_runs || 1}
@@ -563,7 +511,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-white">
-                      {run.trigger === 'scheduled_4h' ? 'Automated 4-Hour Recurring Run' : 'Manual Triggered Run'}
+                      {run.trigger === 'scheduled_4h' ? 'Scheduled Search' : 'Manual Search'}
                     </span>
                     <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
                       {run.status}
@@ -885,7 +833,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 </div>
 
                 <p className="text-[10px] text-zinc-500 italic pt-1 border-t border-white/[0.04]">
-                  Automated alert dispatched via CareerOps-AI pipeline.
+                  Alert sent via CareerOps AI.
                 </p>
               </div>
             </div>

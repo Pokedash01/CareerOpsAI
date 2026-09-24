@@ -144,10 +144,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
           <div className="space-y-2">
             <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Career Engine for {profile.full_name}
+              Career Dashboard for {profile.full_name}
             </h1>
             <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-2xl font-normal">
-              Continuous ATS discovery scans, deterministic constraint validation (tech stack, experience, location, CTC), and instant ATS-compliant document tailoring.
+              Automated job discovery, qualification matching, and tailored resume & cover letter generation.
             </p>
           </div>
 
@@ -175,8 +175,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/[0.07] text-zinc-300">
-              <span className="text-zinc-500 text-[11px]">Cadence:</span>
-              <span className="font-semibold text-white">4h Loop</span>
+              <span className="text-zinc-500 text-[11px]">Schedule:</span>
+              <span className="font-semibold text-white">Every 4 Hours</span>
             </span>
 
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/[0.07] text-zinc-300">
@@ -244,7 +244,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400 text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
-            <span>Workspace Configured &bull; 000 Baseline KPIs</span>
+            <span>Workspace Ready</span>
           </div>
 
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600/30 to-indigo-600/30 border border-blue-500/30 flex items-center justify-center text-blue-400 mx-auto shadow-inner">
@@ -253,7 +253,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           <div className="max-w-xl mx-auto space-y-2">
             <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-              Initiate Your First Autonomous Execution
+              Run Your First Job Search
             </h3>
             <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
               Welcome, <span className="text-white font-semibold">{profile.full_name}</span>! Your career targets are active for{' '}
@@ -262,7 +262,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               ({profile.salary_expectation ? `₹${profile.salary_expectation.min_lpa}–₹${profile.salary_expectation.max_lpa} LPA` : 'Market Competitive'}).
             </p>
             <p className="text-xs text-zinc-400">
-              Your dashboard currently shows 0 KPIs. Trigger your first autonomous run now to scan verified ATS portals (Greenhouse, Lever, Ashby, Workday), filter expired ghost listings, and receive real-time fit analysis.
+              Your dashboard is ready. Start your first job search to find verified openings matching your experience, filter out closed listings, and view your match scores.
             </p>
           </div>
 
@@ -281,12 +281,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {isWorkflowRunning || isPipelineRunning ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                  <span>Executing Autonomous Discovery Engine...</span>
+                  <span>Searching for Matching Roles...</span>
                 </>
               ) : (
                 <>
                   <Zap className="w-4 h-4 text-amber-300" />
-                  <span>Initiate First Autonomous Execution</span>
+                  <span>Start Initial Job Search</span>
                   <ArrowRight className="w-4 h-4 ml-0.5" />
                 </>
               )}
@@ -296,7 +296,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               onClick={() => setActiveTab('profile')}
               className="py-3 px-4 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-medium rounded-xl transition-all cursor-pointer"
             >
-              Review Career Target Criteria
+              Review Target Roles & Preferences
             </button>
           </div>
         </motion.div>
