@@ -23,6 +23,9 @@ import {
   Sparkles,
   Award,
   DollarSign,
+  KeyRound,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { UserAccount } from '../types.js';
 
@@ -46,11 +49,11 @@ interface AuthModalProps {
       seniority_tier?: string;
       skills?: string[];
     }
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<{ success: boolean; error?: string; code?: string; email?: string; redirectTo?: string }>;
   onQuickSwitch?: (accountId: string) => Promise<{ success: boolean; error?: string }>;
   onLogout: () => Promise<void>;
   requireAuthToDismiss?: boolean;
-  initialTab?: 'login' | 'register';
+  initialTab?: 'login' | 'register' | 'forgot-password';
 }
 
 // Seniority tiers with domain-specific suggested roles & salary baselines
@@ -142,8 +145,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   requireAuthToDismiss = false,
   initialTab = 'login',
 }) => {
-  const [tab, setTab] = useState<'login' | 'register'>(initialTab);
+  const [tab, setTab] = useState<'login' | 'register' | 'forgot-password'>(initialTab);
   const [registerStep, setRegisterStep] = useState<1 | 2 | 3 | 4>(1);
+
+  // Forgot Password State
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotStep, setForgotStep] = useState<1 | 2>(1);
+  const [forgotCode, setForgotCode] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
+  const [forgotTelegramSent, setForgotTelegramSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showForgotNewPassword, setShowForgotNewPassword] = useState(false);
 
   // Step 1: Credentials
   const [email, setEmail] = useState('');
@@ -258,8 +271,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setPreferredLocations((prev) => prev.filter((l) => l !== loc));
   };
 
-  // Step 1 validation
-  const handleStep1Submit = (e: React.FormEvent) => {
+  // Step 1 validation with proactive existing email check & redirect
+  const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setShowSwitchToLogin(false);
@@ -275,6 +288,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setErrorMessage('Password must be at least 6 characters.');
       return;
     }
+
+    // Proactively verify if this email is already registered before candidate fills steps 2, 3, 4
+    setIsLoading(true);
+    try {
+      const checkRes = await fetch('/api/auth/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const checkData = await checkRes.json().catch(() => null);
+      if (checkData?.exists) {
+        setIsLoading(false);
+        setErrorMessage('An account with this email address already exists. Redirecting to Sign In...');
+        setShowSwitchToLogin(true);
+        setTimeout(() => {
+          setTab('login');
+          setErrorMessage('This email is already registered. Please sign in with your password, or use "Forgot password?" if needed.');
+        }, 1100);
+        return;
+      }
+    } catch {
+      // Proceed if transient network offline
+    } finally {
+      setIsLoading(false);
+    }
+
     setRegisterStep(2);
   };
 
@@ -403,17 +442,119 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         }, 600);
       } else {
         const errText = res.error || 'Failed to create account.';
-        setErrorMessage(errText);
-        if (errText.toLowerCase().includes('already exists')) {
+        const isDuplicate =
+          (res as any).code === 'EMAIL_ALREADY_EXISTS' ||
+          errText.toLowerCase().includes('already exists') ||
+          (res as any).redirectTo === 'login';
+
+        if (isDuplicate) {
+          setErrorMessage('An account with this email address already exists. Redirecting to Sign In...');
           setShowSwitchToLogin(true);
+          setTimeout(() => {
+            setTab('login');
+            setErrorMessage('This email is already registered. Please sign in with your password, or use "Forgot password?" if needed.');
+          }, 1100);
+        } else {
+          setErrorMessage(errText);
         }
       }
     } catch (err: any) {
       const msg = err.message || 'Registration error.';
-      setErrorMessage(msg);
       if (msg.toLowerCase().includes('already exists')) {
+        setErrorMessage('An account with this email address already exists. Redirecting to Sign In...');
         setShowSwitchToLogin(true);
+        setTimeout(() => {
+          setTab('login');
+          setErrorMessage('This email is already registered. Please sign in with your password, or use "Forgot password?" if needed.');
+        }, 1100);
+      } else {
+        setErrorMessage(msg);
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Trigger Forgot Password code generation
+  const handleSendResetCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    const targetEmail = forgotEmail.trim();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      setErrorMessage('Please enter a valid registered candidate email address.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: targetEmail }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
+        setForgotStep(2);
+        setForgotCode(data.code || '');
+        setForgotTelegramSent(Boolean(data.telegram_sent));
+        setSuccessMessage(
+          data.telegram_sent
+            ? '✅ Reset code generated and dispatched to your Telegram!'
+            : '✅ Reset verification code generated! Enter it below to choose a new password.'
+        );
+      } else {
+        setErrorMessage(data?.error || 'Could not find a registered account with that email.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Error requesting password reset.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Submit code and new password
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    if (!forgotCode.trim()) {
+      setErrorMessage('Please enter the 6-digit verification code.');
+      return;
+    }
+    if (!forgotNewPassword || forgotNewPassword.length < 6) {
+      setErrorMessage('New password must be at least 6 characters long.');
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setErrorMessage('Passwords do not match. Please verify both password fields.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: forgotEmail.trim(),
+          code: forgotCode.trim(),
+          new_password: forgotNewPassword,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
+        setSuccessMessage('🎉 Password successfully updated! Signing into your workspace...');
+        // Automatically sign in with new credentials
+        await onLogin(forgotEmail.trim(), forgotNewPassword, true);
+        setTimeout(() => {
+          if (onClose) onClose();
+        }, 700);
+      } else {
+        setErrorMessage(data?.error || 'Password reset failed. Please check the code.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Error updating password.');
     } finally {
       setIsLoading(false);
     }
@@ -440,15 +581,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Modal Header (Fixed, Never Cut Off) */}
         <div className="p-3.5 sm:p-4 pb-3 flex items-center justify-between border-b border-white/[0.08] shrink-0 bg-[#0D1117]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
-              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl border flex items-center justify-center shrink-0 ${
+              tab === 'forgot-password'
+                ? 'bg-amber-600/20 border-amber-500/30 text-amber-400'
+                : 'bg-blue-600/20 border-blue-500/30 text-blue-400'
+            }`}>
+              {tab === 'forgot-password' ? <KeyRound className="w-4 h-4 sm:w-5 sm:h-5" /> : <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />}
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-semibold text-white tracking-tight">
-                {tab === 'login' ? 'Sign In to Workspace' : 'Create Candidate Account'}
+                {tab === 'login'
+                  ? 'Sign In to Workspace'
+                  : tab === 'forgot-password'
+                  ? 'Reset Account Password'
+                  : 'Create Candidate Account'}
               </h2>
               <p className="text-[11px] text-zinc-400">
-                1 Account per candidate • Isolated partition & alerts
+                {tab === 'forgot-password'
+                  ? 'Recover access to your private workspace partition'
+                  : '1 Account per candidate • Isolated partition & alerts'}
               </p>
             </div>
           </div>
@@ -481,7 +632,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         )}
 
-        {/* Tabs: Sign In / Create Account Only */}
+        {/* Tabs: Sign In / Create Account / Reset Password */}
         <div className="flex px-3.5 sm:px-4 pt-2 gap-4 border-b border-white/[0.06] shrink-0 bg-[#0D1117]">
           <button
             onClick={() => {
@@ -519,6 +670,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               />
             )}
           </button>
+          {tab === 'forgot-password' && (
+            <button
+              onClick={() => {
+                setTab('forgot-password');
+                setErrorMessage(null);
+              }}
+              className="pb-2 text-xs font-semibold transition-colors relative cursor-pointer text-amber-400"
+            >
+              Reset Password
+              <motion.div
+                layoutId="authTabIndicator"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500"
+              />
+            </button>
+          )}
         </div>
 
         {/* Step Indicator (Registration only) */}
@@ -590,7 +756,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     }}
                     className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold shrink-0 cursor-pointer transition"
                   >
-                    Sign In
+                    Sign In Now
                   </button>
                 )}
               </motion.div>
@@ -629,19 +795,42 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1">
-                  Password
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-zinc-300">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTab('forgot-password');
+                      setForgotEmail(email || '');
+                      setForgotStep(1);
+                      setErrorMessage(null);
+                      setSuccessMessage(null);
+                    }}
+                    className="text-[11px] text-blue-400 hover:text-blue-300 font-medium cursor-pointer transition hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     required
-                    className="w-full pl-9 pr-3 py-2 text-xs bg-black/40 border border-white/[0.08] rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-9 pr-10 py-2 text-xs bg-black/40 border border-white/[0.08] rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2.5 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -671,7 +860,197 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </>
                 )}
               </button>
+
+              <div className="text-center pt-2 border-t border-white/[0.06] text-xs text-zinc-400">
+                New candidate?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTab('register');
+                    setErrorMessage(null);
+                    setShowSwitchToLogin(false);
+                  }}
+                  className="text-blue-400 hover:text-blue-300 font-semibold cursor-pointer underline transition"
+                >
+                  Create workspace account
+                </button>
+              </div>
             </form>
+          )}
+
+          {/* TAB 3: FORGOT PASSWORD */}
+          {tab === 'forgot-password' && (
+            <div className="space-y-4">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2.5">
+                <KeyRound className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div className="text-xs">
+                  <p className="text-amber-200 font-medium">Reset Your Account Password</p>
+                  <p className="text-amber-300/80 text-[11px] mt-0.5">
+                    {forgotStep === 1
+                      ? 'Enter your registered candidate email address to generate a 6-digit password reset verification code.'
+                      : `Enter the 6-digit code for ${forgotEmail} and choose a new password.`}
+                  </p>
+                </div>
+              </div>
+
+              {forgotStep === 1 ? (
+                <form onSubmit={handleSendResetCode} className="space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-300 mb-1">
+                      Registered Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
+                      <input
+                        type="email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        placeholder="e.g. user@domain.com"
+                        required
+                        className="w-full pl-9 pr-3 py-2 text-xs bg-black/40 border border-white/[0.08] rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTab('login');
+                        setErrorMessage(null);
+                        setSuccessMessage(null);
+                      }}
+                      className="flex-1 py-2 px-3 bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 text-xs font-medium rounded-xl transition cursor-pointer"
+                    >
+                      Back to Sign In
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="flex-1 py-2 px-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-amber-600/25 transition disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      {isLoading ? (
+                        <>Sending Code...</>
+                      ) : (
+                        <>
+                          <KeyRound className="w-3.5 h-3.5" />
+                          <span>Get Reset Code</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5">
+                  {/* Generated code highlight badge */}
+                  {forgotCode && (
+                    <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-xl flex items-center justify-between">
+                      <div>
+                        <div className="text-[10px] uppercase font-semibold text-amber-300/80">
+                          {forgotTelegramSent ? 'Telegram & On-Screen Verification Code' : 'Verification Code'}
+                        </div>
+                        <div className="text-lg font-mono font-bold text-amber-300 tracking-widest">{forgotCode}</div>
+                        <div className="text-[10px] text-zinc-400">Valid for 15 minutes • Auto-loaded below</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSuccessMessage('Code confirmed in input.');
+                        }}
+                        className="px-2.5 py-1 text-[11px] bg-amber-500/20 text-amber-300 rounded-lg border border-amber-500/30 font-medium"
+                      >
+                        Active
+                      </button>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-300 mb-1">
+                      6-Digit Verification Code *
+                    </label>
+                    <input
+                      type="text"
+                      value={forgotCode}
+                      onChange={(e) => setForgotCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="e.g. 123456"
+                      maxLength={6}
+                      required
+                      className="w-full px-3 py-2 text-sm tracking-widest font-mono text-center bg-black/40 border border-white/[0.08] rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-300 mb-1">
+                      New Password * (Min 6 characters)
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
+                      <input
+                        type={showForgotNewPassword ? 'text' : 'password'}
+                        value={forgotNewPassword}
+                        onChange={(e) => setForgotNewPassword(e.target.value)}
+                        placeholder="At least 6 characters"
+                        required
+                        className="w-full pl-9 pr-10 py-2 text-xs bg-black/40 border border-white/[0.08] rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotNewPassword(!showForgotNewPassword)}
+                        className="absolute right-3 top-2.5 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                        aria-label={showForgotNewPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showForgotNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-300 mb-1">
+                      Confirm New Password *
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
+                      <input
+                        type="password"
+                        value={forgotConfirmPassword}
+                        onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                        placeholder="Confirm matching password"
+                        required
+                        className="w-full pl-9 pr-3 py-2 text-xs bg-black/40 border border-white/[0.08] rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotStep(1);
+                        setErrorMessage(null);
+                        setSuccessMessage(null);
+                      }}
+                      className="py-2 px-3 bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 text-xs font-medium rounded-xl transition cursor-pointer"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="flex-1 py-2 px-3 bg-gradient-to-r from-amber-600 to-emerald-600 hover:from-amber-500 hover:to-emerald-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-amber-600/25 transition disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      {isLoading ? (
+                        <>Updating Password...</>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Update Password & Sign In</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           )}
 
           {/* TAB 2: REGISTER - STEP 1 (Credentials) */}

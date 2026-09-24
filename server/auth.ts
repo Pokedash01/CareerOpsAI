@@ -46,6 +46,73 @@ export const userEmailIndex: Record<string, string> = {}; // lowercase email -> 
 export const sessions: Record<string, UserSessionRecord> = {}; // token -> session
 export const userPartitions: Record<string, UserPartitionData> = {}; // user_id -> partition
 
+export interface PasswordResetRecord {
+  email: string;
+  code: string;
+  created_at: string;
+  expires_at: string;
+}
+
+export const passwordResetCodes: Record<string, PasswordResetRecord> = {};
+
+export function createPasswordResetCode(email: string): string {
+  const cleanEmail = email.toLowerCase().trim();
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const now = Date.now();
+  passwordResetCodes[cleanEmail] = {
+    email: cleanEmail,
+    code,
+    created_at: new Date(now).toISOString(),
+    expires_at: new Date(now + 15 * 60 * 1000).toISOString(), // 15 mins
+  };
+  return code;
+}
+
+export function verifyAndResetPassword(
+  email: string,
+  code: string,
+  newPassword: string
+): { success: boolean; error?: string; user?: UserAccountRecord } {
+  const cleanEmail = email.toLowerCase().trim();
+  const record = passwordResetCodes[cleanEmail];
+  if (!record) {
+    return { success: false, error: 'No active password reset request found for this email. Please request a new code.' };
+  }
+
+  if (new Date(record.expires_at).getTime() < Date.now()) {
+    delete passwordResetCodes[cleanEmail];
+    return { success: false, error: 'The verification code has expired. Please request a new one.' };
+  }
+
+  if (record.code.trim() !== code.trim()) {
+    return { success: false, error: 'Incorrect verification code. Please check and try again.' };
+  }
+
+  const userId = userEmailIndex[cleanEmail];
+  if (!userId || !users[userId]) {
+    return { success: false, error: 'User account not found.' };
+  }
+
+  if (!newPassword || newPassword.length < 6) {
+    return { success: false, error: 'New password must be at least 6 characters long.' };
+  }
+
+  const { hash, salt } = hashPassword(newPassword);
+  users[userId].password_hash = hash;
+  users[userId].salt = salt;
+  users[userId].last_login_at = new Date().toISOString();
+
+  // Invalidate any existing sessions for security
+  for (const [token, sess] of Object.entries(sessions)) {
+    if (sess.user_id === userId) {
+      delete sessions[token];
+    }
+  }
+
+  delete passwordResetCodes[cleanEmail];
+  return { success: true, user: users[userId] };
+}
+
 export function hashPassword(password: string, customSalt?: string): { hash: string; salt: string } {
   const salt = customSalt || crypto.randomBytes(16).toString('hex');
   const hash = crypto.scryptSync(password, salt, 64).toString('hex');

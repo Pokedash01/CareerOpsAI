@@ -61,7 +61,16 @@ async function safeFetchJson<T>(url: string, init?: RequestInit, timeoutMs = 200
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
-      if (!res.ok) continue;
+      if (!res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          try {
+            const errData = await res.json();
+            return errData;
+          } catch {}
+        }
+        continue;
+      }
       const contentType = res.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) continue;
       const data = await res.json();
@@ -455,7 +464,13 @@ export function App() {
         await loadUserData();
         return { success: true };
       }
-      return { success: false, error: res?.error || 'Registration failed' };
+      return {
+        success: false,
+        error: res?.error || 'Registration failed',
+        code: res?.code,
+        email: res?.email,
+        redirectTo: res?.redirect_to,
+      };
     } catch (err: any) {
       return { success: false, error: err.message || 'Registration error' };
     }

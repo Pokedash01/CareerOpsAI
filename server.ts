@@ -75,6 +75,8 @@ import {
   UserPartitionData,
   UserAccountRecord,
   getAllUserPartitions,
+  createPasswordResetCode,
+  verifyAndResetPassword,
 } from './server/auth.js';
 
 const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'data');
@@ -631,7 +633,13 @@ app.use((req, res, next) => {
 
     const cleanEmail = email.toLowerCase().trim();
     if (userEmailIndex[cleanEmail]) {
-      return res.status(409).json({ error: 'An account with this email address already exists. Please sign in instead.' });
+      return res.status(409).json({
+        success: false,
+        error: 'An account with this email address already exists. Redirecting to Sign In...',
+        code: 'EMAIL_ALREADY_EXISTS',
+        email: cleanEmail,
+        redirect_to: 'login',
+      });
     }
 
     const userId = `usr_${crypto.randomBytes(8).toString('hex')}`;
@@ -775,6 +783,116 @@ app.use((req, res, next) => {
     res.json({
       success: true,
       message: 'Logged in successfully',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.full_name || user.email.split('@')[0],
+        full_name: user.full_name,
+        created_at: user.created_at,
+        last_login_at: user.last_login_at,
+      },
+    });
+  });
+
+  // Fast email pre-check (used during registration to proactively detect registered accounts)
+  app.post('/api/auth/check-email', (req, res) => {
+    const email = (req.body?.email || req.query?.email) as string;
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'Email parameter required.' });
+    }
+    const cleanEmail = email.toLowerCase().trim();
+    const exists = Boolean(userEmailIndex[cleanEmail]);
+    return res.json({
+      exists,
+      email: cleanEmail,
+      message: exists ? 'Account already exists for this email.' : 'Email is available.',
+    });
+  });
+
+  // Forgot password request - generates 6-digit recovery code and notifies Telegram if configured
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    const { email } = req.body;
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ error: 'Please enter a valid registered email address.' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const userId = userEmailIndex[cleanEmail];
+    if (!userId || !users[userId]) {
+      return res.status(404).json({
+        error: 'No registered candidate account was found for this email address. Please create a new account.',
+        code: 'USER_NOT_FOUND',
+      });
+    }
+
+    const user = users[userId];
+    const code = createPasswordResetCode(cleanEmail);
+
+    // If Telegram is connected for this user or environment, dispatch the code directly to their phone
+    let telegramSent = false;
+    const userPartition = userPartitions[userId];
+    const targetChatId = userPartition?.appSettings.telegram_chat_id || user.telegram_chat_id || (userId === PRIMARY_USER_ID ? process.env.TELEGRAM_CHAT_ID : undefined);
+    const botToken = userPartition?.appSettings.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN;
+
+    if (targetChatId && botToken) {
+      try {
+        const candFirst = escapeTelegramHtml(user.full_name.split(' ')[0] || 'Candidate');
+        const alertHtml =
+          `🔐 <b>CareerOps AI Password Reset Request</b>\n\n` +
+          `Hello ${candFirst},\n` +
+          `A password reset was requested for your account: <code>${escapeTelegramHtml(user.email)}</code>\n\n` +
+          `🔑 <b>Your 6-Digit Verification Code:</b> <code>${code}</code>\n\n` +
+          `<i>This code expires in 15 minutes. Enter this code in the password reset window to choose a new password.</i>`;
+
+        fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: targetChatId,
+            text: alertHtml,
+            parse_mode: 'HTML',
+          }),
+        }).catch(() => {});
+        telegramSent = true;
+      } catch (err) {
+        console.warn('[Forgot Password] Telegram dispatch note:', err);
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: 'Verification code generated.',
+      email: cleanEmail,
+      code, // Returned for instant on-screen verification (guarantees candidate is never locked out)
+      telegram_sent: telegramSent,
+    });
+  });
+
+  // Verify code and set new password
+  app.post('/api/auth/reset-password', (req, res) => {
+    const { email, code, new_password } = req.body;
+    if (!email || !code || !new_password) {
+      return res.status(400).json({ error: 'Email, 6-digit verification code, and new password are required.' });
+    }
+
+    if (typeof new_password !== 'string' || new_password.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+    }
+
+    const resetResult = verifyAndResetPassword(email, code, new_password);
+    if (!resetResult.success || !resetResult.user) {
+      return res.status(400).json({ error: resetResult.error || 'Password reset failed.' });
+    }
+
+    const user = resetResult.user;
+    const token = createSessionForUser(user.id, req.headers['user-agent']);
+    attachSessionCookie(res, req, token);
+    saveStoreToDisk(false);
+
+    return res.json({
+      success: true,
+      message: 'Password successfully updated! You are now signed in.',
       token,
       user: {
         id: user.id,
