@@ -1,6 +1,6 @@
 import mammoth from 'mammoth';
 import { getGeminiClient, cleanJsonResponse } from './gemini.js';
-import { UserProfile, ScrapedLinkSource, CandidateProject } from '../src/types.js';
+import type { UserProfile, ScrapedLinkSource, CandidateProject } from '../src/types.js';
 
 // Polyfill canvas/DOM matrix primitives for headless serverless environments (e.g. Vercel)
 function ensureCanvasPolyfills() {

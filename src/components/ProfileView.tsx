@@ -27,6 +27,9 @@ import {
   FileCheck,
   Pencil,
   X,
+  Key,
+  Lock,
+  Shield,
 } from 'lucide-react';
 import { UserProfile, WorkExperience } from '../types.js';
 
@@ -37,6 +40,7 @@ interface ProfileViewProps {
   onParseResumeText: (text: string) => Promise<void>;
   onParseResumeDocument?: (fileData: { base64: string; fileName: string; mimeType: string }) => Promise<void>;
   isParsingResume: boolean;
+  currentUser?: { id: string; email: string; name: string } | null;
 }
 
 export const ProfileView: React.FC<ProfileViewProps> = ({
@@ -46,6 +50,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onParseResumeText,
   onParseResumeDocument,
   isParsingResume,
+  currentUser,
 }) => {
   const [formData, setFormData] = useState<UserProfile>(profile);
   const [newSkill, setNewSkill] = useState('');
@@ -55,6 +60,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [parseText, setParseText] = useState('');
   const [showParseModal, setShowParseModal] = useState(false);
+
+  // Password & Security State
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSuccess, setPwSuccess] = useState<string | null>(null);
 
   // Work Experience Editing State
   const [editingExpIdx, setEditingExpIdx] = useState<number | null>(null);
@@ -120,6 +133,53 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   const handleRemoveRole = (role: string) => {
     setFormData({ ...formData, target_roles: formData.target_roles.filter((r) => r !== role) });
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError(null);
+    setPwSuccess(null);
+    if (!newPassword || newPassword.length < 6) {
+      setPwError('New password must be at least 6 characters long.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwError('Passwords do not match.');
+      return;
+    }
+
+    setPwLoading(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('careerops_auth_token') : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          current_password: currentPassword.trim() || undefined,
+          new_password: newPassword.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
+        const nextToken = data.session_token || data.token;
+        if (nextToken) {
+          try { localStorage.setItem('careerops_auth_token', nextToken); } catch {}
+        }
+        setPwSuccess('Password successfully updated! Your session and partition are secure.');
+        setNewPassword('');
+        setConfirmPassword('');
+        setCurrentPassword('');
+      } else {
+        setPwError(data?.error || 'Failed to update password.');
+      }
+    } catch (err: any) {
+      setPwError(err.message || 'Error updating password.');
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   // Experience handlers
@@ -577,6 +637,102 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 focus:outline-none focus:border-blue-500/50"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Security & Password Card */}
+          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl space-y-4 border border-blue-500/20 bg-blue-950/10">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-white text-xs uppercase tracking-wider flex items-center gap-2">
+                <Shield className="w-4 h-4 text-blue-400" />
+                <span>Account Security</span>
+              </h3>
+              {currentUser?.email && (
+                <span className="text-[10px] bg-blue-500/20 text-blue-300 font-mono px-2 py-0.5 rounded-md border border-blue-500/30">
+                  {currentUser.email}
+                </span>
+              )}
+            </div>
+
+            <p className="text-[11px] text-neutral-400 leading-relaxed">
+              Your partitioned workspace, searched jobs catalog, and cadences are tied to your account. You can update your password below at any time.
+            </p>
+
+            {pwSuccess && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-300 text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                <span>{pwSuccess}</span>
+              </div>
+            )}
+
+            {pwError && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{pwError}</span>
+              </div>
+            )}
+
+            <div className="space-y-3 text-xs pt-1">
+              <div>
+                <label className="block text-neutral-400 font-medium mb-1 flex items-center gap-1.5">
+                  <Lock className="w-3 h-3 text-neutral-500" />
+                  <span>Current Password (optional if signed in)</span>
+                </label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Enter current password"
+                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 text-xs focus:outline-none focus:border-blue-500/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-neutral-400 font-medium mb-1 flex items-center gap-1.5">
+                  <Key className="w-3 h-3 text-blue-400" />
+                  <span>New Password</span>
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="At least 6 characters"
+                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 text-xs focus:outline-none focus:border-blue-500/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-neutral-400 font-medium mb-1 flex items-center gap-1.5">
+                  <Key className="w-3 h-3 text-blue-400" />
+                  <span>Confirm New Password</span>
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 text-xs focus:outline-none focus:border-blue-500/50"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleUpdatePassword}
+                disabled={pwLoading || !newPassword || newPassword.length < 6 || newPassword !== confirmPassword}
+                className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-xs transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                {pwLoading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Updating Password...</span>
+                  </>
+                ) : (
+                  <>
+                    <Key className="w-3.5 h-3.5" />
+                    <span>Update Password</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
 

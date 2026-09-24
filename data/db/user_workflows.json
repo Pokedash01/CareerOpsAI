@@ -1,0 +1,240 @@
+{
+  "usr_kb270102": {
+    "enabled": true,
+    "interval_hours": 4,
+    "last_run": "2026-09-24T08:28:04.322Z",
+    "next_run": "2026-09-24T16:00:00.000Z",
+    "is_running": false,
+    "total_runs": 11,
+    "auto_notify_telegram": true,
+    "runs": [
+      {
+        "id": "run-1790238453755",
+        "started_at": "2026-09-24T08:27:33.755Z",
+        "completed_at": "2026-09-24T08:28:04.322Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 7,
+        "evaluated_count": 7,
+        "high_fit_count": 41,
+        "notified_count": 5,
+        "status": "completed",
+        "summary": "Autonomous 4-hour cycle: Verified active postings (1 dead links pruned), found 7 fresh roles. Evaluated 7 listings (41 high-fit ≥75%), 5 alerts pushed to Telegram."
+      },
+      {
+        "id": "run-1789719188424",
+        "started_at": "2026-09-18T08:13:08.424Z",
+        "completed_at": "2026-09-18T08:14:00.795Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 5,
+        "evaluated_count": 5,
+        "high_fit_count": 36,
+        "notified_count": 4,
+        "status": "completed",
+        "summary": "Automated cycle: Scanned existing links (0 expired identified), discovered 5 fresh jobs. Evaluated 5 listings, 36 high-fit matches, 4 Telegram alerts dispatched."
+      },
+      {
+        "id": "run-1789488749691",
+        "started_at": "2026-09-15T16:12:29.691Z",
+        "completed_at": "2026-09-15T16:12:51.083Z",
+        "trigger": "manual",
+        "new_jobs_found": 0,
+        "evaluated_count": 0,
+        "high_fit_count": 28,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Automation cycle: Scanned links (0 expired identified), discovered 0 fresh jobs. Evaluated 0 listings, 28 high-fit matches, 0 Telegram alerts dispatched."
+      },
+      {
+        "id": "run-1789488168000",
+        "started_at": "2026-09-15T16:02:48.000Z",
+        "completed_at": "2026-09-15T16:03:12.596Z",
+        "trigger": "manual",
+        "new_jobs_found": 1,
+        "evaluated_count": 1,
+        "high_fit_count": 28,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Automation cycle: Scanned links (0 expired identified), discovered 1 fresh jobs. Evaluated 1 listings, 28 high-fit matches, 0 Telegram alerts dispatched."
+      },
+      {
+        "id": "run-1789375230583",
+        "started_at": "2026-09-14T08:40:30.583Z",
+        "completed_at": "2026-09-14T08:41:15.455Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 1,
+        "evaluated_count": 1,
+        "high_fit_count": 31,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Automated cycle: Scanned existing links (0 expired identified), discovered 1 fresh jobs. Evaluated 1 listings, 31 high-fit matches, 0 Telegram alerts dispatched."
+      },
+      {
+        "id": "run-1789375060209",
+        "started_at": "2026-09-14T08:37:40.209Z",
+        "completed_at": "2026-09-14T08:38:18.536Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 0,
+        "evaluated_count": 0,
+        "high_fit_count": 31,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Automated cycle: Scanned existing links (0 expired identified), discovered 0 fresh jobs. Evaluated 0 listings, 31 high-fit matches, 0 Telegram alerts dispatched."
+      },
+      {
+        "id": "run-1789375006470",
+        "started_at": "2026-09-14T08:36:46.470Z",
+        "completed_at": "2026-09-14T08:37:26.199Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 1,
+        "evaluated_count": 1,
+        "high_fit_count": 31,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Automated cycle: Scanned existing links (0 expired identified), discovered 1 fresh jobs. Evaluated 1 listings, 31 high-fit matches, 0 Telegram alerts dispatched."
+      },
+      {
+        "id": "run-1789374935467",
+        "started_at": "2026-09-14T08:35:35.467Z",
+        "completed_at": "2026-09-14T08:36:28.125Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 0,
+        "evaluated_count": 0,
+        "high_fit_count": 31,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Automated cycle: Scanned existing links (0 expired identified), discovered 0 fresh jobs. Evaluated 0 listings, 31 high-fit matches, 0 Telegram alerts dispatched."
+      },
+      {
+        "id": "run-1788603288633",
+        "started_at": "2026-09-05T10:14:48.633Z",
+        "completed_at": "2026-09-05T10:15:14.447Z",
+        "trigger": "manual",
+        "new_jobs_found": 0,
+        "evaluated_count": 0,
+        "high_fit_count": 3,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Automation cycle: Scanned links (0 expired identified), discovered 0 fresh jobs. Evaluated 0 listings, 3 high-fit matches, 0 Telegram alerts dispatched."
+      },
+      {
+        "id": "run-1788603258244",
+        "started_at": "2026-09-05T10:14:18.244Z",
+        "completed_at": "2026-09-05T10:14:41.669Z",
+        "trigger": "manual",
+        "new_jobs_found": 1,
+        "evaluated_count": 1,
+        "high_fit_count": 3,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Automation cycle: Scanned links (0 expired identified), discovered 1 fresh jobs. Evaluated 1 listings, 3 high-fit matches, 0 Telegram alerts dispatched."
+      },
+      {
+        "id": "run-init-01",
+        "started_at": "2026-09-05T07:04:52.321Z",
+        "completed_at": "2026-09-05T07:05:52.321Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 6,
+        "evaluated_count": 6,
+        "high_fit_count": 4,
+        "notified_count": 2,
+        "status": "completed",
+        "summary": "Automated 4-hour cycle: Scanned Workday, Greenhouse & Ashby portals. Evaluated 6 roles, 4 high-fit (≥75%), 2 dispatched to Telegram."
+      }
+    ],
+    "last_updated": "2026-09-24T15:04:32.141Z"
+  },
+  "usr_demo": {
+    "enabled": true,
+    "interval_hours": 4,
+    "last_run": "2026-09-24T14:42:15.827Z",
+    "next_run": "2026-09-24T18:42:15.827Z",
+    "is_running": false,
+    "total_runs": 3,
+    "auto_notify_telegram": false,
+    "runs": [
+      {
+        "id": "run-1790260897899",
+        "started_at": "2026-09-24T14:41:37.899Z",
+        "completed_at": "2026-09-24T14:42:15.827Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 4,
+        "evaluated_count": 7,
+        "high_fit_count": 21,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Autonomous 4-hour cycle: Verified active postings (0 dead links pruned), found 4 fresh roles. Evaluated 7 listings (21 high-fit ≥75%), 0 alerts pushed to Telegram."
+      },
+      {
+        "id": "run-1790238473755",
+        "started_at": "2026-09-24T08:27:53.755Z",
+        "completed_at": "2026-09-24T08:28:24.620Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 3,
+        "evaluated_count": 8,
+        "high_fit_count": 11,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Autonomous 4-hour cycle: Verified active postings (0 dead links pruned), found 3 fresh roles. Evaluated 8 listings (11 high-fit ≥75%), 0 alerts pushed to Telegram."
+      },
+      {
+        "id": "run-1790219195388",
+        "started_at": "2026-09-24T03:06:35.388Z",
+        "completed_at": "2026-09-24T03:07:10.609Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 16,
+        "evaluated_count": 8,
+        "high_fit_count": 11,
+        "notified_count": 0,
+        "status": "completed",
+        "summary": "Autonomous 4-hour cycle: Verified active postings (2 dead links pruned), found 16 fresh roles. Evaluated 8 listings (11 high-fit ≥75%), 0 alerts pushed to Telegram."
+      }
+    ]
+  },
+  "usr_1c17ab7bbea3a5b5": {
+    "enabled": true,
+    "interval_hours": 4,
+    "last_run": "2026-09-24T14:42:33.855Z",
+    "next_run": "2026-09-24T18:42:33.855Z",
+    "is_running": false,
+    "total_runs": 3,
+    "auto_notify_telegram": true,
+    "runs": [
+      {
+        "id": "run-1790260917899",
+        "started_at": "2026-09-24T14:41:57.899Z",
+        "completed_at": "2026-09-24T14:42:33.855Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 1,
+        "evaluated_count": 5,
+        "high_fit_count": 18,
+        "notified_count": 4,
+        "status": "completed",
+        "summary": "Autonomous 4-hour cycle: Verified active postings (0 dead links pruned), found 1 fresh roles. Evaluated 5 listings (18 high-fit ≥75%), 4 alerts pushed to Telegram."
+      },
+      {
+        "id": "run-1790238484342",
+        "started_at": "2026-09-24T08:28:04.342Z",
+        "completed_at": "2026-09-24T08:28:42.311Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 4,
+        "evaluated_count": 8,
+        "high_fit_count": 13,
+        "notified_count": 3,
+        "status": "completed",
+        "summary": "Autonomous 4-hour cycle: Verified active postings (0 dead links pruned), found 4 fresh roles. Evaluated 8 listings (13 high-fit ≥75%), 3 alerts pushed to Telegram."
+      },
+      {
+        "id": "run-1790219215404",
+        "started_at": "2026-09-24T03:06:55.404Z",
+        "completed_at": "2026-09-24T03:07:37.415Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 16,
+        "evaluated_count": 8,
+        "high_fit_count": 11,
+        "notified_count": 7,
+        "status": "completed",
+        "summary": "Autonomous 4-hour cycle: Verified active postings (2 dead links pruned), found 16 fresh roles. Evaluated 8 listings (11 high-fit ≥75%), 7 alerts pushed to Telegram."
+      }
+    ]
+  }
+}

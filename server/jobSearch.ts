@@ -1,4 +1,4 @@
-import { UserProfile, JobListing } from '../src/types.js';
+import type { UserProfile, JobListing } from '../src/types.js';
 import { isGenericSearchLink, verifyJobPosting } from './linkVerifier.js';
 import { extractSalaryLpa, extractExperienceYears } from './salaryHelpers.js';
 import { searchSalaryLiveFromGlassdoorAndAmbitionBox, estimateSalaryLpa } from './salaryEstimator.js';

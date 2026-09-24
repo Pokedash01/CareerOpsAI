@@ -1,5 +1,21 @@
 import fs from 'fs';
 import path from 'path';
+import {
+  initRelationalDatabase,
+  saveRelationalDatabase,
+  decomposePartitionToDb,
+  recomposePartitionFromDb,
+  dbUsers,
+  dbSessions,
+  dbJobs,
+  dbUserJobs,
+  dbUserProfiles,
+  dbUserSettings,
+  dbUserWorkflows,
+  dbUserRegistries,
+  DB_DIR,
+  BUNDLED_DB_DIR,
+} from './database.js';
 
 export interface StorageData {
   currentProfile?: any;
@@ -81,7 +97,7 @@ export async function saveToRemoteKV(data: StorageData): Promise<boolean> {
 }
 
 /**
- * Loads store synchronously from local disk / tmp / bundled files
+ * Loads store synchronously from local disk / tmp / bundled files, prioritizing relational JSON DB
  */
 const candidatePaths = [
   STORE_FILE,
@@ -92,8 +108,16 @@ const candidatePaths = [
 
 export function loadFromDisk(): StorageData | null {
   try {
-    let bestData: StorageData | null = null;
+    // 1. Check if relational DB files exist in data/db/
+    const usersPath = path.join(DB_DIR, 'users.json');
+    const jobsPath = path.join(DB_DIR, 'jobs.json');
+    const bundledUsersPath = path.join(BUNDLED_DB_DIR, 'users.json');
+
+    const hasRelationalDb = fs.existsSync(usersPath) || fs.existsSync(bundledUsersPath) || fs.existsSync(jobsPath);
+
+    let legacyStore: StorageData | null = null;
     let latestTime = -1;
+
     for (const filePath of candidatePaths) {
       if (fs.existsSync(filePath)) {
         try {
@@ -101,16 +125,49 @@ export function loadFromDisk(): StorageData | null {
           const data = JSON.parse(raw);
           if (data && ((Array.isArray(data.jobListings) && data.jobListings.length > 0) || (data.users && Object.keys(data.users).length > 0))) {
             const fileTime = data.lastUpdated ? new Date(data.lastUpdated).getTime() : 0;
-            if (!bestData || fileTime > latestTime) {
-              bestData = data;
+            if (!legacyStore || fileTime > latestTime) {
+              legacyStore = data;
               latestTime = fileTime;
             }
           }
         } catch {}
       }
     }
-    if (bestData) {
-      return bestData;
+
+    // Initialize the relational database (migrating from legacyStore if DB files are not yet created)
+    initRelationalDatabase(legacyStore);
+
+    // If relational database has users or jobs, reconstruct unified StorageData from relational DB
+    if (Object.keys(dbUsers).length > 0 || Object.keys(dbJobs).length > 0) {
+      const reconstructedPartitions: Record<string, any> = {};
+      for (const userId of Object.keys(dbUsers)) {
+        reconstructedPartitions[userId] = recomposePartitionFromDb(userId);
+      }
+
+      // Also ensure default primary user partition is present
+      const primaryPartition = reconstructedPartitions['usr_kb270102'] || recomposePartitionFromDb('usr_kb270102');
+
+      const reconstructedStore: StorageData = {
+        users: { ...dbUsers },
+        sessions: { ...dbSessions },
+        userPartitions: reconstructedPartitions,
+        currentProfile: primaryPartition.currentProfile,
+        jobListings: primaryPartition.jobListings,
+        notifiedJobIds: primaryPartition.notifiedJobIds,
+        deletedJobIds: primaryPartition.deletedJobIds,
+        seenJobs: primaryPartition.seenJobs,
+        searchedRegistry: primaryPartition.searchedRegistry,
+        appSettings: primaryPartition.appSettings,
+        workflowState: primaryPartition.workflowState,
+        lastUpdated: new Date().toISOString(),
+      };
+
+      console.log(`[Storage] Hydrated from relational JSON DB (${Object.keys(dbUsers).length} users, ${Object.keys(dbJobs).length} jobs, ${Object.keys(dbUserJobs).length} relations)`);
+      return reconstructedStore;
+    }
+
+    if (legacyStore) {
+      return legacyStore;
     }
   } catch (err) {
     console.error('[Storage] Error reading disk store:', err);
@@ -119,22 +176,39 @@ export function loadFromDisk(): StorageData | null {
 }
 
 /**
- * Saves store synchronously to local disk (/tmp in serverless, data/ in dev)
+ * Saves store synchronously to modular relational JSON files (/tmp/db in serverless, data/db/ in dev)
  */
 export function saveToDisk(data: StorageData): void {
   try {
+    // 1. Decompose all user partitions and auth tables into relational database
+    if (data.users && typeof data.users === 'object') {
+      Object.assign(dbUsers, data.users);
+    }
+    if (data.sessions && typeof data.sessions === 'object') {
+      Object.assign(dbSessions, data.sessions);
+    }
+    if (data.userPartitions && typeof data.userPartitions === 'object') {
+      for (const [userId, partition] of Object.entries(data.userPartitions)) {
+        if (partition) {
+          decomposePartitionToDb(userId, partition);
+        }
+      }
+    }
+
+    // 2. Persist modular JSON database files (users.json, jobs.json, user_jobs.json, etc.)
+    saveRelationalDatabase();
+
+    // 3. Also maintain careerops_store.json for fallback compatibility
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('[Storage] Failed to save store to disk:', err);
-  }
 
-  // Also write to data/careerops_store.json if it's different and parent dir exists/writable
-  try {
     if (STORE_FILE !== BUNDLED_STORE_FILE && fs.existsSync(path.dirname(BUNDLED_STORE_FILE))) {
       fs.writeFileSync(BUNDLED_STORE_FILE, JSON.stringify(data, null, 2), 'utf-8');
     }
-  } catch {}
+  } catch (err) {
+    console.error('[Storage] Failed to save store to disk:', err);
+  }
 }
+

@@ -1,16 +1,12 @@
-import type { UserProfile, TailoredContent } from '../src/types.js';
-import { getGeminiClient, cleanJsonResponse } from './gemini.js';
-
+import { getGeminiClient, cleanJsonResponse } from "./gemini.js";
 const NUMBER_REGEX = /\d[\d,]*\.?\d*%?/g;
-
-export function extractNumbers(text: string): Set<string> {
-  if (!text) return new Set();
+function extractNumbers(text) {
+  if (!text) return /* @__PURE__ */ new Set();
   const matches = text.match(NUMBER_REGEX) || [];
-  return new Set(matches.map((n) => n.replace(/,/g, '')));
+  return new Set(matches.map((n) => n.replace(/,/g, "")));
 }
-
-export function buildSourceNumberPool(profile: UserProfile): Set<string> {
-  const pool = new Set<string>();
+function buildSourceNumberPool(profile) {
+  const pool = /* @__PURE__ */ new Set();
   for (const exp of profile.experience || []) {
     for (const b of exp.bullets || []) {
       for (const num of extractNumbers(b)) {
@@ -19,7 +15,7 @@ export function buildSourceNumberPool(profile: UserProfile): Set<string> {
     }
   }
   for (const edu of profile.education || []) {
-    for (const num of extractNumbers(edu.details || '')) {
+    for (const num of extractNumbers(edu.details || "")) {
       pool.add(num);
     }
   }
@@ -28,33 +24,22 @@ export function buildSourceNumberPool(profile: UserProfile): Set<string> {
   }
   return pool;
 }
-
-export function isBulletGrounded(
-  bullet: string,
-  sourceBullets: string[],
-  globalNumberPool: Set<string>
-): boolean {
+function isBulletGrounded(bullet, sourceBullets, globalNumberPool) {
   if (!bullet || !sourceBullets || sourceBullets.length === 0) return false;
-
-  // Check numbers
   const bulletNumbers = extractNumbers(bullet);
   for (const num of bulletNumbers) {
     if (!globalNumberPool.has(num)) {
-      // Unrecognized metric introduced by LLM!
       return false;
     }
   }
-
-  // Check vocabulary overlap (words of 4+ chars)
   const bulletWords = new Set(
-    (bullet.toLowerCase().match(/[a-z]{4,}/g) || [])
+    bullet.toLowerCase().match(/[a-z]{4,}/g) || []
   );
   if (bulletWords.size === 0) return true;
-
   let bestOverlap = 0;
   for (const sb of sourceBullets) {
     const sbWords = new Set(
-      (sb.toLowerCase().match(/[a-z]{4,}/g) || [])
+      sb.toLowerCase().match(/[a-z]{4,}/g) || []
     );
     let common = 0;
     for (const w of bulletWords) {
@@ -63,18 +48,10 @@ export function isBulletGrounded(
     const overlap = common / Math.max(bulletWords.size, 1);
     if (overlap > bestOverlap) bestOverlap = overlap;
   }
-
-  return bestOverlap >= 0.20;
+  return bestOverlap >= 0.2;
 }
-
-export async function generateTailoredDocuments(
-  profile: UserProfile,
-  jobTitle: string,
-  company: string,
-  jobDesc: string
-): Promise<TailoredContent> {
+async function generateTailoredDocuments(profile, jobTitle, company, jobDesc) {
   const numberPool = buildSourceNumberPool(profile);
-
   const sysPrompt = `You are an elite ATS resume & cover letter tailoring assistant.
 Your job is to REFRAME the candidate's real, existing experience so it highlights direct relevance to the target job description.
 
@@ -104,61 +81,50 @@ Output JSON matching this exact structure:
     "Crisp closing paragraph reiterating enthusiasm, availability, and contact."
   ]
 }`;
-
   const prompt = `Candidate Profile (JSON):
 ${JSON.stringify({
-  full_name: profile.full_name,
-  experience: profile.experience,
-  skills: profile.skills,
-  certifications: profile.certifications,
-  education: profile.education
-})}
+    full_name: profile.full_name,
+    experience: profile.experience,
+    skills: profile.skills,
+    certifications: profile.certifications,
+    education: profile.education
+  })}
 
 Target Role: ${jobTitle} at ${company}
 
 Job Description:
 ${jobDesc.substring(0, 3500)}`;
-
-  let rawTailored: any = null;
-
+  let rawTailored = null;
   try {
     const ai = getGeminiClient();
     const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: "gemini-3.8-flash",
       contents: prompt,
       config: {
         systemInstruction: sysPrompt,
         temperature: 0.2,
-        responseMimeType: 'application/json',
-      },
+        responseMimeType: "application/json"
+      }
     });
-
-    rawTailored = cleanJsonResponse(response.text || '{}');
+    rawTailored = cleanJsonResponse(response.text || "{}");
   } catch (error) {
-    console.error('[Tailor] LLM generation failed, generating fallback tailored output:', error);
+    console.error("[Tailor] LLM generation failed, generating fallback tailored output:", error);
   }
-
-  // Validate and Ground against Source Profile
-  const companySourceMap = new Map<string, string[]>();
+  const companySourceMap = /* @__PURE__ */ new Map();
   for (const exp of profile.experience || []) {
     companySourceMap.set(exp.company.toLowerCase().trim(), exp.bullets || []);
   }
-
   let totalBullets = 0;
   let groundedCount = 0;
   let blockedCount = 0;
-
-  const mergedExperience: Array<{ company: string; bullets: string[] }> = [];
-
+  const mergedExperience = [];
   for (const exp of profile.experience || []) {
     const companyKey = exp.company.toLowerCase().trim();
     const sourceBullets = exp.bullets || [];
     const tailoredCompany = rawTailored?.experience?.find(
-      (e: any) => e.company && e.company.toLowerCase().trim() === companyKey
+      (e) => e.company && e.company.toLowerCase().trim() === companyKey
     );
-
-    const verifiedBullets: string[] = [];
-
+    const verifiedBullets = [];
     if (tailoredCompany && Array.isArray(tailoredCompany.bullets)) {
       for (const tb of tailoredCompany.bullets) {
         totalBullets++;
@@ -170,57 +136,53 @@ ${jobDesc.substring(0, 3500)}`;
         }
       }
     }
-
-    // If all bullets were blocked or none generated, use original source bullets
     if (verifiedBullets.length === 0) {
       verifiedBullets.push(...sourceBullets.slice(0, 5));
       groundedCount += verifiedBullets.length;
       totalBullets += verifiedBullets.length;
     }
-
     mergedExperience.push({
       company: exp.company,
-      bullets: verifiedBullets,
+      bullets: verifiedBullets
     });
   }
-
-  // Grounded skills order: keep candidate's original skills, reordered if proposed
   let finalSkills = [...profile.skills];
   if (Array.isArray(rawTailored?.skills_ordered)) {
-    const validSkills = rawTailored.skills_ordered.filter((s: string) =>
-      profile.skills.some((ps) => ps.toLowerCase() === s.toLowerCase())
+    const validSkills = rawTailored.skills_ordered.filter(
+      (s) => profile.skills.some((ps) => ps.toLowerCase() === s.toLowerCase())
     );
     const missing = profile.skills.filter(
-      (ps) => !validSkills.some((vs: string) => vs.toLowerCase() === ps.toLowerCase())
+      (ps) => !validSkills.some((vs) => vs.toLowerCase() === ps.toLowerCase())
     );
     finalSkills = [...validSkills, ...missing];
   }
-
-  const defaultSummary = `${profile.full_name} is a results-driven professional with ${profile.total_years_experience} years of hands-on experience specializing in ${profile.skills.slice(0, 4).join(', ')}. Demonstrated success delivering high-impact automation and cross-functional solutions.`;
-
-  const coverLetterParagraphs: string[] = Array.isArray(rawTailored?.cover_letter_paragraphs) && rawTailored.cover_letter_paragraphs.length >= 3
-    ? rawTailored.cover_letter_paragraphs
-    : [
-        `I am writing to express my strong enthusiasm for the ${jobTitle} position at ${company}. With over ${profile.total_years_experience} years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.`,
-        `During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.`,
-        `My technical foundation spans ${profile.skills.slice(0, 6).join(', ')}, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at ${company}.`,
-        `Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for ${company}.`
-      ];
-
+  const defaultSummary = `${profile.full_name} is a results-driven professional with ${profile.total_years_experience} years of hands-on experience specializing in ${profile.skills.slice(0, 4).join(", ")}. Demonstrated success delivering high-impact automation and cross-functional solutions.`;
+  const coverLetterParagraphs = Array.isArray(rawTailored?.cover_letter_paragraphs) && rawTailored.cover_letter_paragraphs.length >= 3 ? rawTailored.cover_letter_paragraphs : [
+    `I am writing to express my strong enthusiasm for the ${jobTitle} position at ${company}. With over ${profile.total_years_experience} years of hands-on experience in enterprise automation, business intelligence, and digital transformation, I am confident in my ability to immediately add value to your team.`,
+    `During my tenure at KPMG, I architected and deployed enterprise solutions across 13 sectors that saved over 2,000 hours annually, including multi-modal Copilot agents and extensive Power Platform integrations. My background also includes spearheading process documentation and dataset QA for key clients at GlobalLogic.`,
+    `My technical foundation spans ${profile.skills.slice(0, 6).join(", ")}, backed by industry certifications including Azure AI Fundamentals and Lean Six Sigma Yellow Belt. I am eager to apply this rigorous execution discipline to solve strategic engineering challenges at ${company}.`,
+    `Thank you for considering my candidacy. I welcome the opportunity to discuss how my automation background and technical capabilities can drive measurable operational efficiencies for ${company}.`
+  ];
   return {
     job_title: jobTitle,
-    company: company,
-    jd_keywords: Array.isArray(rawTailored?.jd_keywords) ? rawTailored.jd_keywords : ['Power Platform', 'Automation', 'Power BI', 'Copilot', 'SQL'],
+    company,
+    jd_keywords: Array.isArray(rawTailored?.jd_keywords) ? rawTailored.jd_keywords : ["Power Platform", "Automation", "Power BI", "Copilot", "SQL"],
     summary: rawTailored?.summary || defaultSummary,
     skills_ordered: finalSkills,
     experience: mergedExperience,
     cover_letter_paragraphs: coverLetterParagraphs,
-    generated_at: new Date().toISOString(),
+    generated_at: (/* @__PURE__ */ new Date()).toISOString(),
     grounding_stats: {
       total_bullets: totalBullets,
       grounded_count: groundedCount,
       hallucinations_blocked: blockedCount,
-      metrics_verified: true,
-    },
+      metrics_verified: true
+    }
   };
 }
+export {
+  buildSourceNumberPool,
+  extractNumbers,
+  generateTailoredDocuments,
+  isBulletGrounded
+};

@@ -1,4 +1,4 @@
-import { LinkVerificationStatus } from '../src/types.js';
+import type { LinkVerificationStatus } from '../src/types.js';
 
 // Regex and patterns for generic job search pages (STRICTLY BANNED)
 const GENERIC_SEARCH_PATTERNS: RegExp[] = [

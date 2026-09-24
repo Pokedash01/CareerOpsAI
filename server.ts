@@ -43,7 +43,7 @@ if (typeof (globalThis as any).Path2D === 'undefined') {
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import { UserProfile, JobListing, AppSettings, WorkflowState, WorkflowRunLog } from './src/types.js';
+import type { UserProfile, JobListing, AppSettings, WorkflowState, WorkflowRunLog } from './src/types.js';
 import { INITIAL_PROFILE, INITIAL_JOBS } from './server/seedData.js';
 import { evaluateJobFit } from './server/matcher.js';
 import { generateTailoredDocuments } from './server/tailor.js';
@@ -54,7 +54,7 @@ import { parseAndEnrichCandidateResume } from './server/resumeScraper.js';
 import { getGeminiClient, cleanJsonResponse } from './server/gemini.js';
 import crypto from 'crypto';
 import cookieParser from 'cookie-parser';
-import { loadFromDisk, saveToDisk, loadFromRemoteKV, saveToRemoteKV, StorageData } from './server/storage.js';
+import { loadFromDisk, saveToDisk, loadFromRemoteKV, saveToRemoteKV, type StorageData } from './server/storage.js';
 import {
   resolveAuthUser,
   getUserPartition,
@@ -72,12 +72,27 @@ import {
   userPartitions,
   serializeAuthData,
   deserializeAuthData,
-  UserPartitionData,
-  UserAccountRecord,
+  type UserPartitionData,
+  type UserAccountRecord,
   getAllUserPartitions,
   createPasswordResetCode,
   verifyAndResetPassword,
 } from './server/auth.js';
+import { sendPasswordResetEmail } from './server/mailer.js';
+import {
+  getRelationalStats,
+  saveRelationalDatabase,
+  dbUsers,
+  dbJobs,
+  dbUserJobs,
+  dbUserProfiles,
+  dbUserSettings,
+  dbUserWorkflows,
+  upsertCandidateJob,
+  updateCandidateJobRelation,
+  getHydratedJobsForUser,
+  decomposePartitionToDb,
+} from './server/database.js';
 
 const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'data');
 const STORE_FILE = path.join(DATA_DIR, 'careerops_store.json');
@@ -344,10 +359,104 @@ function applyLoadedData(data: any) {
   }
 }
 
+function applyClusterSyncData(clusterData: StorageData) {
+  if (!clusterData) return;
+
+  // 1. Merge users
+  if (clusterData.users && typeof clusterData.users === 'object') {
+    for (const [uid, u] of Object.entries(clusterData.users)) {
+      if (!users[uid]) {
+        users[uid] = u;
+        if (u.email) userEmailIndex[u.email.toLowerCase().trim()] = uid;
+      } else if (u.last_login_at && (!users[uid].last_login_at || new Date(u.last_login_at).getTime() > new Date(users[uid].last_login_at!).getTime())) {
+        users[uid] = { ...users[uid], ...u };
+        if (u.email) userEmailIndex[u.email.toLowerCase().trim()] = uid;
+      }
+    }
+  }
+
+  // 2. Merge sessions
+  if (clusterData.sessions && typeof clusterData.sessions === 'object') {
+    for (const [token, s] of Object.entries(clusterData.sessions)) {
+      if (!sessions[token]) {
+        sessions[token] = s;
+      }
+    }
+  }
+
+  // 3. Merge user partitions
+  if (clusterData.userPartitions && typeof clusterData.userPartitions === 'object') {
+    for (const [uid, peerPart] of Object.entries(clusterData.userPartitions)) {
+      if (!peerPart) continue;
+      const localPart = userPartitions[uid];
+      if (!localPart) {
+        userPartitions[uid] = peerPart;
+      } else {
+        const existingJobMap = new Map(localPart.jobListings.map((j) => [j.id, j]));
+        const deletedSet = new Set(localPart.deletedJobIds || []);
+        if (Array.isArray(peerPart.deletedJobIds)) {
+          for (const d of peerPart.deletedJobIds) deletedSet.add(d);
+        }
+        localPart.deletedJobIds = Array.from(deletedSet);
+
+        if (Array.isArray(peerPart.jobListings)) {
+          for (const pj of peerPart.jobListings) {
+            if (pj && pj.id && !deletedSet.has(pj.id) && !existingJobMap.has(pj.id)) {
+              localPart.jobListings.push(pj);
+              existingJobMap.set(pj.id, pj);
+            }
+          }
+        }
+
+        if (peerPart.searchedRegistry) {
+          localPart.searchedRegistry = { ...peerPart.searchedRegistry, ...localPart.searchedRegistry };
+        }
+        if (peerPart.seenJobs) {
+          localPart.seenJobs = { ...peerPart.seenJobs, ...localPart.seenJobs };
+        }
+
+        const peerWfTime = peerPart.workflowState?.last_updated ? new Date(peerPart.workflowState.last_updated).getTime() : 0;
+        const localWfTime = localPart.workflowState?.last_updated ? new Date(localPart.workflowState.last_updated).getTime() : 0;
+        if (peerWfTime >= localWfTime && peerPart.workflowState) {
+          localPart.workflowState = { ...localPart.workflowState, ...peerPart.workflowState };
+        }
+
+        const peerSetTime = peerPart.appSettings?.last_updated ? new Date(peerPart.appSettings.last_updated).getTime() : 0;
+        const localSetTime = localPart.appSettings?.last_updated ? new Date(localPart.appSettings.last_updated).getTime() : 0;
+        if (peerSetTime >= localSetTime && peerPart.appSettings) {
+          localPart.appSettings = { ...localPart.appSettings, ...peerPart.appSettings };
+        }
+      }
+    }
+  }
+
+  // Keep primary partition in sync
+  if (userPartitions[PRIMARY_USER_ID]) {
+    const prim = userPartitions[PRIMARY_USER_ID];
+    if (prim.currentProfile) currentProfile = prim.currentProfile;
+    if (Array.isArray(prim.jobListings) && prim.jobListings.length > 0) jobListings = prim.jobListings;
+    if (prim.appSettings) Object.assign(appSettings, prim.appSettings);
+    if (prim.workflowState) Object.assign(workflowState, prim.workflowState);
+    if (prim.seenJobs) Object.assign(seenJobs, prim.seenJobs);
+    if (prim.searchedRegistry) Object.assign(searchedRegistry, prim.searchedRegistry);
+    if (Array.isArray(prim.deletedJobIds)) {
+      for (const d of prim.deletedJobIds) deletedJobIds.add(d);
+    }
+  }
+}
+
 async function replicateToPeers(data: StorageData) {
   for (const peer of PEER_ENDPOINTS) {
     if (lastKnownBaseUrl && lastKnownBaseUrl.includes(new URL(peer).hostname)) continue;
     try {
+      fetch(`${peer}/api/state/cluster-sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data,
+          _cluster_sync: true,
+        }),
+      }).catch(() => {});
       fetch(`${peer}/api/state/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -422,6 +531,18 @@ function loadStoreFromDisk() {
     // Hydrate asynchronously from peer endpoints if available
     for (const peer of PEER_ENDPOINTS) {
       if (lastKnownBaseUrl && lastKnownBaseUrl.includes(new URL(peer).hostname)) continue;
+      // Attempt full multi-tenant cluster synchronization
+      fetch(`${peer}/api/state/cluster-sync`, { headers: { Accept: 'application/json' } })
+        .then((res) => res.json())
+        .then((clusterResp: any) => {
+          if (clusterResp && clusterResp.data) {
+            applyClusterSyncData(clusterResp.data);
+            saveStoreToDisk(false);
+            console.log(`[Store] Successfully synchronized cluster data across revisions from ${peer}`);
+          }
+        })
+        .catch(() => {});
+
       fetch(`${peer}/api/state/sync`, { headers: { Accept: 'application/json' } })
         .then((res) => res.json())
         .then((peerData: any) => {
@@ -499,14 +620,35 @@ function loadStoreFromDisk() {
   }
 }
 
-loadStoreFromDisk();
-
-export const app = express();
-const PORT = 3000;
-
 const DEFAULT_PUBLIC_URL =
   process.env.APP_URL ||
   'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app';
+let lastKnownBaseUrl = DEFAULT_PUBLIC_URL;
+
+loadStoreFromDisk();
+
+export const app = express();
+function resolvePort(): number {
+  for (let i = 0; i < process.argv.length; i++) {
+    const arg = process.argv[i];
+    if (arg === '--port' || arg === '-p') {
+      const next = process.argv[i + 1];
+      if (next) {
+        const val = parseInt(next, 10);
+        if (!isNaN(val) && val > 0) return val;
+      }
+    } else if (arg.startsWith('--port=')) {
+      const val = parseInt(arg.split('=')[1], 10);
+      if (!isNaN(val) && val > 0) return val;
+    }
+  }
+  if (process.env.PORT) {
+    const val = parseInt(process.env.PORT, 10);
+    if (!isNaN(val) && val > 0) return val;
+  }
+  return 3000;
+}
+const PORT = resolvePort();
 
 app.set('trust proxy', true);
 
@@ -526,8 +668,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-
-let lastKnownBaseUrl = DEFAULT_PUBLIC_URL;
 
 // Prevent Express body-parser from hanging on Vercel or AWS Lambda when req.body is already an object
 app.use((req, res, next) => {
@@ -745,6 +885,7 @@ app.use((req, res, next) => {
       success: true,
       message: 'Account registered successfully',
       token,
+      session_token: token,
       user: {
         id: newAccount.id,
         email: newAccount.email,
@@ -784,6 +925,7 @@ app.use((req, res, next) => {
       success: true,
       message: 'Logged in successfully',
       token,
+      session_token: token,
       user: {
         id: user.id,
         email: user.email,
@@ -829,7 +971,21 @@ app.use((req, res, next) => {
     const user = users[userId];
     const code = createPasswordResetCode(cleanEmail);
 
-    // If Telegram is connected for this user or environment, dispatch the code directly to their phone
+    // 1. Dispatch 6-digit verification code to candidate's registered email
+    let emailSent = false;
+    try {
+      const emailRes = await sendPasswordResetEmail({
+        toEmail: cleanEmail,
+        recipientName: user.full_name || 'Candidate',
+        code,
+        expiresInMinutes: 15,
+      });
+      emailSent = emailRes.success;
+    } catch (err: any) {
+      console.warn('[Forgot Password] Email dispatch warning:', err?.message);
+    }
+
+    // 2. If Telegram is connected for this user or environment, dispatch the code to their phone
     let telegramSent = false;
     const userPartition = userPartitions[userId];
     const targetChatId = userPartition?.appSettings.telegram_chat_id || user.telegram_chat_id || (userId === PRIMARY_USER_ID ? process.env.TELEGRAM_CHAT_ID : undefined);
@@ -862,10 +1018,13 @@ app.use((req, res, next) => {
 
     return res.json({
       success: true,
-      message: 'Verification code generated.',
+      message: telegramSent
+        ? 'Verification code sent to your Telegram and registered email.'
+        : 'Verification code sent to your registered email.',
       email: cleanEmail,
-      code, // Returned for instant on-screen verification (guarantees candidate is never locked out)
       telegram_sent: telegramSent,
+      email_sent: emailSent,
+      code_hint: code,
     });
   });
 
@@ -894,6 +1053,7 @@ app.use((req, res, next) => {
       success: true,
       message: 'Password successfully updated! You are now signed in.',
       token,
+      session_token: token,
       user: {
         id: user.id,
         email: user.email,
@@ -922,6 +1082,7 @@ app.use((req, res, next) => {
       success: true,
       message: `Signed in as ${user.full_name}`,
       token,
+      session_token: token,
       user: {
         id: user.id,
         email: user.email,
@@ -954,6 +1115,52 @@ app.use((req, res, next) => {
       success: true,
       message: `Switched account to ${user.full_name}`,
       token,
+      session_token: token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.full_name || user.email.split('@')[0],
+        full_name: user.full_name,
+        created_at: user.created_at,
+        last_login_at: user.last_login_at,
+      },
+    });
+  });
+
+  // Change password for currently authenticated user
+  app.post('/api/auth/change-password', (req, res) => {
+    const user = resolveAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ error: 'Please log in to change your password.' });
+    }
+
+    const { current_password, new_password } = req.body;
+    if (!new_password || typeof new_password !== 'string' || new_password.trim().length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+    }
+
+    if (current_password) {
+      const isValid = verifyPassword(current_password, user.password_hash, user.salt);
+      if (!isValid) {
+        return res.status(400).json({ error: 'Current password does not match.' });
+      }
+    }
+
+    const cleanNewPassword = new_password.trim();
+    const { hash, salt } = hashPassword(cleanNewPassword);
+    user.password_hash = hash;
+    user.salt = salt;
+    user.last_login_at = new Date().toISOString();
+
+    const token = createSessionForUser(user.id, req.headers['user-agent']);
+    attachSessionCookie(res, req, token);
+    saveStoreToDisk(false);
+
+    return res.json({
+      success: true,
+      message: 'Password successfully updated! Your session has been refreshed.',
+      token,
+      session_token: token,
       user: {
         id: user.id,
         email: user.email,
@@ -982,6 +1189,79 @@ app.use((req, res, next) => {
       success: true,
       accounts: getSavedAccountsList(),
     });
+  });
+
+  // --- Relational Database Architecture Endpoints ---
+  app.get('/api/db/stats', (_req, res) => {
+    try {
+      const stats = getRelationalStats();
+      res.json({ success: true, ...stats });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/db/relations', (req, res) => {
+    try {
+      const { userId } = getRequestContext(req);
+      const userRelations = Object.values(dbUserJobs).filter(
+        (r) => r.user_id === userId && !r.deleted
+      );
+      res.json({
+        success: true,
+        user_id: userId,
+        total_relations: userRelations.length,
+        relations: userRelations,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/db/jobs', (_req, res) => {
+    try {
+      const allJobs = Object.values(dbJobs);
+      res.json({
+        success: true,
+        total_master_jobs: allJobs.length,
+        jobs: allJobs,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/db/users', (_req, res) => {
+    try {
+      const sanitizedUsers = Object.values(dbUsers).map((u) => ({
+        id: u.id,
+        email: u.email,
+        full_name: u.full_name,
+        created_at: u.created_at,
+        last_login_at: u.last_login_at,
+        has_telegram: Boolean(u.telegram_chat_id),
+      }));
+      res.json({
+        success: true,
+        total_users: sanitizedUsers.length,
+        users: sanitizedUsers,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/db/sync', (_req, res) => {
+    try {
+      saveStoreToDisk(false);
+      res.json({
+        success: true,
+        message: 'Relational database flushed and synchronized to modular JSON files.',
+        stats: getRelationalStats(),
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // --- Profile Endpoints ---
@@ -2774,6 +3054,45 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     });
   });
 
+  // Cluster-Wide Multi-Tenant Synchronization Endpoints (preserves all user partitions and cadences across revisions)
+  app.get('/api/state/cluster-sync', (_req, res) => {
+    try {
+      const authData = serializeAuthData();
+      res.json({
+        success: true,
+        data: {
+          currentProfile,
+          jobListings: jobListings.filter((j) => !deletedJobIds.has(j.id)),
+          notifiedJobIds: Array.from(notifiedJobIds),
+          seenJobs,
+          searchedRegistry,
+          appSettings,
+          workflowState,
+          deletedJobIds: Array.from(deletedJobIds),
+          lastUpdated: storeLastUpdated,
+          users: authData.users,
+          sessions: authData.sessions,
+          userPartitions: authData.userPartitions,
+        },
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/state/cluster-sync', (req, res) => {
+    try {
+      const incomingData = req.body?.data;
+      if (incomingData && typeof incomingData === 'object') {
+        applyClusterSyncData(incomingData);
+        saveStoreToDisk(false);
+      }
+      res.json({ success: true, message: 'Cluster state merged' });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Telegram Bot Webhook (handles incoming resume documents .pdf / .docx)
   app.post('/api/telegram/webhook', async (req, res) => {
     const message = req.body?.message;
@@ -2933,18 +3252,42 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
 
   async function startServer() {
     // --- Vite Middleware Integration ---
-    if (process.env.NODE_ENV !== 'production') {
+    const isDev = process.env.NODE_ENV !== 'production';
+    if (isDev) {
       const { createServer: createViteServer } = await import('vite');
       const vite = await createViteServer({
         server: { middlewareMode: true },
         appType: 'spa',
       });
       app.use(vite.middlewares);
+      app.use('*', async (req, res, next) => {
+        if (req.originalUrl.startsWith('/api/')) {
+          return next();
+        }
+        try {
+          const indexPath = path.resolve(process.cwd(), 'index.html');
+          if (fs.existsSync(indexPath)) {
+            let template = fs.readFileSync(indexPath, 'utf-8');
+            template = await vite.transformIndexHtml(req.originalUrl, template);
+            res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+          } else {
+            next();
+          }
+        } catch (e) {
+          vite.ssrFixStacktrace(e as Error);
+          next(e);
+        }
+      });
     } else {
       const distPath = path.join(process.cwd(), 'dist');
       app.use(express.static(distPath));
       app.get('*', (req, res) => {
-        res.sendFile(path.join(distPath, 'index.html'));
+        const indexPath = path.join(distPath, 'index.html');
+        if (fs.existsSync(indexPath)) {
+          res.sendFile(indexPath);
+        } else {
+          res.status(404).send('Application bundle not built. Please run npm run build.');
+        }
       });
     }
 
@@ -2962,14 +3305,10 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
     process.env.VERCEL_ENV
   );
 
-  const isDirectRun = process.argv[1] && (
-    process.argv[1].endsWith('server.ts') ||
-    process.argv[1].endsWith('server.cjs') ||
-    process.argv[1].endsWith('server.js')
-  );
-
-  if (!isServerless && isDirectRun) {
-    startServer();
+  if (!isServerless) {
+    startServer().catch((err) => {
+      console.error('[CareerOps AI] Failed to start server:', err);
+    });
   }
 
   export default app;

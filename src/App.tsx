@@ -83,7 +83,7 @@ async function safeFetchJson<T>(url: string, init?: RequestInit, timeoutMs = 200
             fetch(alt, {
               ...init,
               credentials: isAltCross ? 'omit' : 'include',
-              headers: { Accept: 'application/json', ...(init?.headers || {}) },
+              headers: { Accept: 'application/json', ...authHeaders, ...(init?.headers || {}) },
               keepalive: true,
             }).catch(() => {});
           }
@@ -126,14 +126,17 @@ export function addDeletedJobId(id: string): void {
 }
 
 // Global real-time cloud synchronizer pushing latest snapshots to both cloud servers
-export async function syncStateToCloud(snapshot: {
-  jobs?: JobListing[];
-  profile?: UserProfile;
-  settings?: AppSettings;
-  workflow?: WorkflowState;
-  deleted_ids?: string[];
-  searched_registry?: Record<string, any>;
-}) {
+export async function syncStateToCloud(
+  snapshot: {
+    jobs?: JobListing[];
+    profile?: UserProfile;
+    settings?: AppSettings;
+    workflow?: WorkflowState;
+    deleted_ids?: string[];
+    searched_registry?: Record<string, any>;
+  },
+  explicitToken?: string
+) {
   const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
   const endpoints = ['/api/state/sync'];
   if (!currentOrigin.includes('ais-dev-w2ikgh4niy7jalbtjcsxj4')) {
@@ -143,7 +146,7 @@ export async function syncStateToCloud(snapshot: {
     endpoints.push(`${LIVE_PREVIEW_ORIGIN}/api/state/sync`);
   }
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('careerops_auth_token') : null;
+  const token = explicitToken || (typeof window !== 'undefined' ? localStorage.getItem('careerops_auth_token') : null);
   const authHeaders: Record<string, string> = {};
   if (token) {
     authHeaders['Authorization'] = `Bearer ${token}`;
@@ -404,13 +407,14 @@ export function App() {
       if (res && res.success && res.user) {
         const norm = normalizeUserRecord(res.user);
         setCurrentUser(norm);
-        if (res.session_token) {
-          try { localStorage.setItem('careerops_auth_token', res.session_token); } catch {}
+        const sessionToken = res.session_token || res.token;
+        if (sessionToken) {
+          try { localStorage.setItem('careerops_auth_token', sessionToken); } catch {}
         }
         try { localStorage.setItem('careerops_user', JSON.stringify(norm)); } catch {}
         updateSavedAccount(norm);
         showToast(`Welcome back, ${norm.name}! Your workspace partition is active.`, 'success');
-        await loadUserData();
+        await loadUserData(sessionToken, norm.id);
         return { success: true };
       }
       return { success: false, error: res?.error || 'Invalid credentials' };
@@ -455,13 +459,14 @@ export function App() {
       if (res && res.success && res.user) {
         const norm = normalizeUserRecord(res.user);
         setCurrentUser(norm);
-        if (res.session_token) {
-          try { localStorage.setItem('careerops_auth_token', res.session_token); } catch {}
+        const sessionToken = res.session_token || res.token;
+        if (sessionToken) {
+          try { localStorage.setItem('careerops_auth_token', sessionToken); } catch {}
         }
         try { localStorage.setItem('careerops_user', JSON.stringify(norm)); } catch {}
         updateSavedAccount(norm);
         showToast(`Workspace initialized for ${norm.name}.`, 'success');
-        await loadUserData();
+        await loadUserData(sessionToken, norm.id);
         return { success: true };
       }
       return {
@@ -486,13 +491,14 @@ export function App() {
       if (res && res.success && res.user) {
         const norm = normalizeUserRecord(res.user);
         setCurrentUser(norm);
-        if (res.session_token) {
-          try { localStorage.setItem('careerops_auth_token', res.session_token); } catch {}
+        const sessionToken = res.session_token || res.token;
+        if (sessionToken) {
+          try { localStorage.setItem('careerops_auth_token', sessionToken); } catch {}
         }
         try { localStorage.setItem('careerops_user', JSON.stringify(norm)); } catch {}
         updateSavedAccount(norm);
         showToast(`Signed into verified workspace for ${norm.name}.`, 'success');
-        await loadUserData();
+        await loadUserData(sessionToken, norm.id);
         return { success: true };
       }
       return { success: false, error: res?.error || 'Demo login failed' };
@@ -511,13 +517,14 @@ export function App() {
       if (res && res.success && res.user) {
         const norm = normalizeUserRecord(res.user);
         setCurrentUser(norm);
-        if (res.session_token) {
-          try { localStorage.setItem('careerops_auth_token', res.session_token); } catch {}
+        const sessionToken = res.session_token || res.token;
+        if (sessionToken) {
+          try { localStorage.setItem('careerops_auth_token', sessionToken); } catch {}
         }
         try { localStorage.setItem('careerops_user', JSON.stringify(norm)); } catch {}
         updateSavedAccount(norm);
         showToast(`Switched account to ${norm.name}.`, 'success');
-        await loadUserData();
+        await loadUserData(sessionToken, norm.id);
         return { success: true };
       }
       return { success: false, error: res?.error || 'Account switch failed' };
@@ -566,73 +573,123 @@ export function App() {
   }, []);
 
   // User data loader partitioned per authenticated user
-  const loadUserData = async () => {
+  const loadUserData = async (explicitToken?: string, targetUserId?: string) => {
     try {
-      await checkAuthSession();
+      const activeToken = explicitToken || (typeof window !== 'undefined' ? localStorage.getItem('careerops_auth_token') : null);
+      let activeUserId = targetUserId || currentUser?.id;
+      if (!activeUserId && activeToken) {
+        const sessionUser = await checkAuthSession();
+        if (sessionUser) activeUserId = sessionUser.id;
+      } else if (!activeUserId) {
+        await checkAuthSession();
+      }
+
       // Attempt atomic single-request synchronization first
-      const syncRes = await safeFetchJson<any>('/api/state/sync', undefined, 12000);
+      const headers: Record<string, string> = {};
+      if (activeToken) headers['Authorization'] = `Bearer ${activeToken}`;
+      const syncRes = await safeFetchJson<any>('/api/state/sync', { headers }, 12000);
 
-        if (syncRes && Array.isArray(syncRes.jobs)) {
-          if (Array.isArray(syncRes.deleted_ids)) {
-            addDeletedJobIds(syncRes.deleted_ids);
-          }
-          const deleted = getDeletedJobIds();
+      if (syncRes && Array.isArray(syncRes.jobs)) {
+        if (Array.isArray(syncRes.deleted_ids)) {
+          addDeletedJobIds(syncRes.deleted_ids);
+        }
+        const deleted = getDeletedJobIds();
 
-          // Use server partition as authority for the authenticated user session
-          const serverJobs = syncRes.jobs.filter((j: JobListing) => !deleted.has(j.id));
-          setJobs(serverJobs);
-          setIsBackendConnected(true);
-          try { localStorage.setItem('careerops_jobs', JSON.stringify(serverJobs)); } catch {}
+        // Use server partition as authority for the authenticated user session
+        let serverJobs = syncRes.jobs.filter((j: JobListing) => !deleted.has(j.id));
 
-          if (syncRes.searched_registry && typeof syncRes.searched_registry === 'object') {
-            const currentReg = getSearchedRegistry();
-            const mergedReg = { ...syncRes.searched_registry, ...currentReg };
-            saveSearchedRegistry(mergedReg);
-          }
-
-          if (syncRes.profile?.full_name) {
-            setProfile(syncRes.profile);
-            try { localStorage.setItem('careerops_profile', JSON.stringify(syncRes.profile)); } catch {}
-          }
-          if (syncRes.stats) {
-            setStats(syncRes.stats);
-            try { localStorage.setItem('careerops_stats', JSON.stringify(syncRes.stats)); } catch {}
-          }
-          if (syncRes.workflow) {
-            const cachedWorkflowRaw = localStorage.getItem('careerops_workflow');
-            let localWorkflow: WorkflowState | null = null;
+        // If server returned 0 jobs for this partition, restore from per-user cache or current cache
+        if (serverJobs.length === 0) {
+          const userJobCache = activeUserId ? localStorage.getItem(`careerops_jobs_${activeUserId}`) : null;
+          const globalJobCache = localStorage.getItem('careerops_jobs');
+          const fallbackRaw = userJobCache || globalJobCache;
+          if (fallbackRaw) {
             try {
-              if (cachedWorkflowRaw) localWorkflow = JSON.parse(cachedWorkflowRaw);
+              const parsed = JSON.parse(fallbackRaw);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const restored = parsed.filter((j: JobListing) => !deleted.has(j.id));
+                if (restored.length > 0) {
+                  serverJobs = restored;
+                  // Heal the server partition immediately
+                  syncStateToCloud({ jobs: restored }, activeToken || undefined).catch(() => {});
+                }
+              }
             } catch {}
-
-            const serverWf = syncRes.workflow;
-            const localTime = localWorkflow?.last_updated ? new Date(localWorkflow.last_updated).getTime() : 0;
-            const serverTime = serverWf.last_updated ? new Date(serverWf.last_updated).getTime() : 0;
-
-            const effectiveInterval = (localWorkflow && localTime >= serverTime)
-              ? (localWorkflow.interval_hours || serverWf.interval_hours)
-              : (serverWf.interval_hours || 4);
-
-            const effectiveWf: WorkflowState = {
-              ...serverWf,
-              interval_hours: effectiveInterval,
-              enabled: (localWorkflow && localTime >= serverTime) ? localWorkflow.enabled : serverWf.enabled,
-              auto_notify_telegram: (localWorkflow && localTime >= serverTime) ? localWorkflow.auto_notify_telegram : serverWf.auto_notify_telegram,
-              last_updated: localTime >= serverTime ? localWorkflow?.last_updated : serverWf.last_updated,
-            };
-
-            setWorkflow(effectiveWf);
-            try { localStorage.setItem('careerops_workflow', JSON.stringify(effectiveWf)); } catch {}
-
-            // If local state had newer cadence or jobs, heal the cloud server
-            if (localWorkflow && localTime > serverTime) {
-              syncStateToCloud({ workflow: effectiveWf, jobs: serverJobs }).catch(() => {});
-            }
           }
-          if (syncRes.settings) {
-            setSettings(syncRes.settings);
-            try { localStorage.setItem('careerops_settings', JSON.stringify(syncRes.settings)); } catch {}
+        }
+
+        setJobs(serverJobs);
+        setIsBackendConnected(true);
+        try {
+          localStorage.setItem('careerops_jobs', JSON.stringify(serverJobs));
+          if (activeUserId) localStorage.setItem(`careerops_jobs_${activeUserId}`, JSON.stringify(serverJobs));
+        } catch {}
+
+        if (syncRes.searched_registry && typeof syncRes.searched_registry === 'object') {
+          const currentReg = getSearchedRegistry();
+          const mergedReg = { ...syncRes.searched_registry, ...currentReg };
+          saveSearchedRegistry(mergedReg);
+          if (activeUserId) {
+            try { localStorage.setItem(`careerops_registry_${activeUserId}`, JSON.stringify(mergedReg)); } catch {}
           }
+        }
+
+        if (syncRes.profile?.full_name) {
+          setProfile(syncRes.profile);
+          try {
+            localStorage.setItem('careerops_profile', JSON.stringify(syncRes.profile));
+            if (activeUserId) localStorage.setItem(`careerops_profile_${activeUserId}`, JSON.stringify(syncRes.profile));
+          } catch {}
+        }
+        if (syncRes.stats) {
+          setStats(syncRes.stats);
+          try {
+            localStorage.setItem('careerops_stats', JSON.stringify(syncRes.stats));
+            if (activeUserId) localStorage.setItem(`careerops_stats_${activeUserId}`, JSON.stringify(syncRes.stats));
+          } catch {}
+        }
+        if (syncRes.workflow) {
+          const userWfCache = activeUserId ? localStorage.getItem(`careerops_workflow_${activeUserId}`) : null;
+          const cachedWorkflowRaw = userWfCache || localStorage.getItem('careerops_workflow');
+          let localWorkflow: WorkflowState | null = null;
+          try {
+            if (cachedWorkflowRaw) localWorkflow = JSON.parse(cachedWorkflowRaw);
+          } catch {}
+
+          const serverWf = syncRes.workflow;
+          const localTime = localWorkflow?.last_updated ? new Date(localWorkflow.last_updated).getTime() : 0;
+          const serverTime = serverWf.last_updated ? new Date(serverWf.last_updated).getTime() : 0;
+
+          const effectiveInterval = (localWorkflow && localTime >= serverTime)
+            ? (localWorkflow.interval_hours || serverWf.interval_hours || 4)
+            : (serverWf.interval_hours || 4);
+
+          const effectiveWf: WorkflowState = {
+            ...serverWf,
+            interval_hours: effectiveInterval,
+            enabled: (localWorkflow && localTime >= serverTime) ? localWorkflow.enabled : serverWf.enabled,
+            auto_notify_telegram: (localWorkflow && localTime >= serverTime) ? localWorkflow.auto_notify_telegram : serverWf.auto_notify_telegram,
+            last_updated: localTime >= serverTime ? localWorkflow?.last_updated : serverWf.last_updated,
+          };
+
+          setWorkflow(effectiveWf);
+          try {
+            localStorage.setItem('careerops_workflow', JSON.stringify(effectiveWf));
+            if (activeUserId) localStorage.setItem(`careerops_workflow_${activeUserId}`, JSON.stringify(effectiveWf));
+          } catch {}
+
+          // If local state had newer cadence or jobs, heal the cloud server
+          if (localWorkflow && localTime > serverTime) {
+            syncStateToCloud({ workflow: effectiveWf, jobs: serverJobs }, activeToken || undefined).catch(() => {});
+          }
+        }
+        if (syncRes.settings) {
+          setSettings(syncRes.settings);
+          try {
+            localStorage.setItem('careerops_settings', JSON.stringify(syncRes.settings));
+            if (activeUserId) localStorage.setItem(`careerops_settings_${activeUserId}`, JSON.stringify(syncRes.settings));
+          } catch {}
+        }
         } else {
           // Fallback to split endpoints
           const [profRes, jobsRes, stateRes] = await Promise.all([
@@ -1760,6 +1817,7 @@ export function App() {
                   onParseResumeText={handleParseResumeText}
                   onParseResumeDocument={handleParseResumeDocument}
                   isParsingResume={isParsingResume}
+                  currentUser={currentUser}
                 />
               </motion.div>
             )}

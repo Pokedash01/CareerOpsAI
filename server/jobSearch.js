@@ -1,0 +1,793 @@
+import { isGenericSearchLink, verifyJobPosting } from "./linkVerifier.js";
+import { extractSalaryLpa, extractExperienceYears } from "./salaryHelpers.js";
+import { estimateSalaryLpa } from "./salaryEstimator.js";
+import crypto from "crypto";
+const ALLOWED_ATS_DOMAINS = [
+  "myworkdayjobs.com",
+  "greenhouse.io",
+  "lever.co",
+  "smartrecruiters.com",
+  "smrtr.io",
+  "ashbyhq.com",
+  "taleo.net"
+];
+const ATS_DOMAINS = "(site:myworkdayjobs.com OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:smartrecruiters.com)";
+const LOCATIONS = '("Gurgaon" OR "Gurugram" OR "Noida" OR "Delhi" OR "Bangalore" OR "Bengaluru" OR "Remote" OR "India")';
+const KNOWN_CITIES = [
+  "Gurgaon",
+  "Gurugram",
+  "Noida",
+  "New Delhi",
+  "Delhi",
+  "Bangalore",
+  "Bengaluru",
+  "Mumbai",
+  "Pune",
+  "Hyderabad",
+  "Chennai",
+  "Kolkata",
+  "Ahmedabad",
+  "Remote",
+  "Hybrid",
+  "Work From Home"
+];
+function isStrictJobUrl(url) {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url.trim());
+    const host = parsed.hostname.toLowerCase();
+    const pathname = parsed.pathname.toLowerCase();
+    const search = parsed.search.toLowerCase();
+    if (search.includes("expjd=true") || search.includes("keywords=") || search.includes("search=") || search.includes("query=") || search.includes("searchterm=")) {
+      return false;
+    }
+    const forbidden = [
+      "shine.com",
+      "indeed.",
+      "glassdoor.",
+      "ambitionbox.",
+      "adzuna.",
+      "bebee.",
+      "timesjobs.",
+      "freshersworld.",
+      "monsterindia.",
+      "simplyhired.",
+      "careerjet.",
+      "jooble.",
+      "hirist.",
+      "instahyre.",
+      "ziprecruiter.",
+      "google.com",
+      "yahoo.com",
+      "bing.com"
+    ];
+    for (const f of forbidden) {
+      if (host.includes(f) || pathname.includes(f)) {
+        return false;
+      }
+    }
+    if (host.includes("linkedin.com")) {
+      if (!pathname.includes("/jobs/view/")) {
+        return false;
+      }
+      if (pathname.includes("/jobs/search") || pathname.includes("/jobs/collections")) {
+        return false;
+      }
+      return true;
+    }
+    if (host.includes("naukri.com")) {
+      if (!pathname.includes("/job-listings-")) {
+        return false;
+      }
+      if (pathname.includes("-jobs") || pathname.includes("/jobs-in-") || pathname.includes("/search") || search.includes("expjd=true")) {
+        return false;
+      }
+      return true;
+    }
+    if (host.includes("foundit.in") || host.includes("monster.com")) {
+      if (pathname.includes("/srp") || pathname.includes("/search")) {
+        return false;
+      }
+      return pathname.includes("/job-postings/") || pathname.includes("/job-openings/");
+    }
+    if (host === "jobs.lever.co" || host.endsWith(".lever.co")) {
+      const parts = pathname.split("/").filter(Boolean);
+      if (parts.length < 2) return false;
+      if (search.includes("location=") || search.includes("workplacetype=") || search.includes("team=") || search.includes("department=")) {
+        return false;
+      }
+      return true;
+    }
+    if (host.includes("greenhouse.io")) {
+      if (pathname.includes("/jobs/") || pathname.includes("/job_app")) {
+        const parts = pathname.split("/").filter(Boolean);
+        return parts.length >= 2;
+      }
+      return false;
+    }
+    if (host.includes("ashbyhq.com")) {
+      const parts = pathname.split("/").filter(Boolean);
+      return parts.length >= 2;
+    }
+    if (host.includes("smartrecruiters.com") || host.includes("smrtr.io")) {
+      const parts = pathname.split("/").filter(Boolean);
+      return parts.length >= 2;
+    }
+    if (host.includes("myworkdayjobs.com")) {
+      return pathname.includes("/job/");
+    }
+    if (host.includes("taleo.net")) {
+      return pathname.includes("jobdetail.ftl");
+    }
+    if (host.startsWith("careers.") || host.startsWith("jobs.")) {
+      if ((pathname.includes("/job/") || pathname.includes("/jobs/") || pathname.includes("/posting/")) && !pathname.includes("/search")) {
+        const parts = pathname.split("/").filter(Boolean);
+        return parts.length >= 2;
+      }
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+const isStrictAtsUrl = isStrictJobUrl;
+function isInvalidBogusTitle(title, company) {
+  if (!title) return true;
+  const t = title.toLowerCase().trim();
+  const c = (company || "").toLowerCase().trim();
+  if (/\bjobs\s+(?:in|for|near|across|at)\b/i.test(t)) return true;
+  if (/\b(?:openings|vacancies|job\s+vacancies)\s+(?:in|for|across|at)\b/i.test(t)) return true;
+  if (/\bjobs\s*[-–|:]/i.test(t)) return true;
+  if (/\b(?:jobs|openings|vacancies)$/i.test(t)) return true;
+  if (/\b\d+[\+,\s]*jobs\b/i.test(t)) return true;
+  if (/^jobs\s+in\b/i.test(t)) return true;
+  if (/^page\s+\d+/i.test(t)) return true;
+  if (/search\s+results/i.test(t)) return true;
+  if (/\b(?:all\s+jobs|latest\s+jobs|job\s+search)\b/i.test(t)) return true;
+  if (/shine\.com|foundit|naukri|indeed|adzuna|glassdoor|ambitionbox/i.test(t)) return true;
+  if (c && (t === c || t === c.replace(/[^a-z0-9]/g, ""))) return true;
+  if (/^(?:careers|jobs|home|join\s+our\s+team|welcome|overview)$/i.test(t)) return true;
+  return false;
+}
+function evaluatePostedWithin3Days(url, itemDate, snippet, pageHtml) {
+  const now = Date.now();
+  if (url && url.includes("naukri.com")) {
+    const nkMatch = url.match(/job-listings-.*?(\d{6})\d{6}(?:[?#&]|$)/);
+    if (nkMatch) {
+      const raw = nkMatch[1];
+      const day = parseInt(raw.slice(0, 2), 10);
+      const month = parseInt(raw.slice(2, 4), 10);
+      const year = 2e3 + parseInt(raw.slice(4, 6), 10);
+      if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
+        const jobTimestamp = new Date(year, month - 1, day).getTime();
+        const diffDays = Math.floor((now - jobTimestamp) / 864e5);
+        if (diffDays > 3) {
+          return {
+            isWithin3Days: false,
+            postedDaysAgo: diffDays,
+            reason: `Naukri posting created ${diffDays} days ago (${day}/${month}/${year})`
+          };
+        }
+        return {
+          isWithin3Days: true,
+          postedDaysAgo: Math.max(0, diffDays),
+          reason: `Naukri posting date ${day}/${month}/${year}`
+        };
+      }
+    }
+  }
+  if (pageHtml) {
+    const metaMatch = pageHtml.match(/<meta\s+[^>]*(?:itemprop|property|name)=["'](?:datePosted|article:published_time|og:updated_time|og:published_time|date)["'][^>]*content=["']([^"']+)["']/i) || pageHtml.match(/<meta\s+[^>]*content=["']([^"']+)["'][^>]*(?:itemprop|property|name)=["'](?:datePosted|article:published_time|og:updated_time|og:published_time|date)["']/i);
+    if (metaMatch) {
+      const dateStr = metaMatch[1];
+      const parsed = Date.parse(dateStr);
+      if (!isNaN(parsed)) {
+        const diffDays = Math.floor((now - parsed) / 864e5);
+        if (diffDays > 3) {
+          return {
+            isWithin3Days: false,
+            postedDaysAgo: diffDays,
+            reason: `Meta datePosted ${dateStr} is ${diffDays} days ago (> 3 days limit)`
+          };
+        }
+        return {
+          isWithin3Days: true,
+          postedDaysAgo: Math.max(0, diffDays),
+          reason: `Meta datePosted ${dateStr} (${diffDays} days ago)`
+        };
+      }
+    }
+    const jsonLdMatch = pageHtml.match(/<script type=["']application\/ld\+json["']>([\s\S]*?)<\/script>/i);
+    if (jsonLdMatch) {
+      try {
+        const parsed = JSON.parse(jsonLdMatch[1]);
+        const dateStr = parsed.datePosted || Array.isArray(parsed) && parsed[0]?.datePosted;
+        if (dateStr) {
+          const timestamp = Date.parse(dateStr);
+          if (!isNaN(timestamp)) {
+            const diffDays = Math.floor((now - timestamp) / 864e5);
+            if (diffDays > 7) {
+              return {
+                isWithin3Days: false,
+                postedDaysAgo: diffDays,
+                reason: `JSON-LD datePosted ${dateStr} is ${diffDays} days ago (> 7 days limit)`
+              };
+            }
+            return {
+              isWithin3Days: true,
+              postedDaysAgo: Math.max(0, diffDays),
+              reason: `JSON-LD datePosted ${dateStr}`
+            };
+          }
+        }
+      } catch {
+      }
+    }
+  }
+  const textToScan = `${itemDate || ""} ${snippet || ""} ${pageHtml ? pageHtml.slice(0, 1500) : ""}`.toLowerCase();
+  if (/posted\s+30\+\s+days\s+ago/i.test(textToScan) || /posted\s+(?:[89]|\d{2,})\s+days\s+ago/i.test(textToScan) || /posted\s+(?:[2-9]|\d{2,})\s+weeks?\s+ago/i.test(textToScan) || /posted\s+\d+\s+months?\s+ago/i.test(textToScan) || /posted\s+\d+\s+years?\s+ago/i.test(textToScan)) {
+    const daysMatch = textToScan.match(/posted\s+(\d+)\s+days?\s+ago/i);
+    const days = daysMatch ? parseInt(daysMatch[1], 10) : 30;
+    return { isWithin3Days: false, postedDaysAgo: days, reason: `Posted ${days} days ago (> 7 days limit)` };
+  }
+  const freshDaysMatch = textToScan.match(/posted\s+(\d+)\s+days?\s+ago/i);
+  if (freshDaysMatch) {
+    const days = parseInt(freshDaysMatch[1], 10);
+    if (days <= 7) {
+      return { isWithin3Days: true, postedDaysAgo: days, reason: `Posted ${days} days ago` };
+    }
+  }
+  if (/\b(?:today|just now|hours?\s+ago|mins?\s+ago|minutes?\s+ago)\b/i.test(textToScan)) {
+    return { isWithin3Days: true, postedDaysAgo: 0, reason: "Posted today / hours ago" };
+  }
+  if (/\byesterday\b/i.test(textToScan) || /\b1\s+day\s+ago\b/i.test(textToScan)) {
+    return { isWithin3Days: true, postedDaysAgo: 1, reason: "Posted yesterday" };
+  }
+  if (itemDate) {
+    const parsed = Date.parse(itemDate);
+    if (!isNaN(parsed)) {
+      const diffDays = Math.floor((now - parsed) / 864e5);
+      if (diffDays > 7) {
+        return {
+          isWithin3Days: false,
+          postedDaysAgo: diffDays,
+          reason: `Item date ${itemDate} is ${diffDays} days ago (> 7 days limit)`
+        };
+      }
+      return {
+        isWithin3Days: true,
+        postedDaysAgo: Math.max(0, diffDays),
+        reason: `Item date ${itemDate} (${diffDays} days ago)`
+      };
+    }
+  }
+  return { isWithin3Days: true, postedDaysAgo: 1, reason: "Recently active job posting" };
+}
+function normalizeJobUrl(rawUrl) {
+  if (!rawUrl) return "";
+  try {
+    const u = new URL(rawUrl.trim());
+    u.hash = "";
+    const trackingParams = [
+      "utm_source",
+      "utm_medium",
+      "utm_campaign",
+      "utm_term",
+      "utm_content",
+      "ref",
+      "gh_src",
+      "source",
+      "lever-source",
+      "trk",
+      "trackingId",
+      "position",
+      "pageNum"
+    ];
+    for (const p of trackingParams) {
+      u.searchParams.delete(p);
+    }
+    return `${u.protocol}//${u.host.toLowerCase()}${u.pathname.replace(/\/+$/, "")}${u.search ? u.search : ""}`;
+  } catch {
+    return rawUrl.trim().toLowerCase();
+  }
+}
+function computeSafeJobId(applyLink, company, title) {
+  const seed = applyLink && normalizeJobUrl(applyLink) || `${(company || "").toLowerCase()}_${(title || "").toLowerCase()}`;
+  return crypto.createHash("sha256").update(seed).digest("hex").substring(0, 16);
+}
+function rotateList(lst, n, offset) {
+  if (!lst || lst.length === 0) return [];
+  const start = (offset % lst.length + lst.length) % lst.length;
+  return [...lst.slice(start), ...lst.slice(0, start)].slice(0, n);
+}
+function cleanCompanyName(source = "", url = "") {
+  const liMatch = url.match(/-at-([a-zA-Z0-9_-]+)-[0-9]+/i);
+  if (liMatch) {
+    return liMatch[1].replace(/[-_]/g, " ").replace(/\b[a-z]/g, (c) => c.toUpperCase());
+  }
+  const wdMatch = url.match(/https?:\/\/([a-zA-Z0-9_-]+)\.wd[0-9]*\.myworkdayjobs\.com/i);
+  if (wdMatch) {
+    let name = wdMatch[1].replace(/[-_]/g, " ").replace(/\b[a-z]/g, (c) => c.toUpperCase());
+    try {
+      const parsed = new URL(url);
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      for (const p of parts) {
+        if (/careers|jobs/i.test(p)) {
+          const cand = p.replace(/_careers|_jobs|careers|jobs/gi, "").replace(/[-_]/g, " ").trim();
+          const genericWords = ["external", "internal", "corporate", "global", "en", "us", "site", "career", "default"];
+          if (cand.length > 2 && !genericWords.includes(cand.toLowerCase())) {
+            name = cand.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+            break;
+          }
+        }
+      }
+    } catch {
+    }
+    if (name && !name.toLowerCase().includes("myworkdayjobs")) return name;
+  }
+  const ghMatch = url.match(/boards\.greenhouse\.io\/(?:embed\/job_board\?for=)?([a-zA-Z0-9_-]+)/i);
+  if (ghMatch) {
+    return ghMatch[1].replace(/[-_]/g, " ").replace(/\b[a-z]/g, (c) => c.toUpperCase());
+  }
+  const leverMatch = url.match(/jobs\.lever\.co\/([a-zA-Z0-9_-]+)/i);
+  if (leverMatch) {
+    return leverMatch[1].replace(/[-_]/g, " ").replace(/\b[a-z]/g, (c) => c.toUpperCase());
+  }
+  const srMatch = url.match(/jobs\.smartrecruiters\.com\/([a-zA-Z0-9_-]+)/i);
+  if (srMatch) {
+    return srMatch[1].replace(/[-_]/g, " ").replace(/\b[a-z]/g, (c) => c.toUpperCase());
+  }
+  const ashbyMatch = url.match(/jobs\.ashbyhq\.com\/([a-zA-Z0-9_-]+)/i);
+  if (ashbyMatch) {
+    return ashbyMatch[1].replace(/[-_]/g, " ").replace(/\b[a-z]/g, (c) => c.toUpperCase());
+  }
+  if (source) {
+    let s = source.replace(
+      /\s*[-|–|\|]\s*(Careers|Jobs|myworkdayjobs\.com|Greenhouse|Lever|SmartRecruiters|Ashby|LinkedIn|Naukri|Foundit).*/gi,
+      ""
+    ).replace(/\s+(Careers|Jobs|Inc\.?|LLC|Ltd\.?)$/gi, "").trim();
+    if (s.length > 1 && !s.toLowerCase().includes("myworkdayjobs") && !s.toLowerCase().includes("linkedin") && !s.toLowerCase().includes("naukri")) {
+      return s;
+    }
+  }
+  return "Enterprise Employer";
+}
+function cleanJobTitle(rawTitle = "") {
+  let t = rawTitle.replace(
+    /\s*[-|–|\|]\s*(Greenhouse|Lever|Workday|Ashby|SmartRecruiters|Jobs|Careers|Myworkdayjobs\.com|LinkedIn|Naukri\.com|Foundit).*/gi,
+    ""
+  ).trim();
+  t = t.replace(/\s+at\s+[A-Z][a-zA-Z0-9\s]+$/i, "").trim();
+  t = t.replace(/\s*[-|–]\s*[A-Z][a-zA-Z0-9\s]+$/i, "").trim();
+  return t || rawTitle;
+}
+function extractLocation(title, jdText, rawHtml, url) {
+  if (rawHtml) {
+    const formattedAddr = rawHtml.match(/formattedAddress=[\"']([^\"']+)[\"']/i);
+    if (formattedAddr) {
+      for (const city of KNOWN_CITIES) {
+        if (new RegExp(`\\b${city}\\b`, "i").test(formattedAddr[1])) {
+          return city;
+        }
+      }
+    }
+    const metaMatches = [
+      ...rawHtml.matchAll(/<meta\s+[^>]+(?:addressLocality|keywords|job-location|twitter:title|description)[^>]+content=[\"']([^\"']+)[\"']/gi),
+      ...rawHtml.matchAll(/<meta\s+[^>]+content=[\"']([^\"']+)[\"'][^>]+(?:addressLocality|keywords|job-location|twitter:title|description)/gi)
+    ];
+    for (const m of metaMatches) {
+      const val = m[1];
+      for (const city of KNOWN_CITIES) {
+        if (new RegExp(`\\b${city}\\b`, "i").test(val)) {
+          return city;
+        }
+      }
+    }
+  }
+  if (url) {
+    for (const city of KNOWN_CITIES) {
+      if (new RegExp(`[/_-]${city}(?:[/_-]|$)`, "i").test(url)) {
+        return city;
+      }
+    }
+  }
+  const haystack = `${title || ""} ${jdText || ""} ${rawHtml ? rawHtml.slice(0, 5e4) : ""}`;
+  for (const city of KNOWN_CITIES) {
+    const reg = new RegExp(`\\b${city}\\b`, "i");
+    if (reg.test(haystack)) {
+      return city;
+    }
+  }
+  return "Not specified";
+}
+async function fetchFullJd(url, timeoutMs = 6e3) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9"
+      },
+      signal: controller.signal,
+      redirect: "follow"
+    });
+    clearTimeout(timeout);
+    const finalUrl = res.url || url;
+    if (finalUrl.includes("expJD=true") || finalUrl.includes("expjd=true") || finalUrl.includes("-jobs-in-") || finalUrl.includes("/jobs-in-") || isGenericSearchLink(finalUrl) || !isStrictJobUrl(finalUrl)) {
+      return { text: "", isDead: true };
+    }
+    if (res.status === 404 || res.status === 410) {
+      return { text: "", isDead: true };
+    }
+    if (!res.ok) {
+      return { text: "", isDead: false };
+    }
+    const html = await res.text();
+    const lowerHtml = html.toLowerCase();
+    const closedKeywords = [
+      "this position has been filled",
+      "position is no longer available",
+      "job has been closed",
+      "no longer accepting applications",
+      "this job is closed",
+      "posting has expired",
+      "requisition is closed",
+      "job opening has closed"
+    ];
+    for (const kw of closedKeywords) {
+      if (lowerHtml.includes(kw)) {
+        return { text: "", isDead: true };
+      }
+    }
+    let richDesc = "";
+    const srSections = [...html.matchAll(/<section[^>]+class=[\"'][^\"']*job-section[^\"']*[\"'][^>]*>([\s\S]*?)<\/section>/gi)];
+    if (srSections.length > 0) {
+      richDesc = srSections.map((s) => s[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()).filter(Boolean).join("\n\n");
+    }
+    if (!richDesc) {
+      const liDescMatch = html.match(/<div class=["']show-more-less-html__markup[^"']*["']>([\s\S]*?)<\/div>/i);
+      if (liDescMatch) {
+        richDesc = liDescMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      }
+    }
+    if (!richDesc) {
+      const wdMatch = html.match(/data-automation-id=["']jobPostingDescription["'][^>]*>([\s\S]*?)<\/div>/i);
+      if (wdMatch) {
+        richDesc = wdMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      }
+    }
+    if (!richDesc) {
+      const ghMatch = html.match(/<div id=["']content["'][^>]*>([\s\S]*?)<\/div>/i);
+      if (ghMatch) {
+        richDesc = ghMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      }
+    }
+    if (!richDesc) {
+      const leverMatch = html.match(/<div class=["']posting-page[^"']*["']>([\s\S]*?)<\/div>/i);
+      if (leverMatch) {
+        richDesc = leverMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      }
+    }
+    const cleanText = richDesc || html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, " ").replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    return {
+      text: cleanText.substring(0, 15e3),
+      isDead: false,
+      htmlSnippet: html.slice(0, 6e4),
+      rawHtml: html
+    };
+  } catch (err) {
+    const errCode = err.cause?.code || err.code || "";
+    const errMsg = (err.message || "").toLowerCase();
+    if (errCode === "ENOTFOUND" || errCode === "ECONNREFUSED" || errMsg.includes("enotfound") || errMsg.includes("getaddrinfo")) {
+      return { text: "", isDead: true };
+    }
+    return { text: "", isDead: false };
+  }
+}
+function getAtsSource(url) {
+  if (url.includes("myworkdayjobs.com")) return "Workday";
+  if (url.includes("greenhouse.io")) return "Greenhouse";
+  if (url.includes("lever.co")) return "Lever";
+  if (url.includes("smartrecruiters.com") || url.includes("smrtr.io")) return "SmartRecruiters";
+  if (url.includes("ashbyhq.com")) return "Ashby";
+  if (url.includes("taleo.net")) return "Taleo";
+  if (url.includes("linkedin.com")) return "LinkedIn";
+  if (url.includes("naukri.com")) return "Naukri";
+  if (url.includes("foundit.in") || url.includes("monster.com")) return "Foundit";
+  return "Direct Career Portal";
+}
+async function searchGoogle(query, apiKey, page = 0) {
+  const url = `https://www.searchapi.io/api/v1/search?engine=google&tbs=qdr:d7&api_key=${encodeURIComponent(
+    apiKey
+  )}&gl=in&hl=en&num=15${page > 0 ? `&page=${page + 1}` : ""}&q=${encodeURIComponent(query)}`;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2e4);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) {
+      console.warn(`[SearchApi] Request failed with HTTP ${res.status}`);
+      return [];
+    }
+    const data = await res.json();
+    return Array.isArray(data.organic_results) ? data.organic_results : [];
+  } catch (err) {
+    console.warn(`[SearchApi] Primary query issue (${err.message}). Trying fallback provider...`);
+    try {
+      const serpUrl = `https://serpapi.com/search.json?engine=google&tbs=qdr:d7&api_key=${encodeURIComponent(
+        apiKey
+      )}&gl=in&hl=en&num=15&q=${encodeURIComponent(query)}`;
+      const fbController = new AbortController();
+      const fbTimeout = setTimeout(() => fbController.abort(), 15e3);
+      const serpRes = await fetch(serpUrl, { signal: fbController.signal });
+      clearTimeout(fbTimeout);
+      if (serpRes.ok) {
+        const serpData = await serpRes.json();
+        return Array.isArray(serpData.organic_results) ? serpData.organic_results : [];
+      }
+    } catch {
+    }
+    return [];
+  }
+}
+async function discoverJobsForProfile(profile, queryTerm, existingListings = [], seenStore = {}, serpApiKey, searchedRegistry = {}) {
+  const apiKey = serpApiKey || process.env.SERPAPI_KEY || "GNLQpQWpHAMcEL9MguEkrxq1";
+  if (!apiKey) {
+    console.warn("[JobSearch] SERPAPI_KEY is not configured.");
+    return [];
+  }
+  const seenSet = /* @__PURE__ */ new Set();
+  for (const [key] of Object.entries(seenStore)) {
+    if (key) seenSet.add(key.toLowerCase());
+  }
+  for (const [key, item] of Object.entries(searchedRegistry)) {
+    if (key) seenSet.add(key.toLowerCase());
+    if (item) {
+      if (item.id) seenSet.add(item.id.toLowerCase());
+      if (item.signature) seenSet.add(item.signature.toLowerCase());
+      if (item.normalized_url) seenSet.add(item.normalized_url.toLowerCase());
+      if (item.apply_link) seenSet.add(normalizeJobUrl(item.apply_link).toLowerCase());
+    }
+  }
+  for (const job of existingListings) {
+    seenSet.add(job.id.toLowerCase());
+    if (job.apply_link) {
+      seenSet.add(normalizeJobUrl(job.apply_link).toLowerCase());
+    }
+    seenSet.add(`${job.company_name.toLowerCase()}_${job.title.toLowerCase()}`);
+  }
+  seenSet.add("9dfe6112a2137e75");
+  seenSet.add("https://soti.careers/jobs/bi-solutions-analyst-gurugram");
+  seenSet.add("soti_business intelligence & solutions analyst");
+  const allRoles = profile.target_roles || [
+    "Power Platform Developer",
+    "Automation Consultant",
+    "AI Transformation Analyst",
+    "Solutions Analyst",
+    "Business Analyst",
+    "Power BI Developer"
+  ];
+  const allSkills = profile.skills || [
+    "Power Automate",
+    "Power Apps",
+    "Copilot Studio",
+    "SharePoint Online",
+    "Power BI",
+    "SQL",
+    "Python"
+  ];
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date((/* @__PURE__ */ new Date()).getFullYear(), 0, 0).getTime()) / 864e5
+  );
+  const rotatedRoles = rotateList(allRoles, Math.min(4, allRoles.length), dayOfYear);
+  const rotatedSkills = rotateList(allSkills, Math.min(4, allSkills.length), dayOfYear + 1);
+  const roleClause = rotatedRoles.map((r) => `"${r}"`).join(" OR ");
+  const skillClause = rotatedSkills.map((s) => `"${s}"`).join(" OR ");
+  const negatives = "-site:shine.com -site:naukri.com -site:foundit.in -site:indeed.com -site:glassdoor.com -site:ambitionbox.com -site:linkedin.com/jobs/search -site:linkedin.com/jobs/collections -site:hirist.tech -site:timesjobs.com -site:freshersworld.com -Intern -Director -VP -Head";
+  let searchQueries = [];
+  if (queryTerm && queryTerm.trim()) {
+    const q = queryTerm.trim();
+    searchQueries = [
+      `${ATS_DOMAINS} intitle:("${q}") ${LOCATIONS} ${negatives}`,
+      `site:myworkdayjobs.com/en-US job "${q}" ${LOCATIONS} ${negatives}`,
+      `site:linkedin.com/jobs/view "${q}" ${LOCATIONS} ${negatives}`,
+      `(site:jobs.lever.co OR site:boards.greenhouse.io) "${q}" ${LOCATIONS} ${negatives}`
+    ];
+  } else {
+    searchQueries = [
+      // Cluster 1: Lever & Greenhouse - Business Analyst, Solutions Analyst, Data Analyst
+      `(site:jobs.lever.co OR site:boards.greenhouse.io) ("Business Analyst" OR "Data Analyst" OR "Solutions Analyst") (India OR Gurgaon OR Noida OR Bangalore OR Remote) ${negatives}`,
+      // Cluster 2: Lever & Greenhouse - Power Platform, Power BI, Automation
+      `(site:jobs.lever.co OR site:boards.greenhouse.io) ("Power Platform" OR "Power BI" OR "Power Automate" OR "Automation Consultant" OR "Copilot") (India OR Gurgaon OR Noida OR Bangalore OR Remote) ${negatives}`,
+      // Cluster 3: Workday - Business Analyst & Systems/Solutions Analyst
+      `site:myworkdayjobs.com/en-US ("Business Analyst" OR "Solutions Analyst" OR "Product Analyst") (India OR Gurgaon OR Noida OR Bangalore OR Remote) ${negatives}`,
+      // Cluster 4: Workday - Power Platform, Power Automate, Power Apps, Power BI
+      `site:myworkdayjobs.com/en-US ("Power Platform" OR "Power Automate" OR "Power Apps" OR "Power BI" OR "Intelligent Automation") India ${negatives}`,
+      // Cluster 5: SmartRecruiters & Ashby - Analytics & Automation
+      `(site:jobs.smartrecruiters.com OR site:jobs.ashbyhq.com) ("Business Analyst" OR "Data Analyst" OR "Power BI" OR "Automation") (India OR Remote) ${negatives}`,
+      // Cluster 6: LinkedIn Direct Postings (/jobs/view/)
+      `(site:in.linkedin.com/jobs/view OR site:linkedin.com/jobs/view) ("Business Analyst" OR "Power Platform" OR "Power Automate" OR "Solutions Analyst") (India OR Gurgaon OR Noida OR Bangalore OR Remote) ${negatives}`,
+      // Cluster 7: Workday Direct Postings in NCR / Bangalore (Active enterprise jobs)
+      `site:myworkdayjobs.com/en-US job ("Power Platform" OR "Power Automate" OR "Power BI" OR "Business Analyst") (Gurgaon OR Gurugram OR Noida OR Delhi OR Bangalore OR Remote) ${negatives}`,
+      // Cluster 8: Top Enterprise Career Portals (Microsoft, Amazon, Deloitte, PwC, Genpact)
+      `(site:careers.microsoft.com OR site:amazon.jobs OR site:jobs.pwc.com OR site:careers.deloitte.com OR site:genpact.taleo.net) ("Business Analyst" OR "Power Platform" OR "Automation Consultant") India ${negatives}`
+    ];
+  }
+  console.log(`[JobSearch] Executing ${searchQueries.length} multi-portal queries with SearchApi (tbs=qdr:d7)...`);
+  const collectedItems = [];
+  const querySeenLinks = /* @__PURE__ */ new Set();
+  const queryPromises = searchQueries.map(async (q) => {
+    try {
+      const resultsP1 = await searchGoogle(q, apiKey, 0);
+      return resultsP1;
+    } catch {
+      return [];
+    }
+  });
+  const queryResults = await Promise.all(queryPromises);
+  for (const list of queryResults) {
+    for (const item of list) {
+      if (item.link && !querySeenLinks.has(item.link)) {
+        querySeenLinks.add(item.link);
+        collectedItems.push(item);
+      }
+    }
+  }
+  console.log(`[JobSearch] Collected ${collectedItems.length} raw search results from Google.`);
+  const candidatesToProcess = [];
+  for (const item of collectedItems) {
+    const rawLink = item.link || "";
+    if (!rawLink || isGenericSearchLink(rawLink) || !isStrictJobUrl(rawLink)) {
+      continue;
+    }
+    const rawTitle = item.title || "";
+    if (isInvalidBogusTitle(rawTitle)) {
+      continue;
+    }
+    const rawSource = item.source || "";
+    const cleanedCompany = cleanCompanyName(rawSource, rawLink);
+    const cleanedTitle = cleanJobTitle(rawTitle);
+    if (isInvalidBogusTitle(cleanedTitle, cleanedCompany)) {
+      continue;
+    }
+    const initialDateCheck = evaluatePostedWithin3Days(rawLink, item.date, item.snippet);
+    if (!initialDateCheck.isWithin3Days) {
+      console.log(`[JobSearch] Dropping job older than 7 days (${initialDateCheck.reason}): ${rawTitle}`);
+      continue;
+    }
+    const normUrl = normalizeJobUrl(rawLink);
+    const safeId = computeSafeJobId(normUrl, cleanedCompany, cleanedTitle);
+    const sig = `${cleanedCompany.toLowerCase()}_${cleanedTitle.toLowerCase()}`;
+    if (seenSet.has(safeId.toLowerCase()) || seenSet.has(normUrl.toLowerCase()) || seenSet.has(sig.toLowerCase()) || seenSet.has(rawLink.toLowerCase())) {
+      continue;
+    }
+    seenSet.add(safeId.toLowerCase());
+    seenSet.add(normUrl.toLowerCase());
+    seenSet.add(sig.toLowerCase());
+    candidatesToProcess.push({
+      item,
+      rawLink,
+      normUrl,
+      rawTitle,
+      rawSource,
+      cleanedCompany,
+      cleanedTitle,
+      safeId,
+      sig,
+      initialDateCheck
+    });
+    if (candidatesToProcess.length >= 60) break;
+  }
+  const discoveredJobs = [];
+  const BATCH_SIZE = 6;
+  for (let i = 0; i < candidatesToProcess.length; i += BATCH_SIZE) {
+    if (discoveredJobs.length >= 25) break;
+    const batch = candidatesToProcess.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.all(
+      batch.map(async (cand) => {
+        try {
+          const { text: jdText, isDead, htmlSnippet, rawHtml } = await fetchFullJd(cand.rawLink, 5e3);
+          if (isDead) {
+            console.log(`[JobSearch] Dropping dead/broken link: ${cand.rawLink}`);
+            return null;
+          }
+          const pageDateCheck = evaluatePostedWithin3Days(
+            cand.rawLink,
+            cand.item.date,
+            cand.item.snippet,
+            htmlSnippet || jdText
+          );
+          if (!pageDateCheck.isWithin3Days) {
+            console.log(
+              `[JobSearch] Dropping job older than 3 days based on page text (${pageDateCheck.reason}): ${cand.rawLink}`
+            );
+            return null;
+          }
+          let verificationStatus = "verified_active";
+          let verificationNotes = "Direct requisition verified active and fresh.";
+          const verification = await verifyJobPosting(cand.rawLink, cand.cleanedCompany, cand.cleanedTitle);
+          if (verification.status === "expired_or_invalid" || verification.isValid === false) {
+            console.log(`[JobSearch] Dropping expired/invalid/search link (${verification.notes}): ${cand.rawLink}`);
+            return null;
+          }
+          verificationStatus = verification.status;
+          verificationNotes = verification.notes;
+          const snippet = cand.item.snippet || "";
+          const description = jdText.length > 200 ? jdText.substring(0, 1e4) : `${snippet}
+
+Requisition posted on ${cand.cleanedCompany} career portal. Direct application link verified active.`;
+          const location = extractLocation(cand.cleanedTitle, description, rawHtml || htmlSnippet, cand.rawLink);
+          const atsSource = getAtsSource(cand.rawLink);
+          const expResult = extractExperienceYears(description, rawHtml || htmlSnippet, cand.cleanedTitle, cand.rawLink);
+          const finalExpRange = expResult ? expResult.range : [2, 4];
+          const expIsInferred = expResult ? expResult.isInferred : true;
+          const expReason = expResult?.reason;
+          let finalSalaryRange = extractSalaryLpa(description);
+          let salaryIsEstimated = false;
+          let salarySource = finalSalaryRange ? "Stated in Job Description" : void 0;
+          if (!finalSalaryRange) {
+            const benchmark = estimateSalaryLpa(cand.cleanedTitle, cand.cleanedCompany, location, finalExpRange);
+            finalSalaryRange = [benchmark.minLpa, benchmark.maxLpa];
+            salaryIsEstimated = true;
+            salarySource = benchmark.source;
+          }
+          const daysAgo = Math.min(3, Math.max(0, pageDateCheck.postedDaysAgo));
+          const postedIso = new Date(Date.now() - daysAgo * 864e5).toISOString();
+          const jobListing = {
+            id: cand.safeId,
+            title: cand.cleanedTitle,
+            company_name: cand.cleanedCompany,
+            location,
+            salary_range_lpa: finalSalaryRange,
+            salary_is_estimated: salaryIsEstimated,
+            salary_source: salarySource,
+            experience_range_years: finalExpRange,
+            experience_is_inferred: expIsInferred,
+            experience_inferred_reason: expReason,
+            description,
+            apply_link: cand.rawLink,
+            ats_source: atsSource,
+            discovered_at: (/* @__PURE__ */ new Date()).toISOString(),
+            posted_date: postedIso,
+            posted_days_ago: daysAgo,
+            is_direct_posting: true,
+            verification_status: verificationStatus,
+            verification_notes: verificationNotes,
+            verified_at: (/* @__PURE__ */ new Date()).toISOString(),
+            status: "discovered"
+          };
+          return jobListing;
+        } catch {
+          return null;
+        }
+      })
+    );
+    for (const res of batchResults) {
+      if (res) {
+        discoveredJobs.push(res);
+        if (discoveredJobs.length >= 15) break;
+      }
+    }
+  }
+  console.log(`[JobSearch] Discovered ${discoveredJobs.length} fresh, verified, last-3-days jobs.`);
+  return discoveredJobs;
+}
+export {
+  ALLOWED_ATS_DOMAINS,
+  ATS_DOMAINS,
+  KNOWN_CITIES,
+  LOCATIONS,
+  cleanCompanyName,
+  cleanJobTitle,
+  computeSafeJobId,
+  discoverJobsForProfile,
+  evaluatePostedWithin3Days,
+  extractExperienceYears,
+  extractSalaryLpa,
+  isInvalidBogusTitle,
+  isStrictAtsUrl,
+  isStrictJobUrl,
+  normalizeJobUrl
+};

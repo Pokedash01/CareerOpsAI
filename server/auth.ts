@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import express from 'express';
-import { UserProfile, JobListing, AppSettings, WorkflowState } from '../src/types.js';
+import type { UserProfile, JobListing, AppSettings, WorkflowState } from '../src/types.js';
 import { INITIAL_PROFILE, INITIAL_JOBS, INITIAL_SETTINGS } from './seedData.js';
 import { computeSafeJobId, normalizeJobUrl } from './jobSearch.js';
 
@@ -231,16 +231,20 @@ export function createDefaultPartitionForUser(
     runs: [],
   };
 
-  // For new registered users, start with a pristine empty job feed so the dashboard does not show pre-seeded dummy jobs.
-  // Only the baseline demo account receives sample jobs.
-  const isDemoAccount = (user?.id === PRIMARY_USER_ID || user?.email === 'demo@careerops.ai') && !preferences;
-  const sampleJobs = isDemoAccount
-    ? INITIAL_JOBS.slice(0, 8).map((j, idx) => ({
+  // Ensure every registered candidate gets the rich catalog of viable jobs matched to tech/automation
+  const activeSeedJobs = (userPartitions[PRIMARY_USER_ID]?.jobListings && userPartitions[PRIMARY_USER_ID].jobListings.length > 0)
+    ? userPartitions[PRIMARY_USER_ID].jobListings.map((j) => ({
+        ...j,
+        id: j.id,
+        status: (j.status || 'discovered') as any,
+      }))
+    : INITIAL_JOBS.slice(0, 8).map((j, idx) => ({
         ...j,
         id: computeSafeJobId(j.title, `${j.company_name}_${user?.id || 'sample'}_${idx}`),
         status: (idx === 0 ? 'discovered' : idx === 1 ? 'notified' : 'discovered') as any,
-      }))
-    : [];
+      }));
+
+  const sampleJobs = activeSeedJobs;
 
   const partitionRegistry: Record<string, any> = {};
   for (const j of sampleJobs) {
@@ -389,7 +393,7 @@ export function attachSessionCookie(res: express.Response, req: express.Request,
   res.cookie(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     maxAge: SESSION_MAX_AGE_MS,
-    sameSite: 'lax',
+    sameSite: isHttps ? 'none' : 'lax',
     secure: isHttps,
     path: '/',
   });

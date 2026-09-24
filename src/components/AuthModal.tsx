@@ -475,9 +475,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  // Trigger Forgot Password code generation
-  const handleSendResetCode = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Trigger Forgot Password code generation and dispatch to Telegram and Email
+  const handleSendResetCode = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
     const targetEmail = forgotEmail.trim();
@@ -496,12 +496,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const data = await res.json().catch(() => null);
       if (res.ok && data?.success) {
         setForgotStep(2);
-        setForgotCode(data.code || '');
+        setForgotCode(''); // Secure: Never display or auto-fill OTP on screen
         setForgotTelegramSent(Boolean(data.telegram_sent));
         setSuccessMessage(
           data.telegram_sent
-            ? '✅ Reset code generated and dispatched to your Telegram!'
-            : '✅ Reset verification code generated! Enter it below to choose a new password.'
+            ? 'Verification code dispatched to your Telegram & registered email! Please check your messages.'
+            : `Verification code sent to ${targetEmail}! Please check your email inbox and spam folder.`
         );
       } else {
         setErrorMessage(data?.error || 'Could not find a registered account with that email.');
@@ -544,6 +544,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       });
       const data = await res.json().catch(() => null);
       if (res.ok && data?.success) {
+        const token = data.session_token || data.token;
+        if (token) {
+          try { localStorage.setItem('careerops_auth_token', token); } catch {}
+        }
         setSuccessMessage('🎉 Password successfully updated! Signing into your workspace...');
         // Automatically sign in with new credentials
         await onLogin(forgotEmail.trim(), forgotNewPassword, true);
@@ -942,40 +946,56 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </form>
               ) : (
                 <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5">
-                  {/* Generated code highlight badge */}
-                  {forgotCode && (
-                    <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-xl flex items-center justify-between">
-                      <div>
-                        <div className="text-[10px] uppercase font-semibold text-amber-300/80">
-                          {forgotTelegramSent ? 'Telegram & On-Screen Verification Code' : 'Verification Code'}
-                        </div>
-                        <div className="text-lg font-mono font-bold text-amber-300 tracking-widest">{forgotCode}</div>
-                        <div className="text-[10px] text-zinc-400">Valid for 15 minutes • Auto-loaded below</div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSuccessMessage('Code confirmed in input.');
-                        }}
-                        className="px-2.5 py-1 text-[11px] bg-amber-500/20 text-amber-300 rounded-lg border border-amber-500/30 font-medium"
-                      >
-                        Active
-                      </button>
+                  {/* Verification Code Dispatch Status Card */}
+                  <div className="p-3.5 bg-blue-500/10 border border-blue-500/25 rounded-xl space-y-2">
+                    <div className="flex items-center gap-2 text-blue-300 text-xs font-semibold">
+                      <Send className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                      <span>Verification Code Dispatched</span>
                     </div>
-                  )}
+                    <p className="text-[11px] text-zinc-300 leading-relaxed">
+                      We have sent your confidential 6-digit verification code to:
+                    </p>
+                    <div className="space-y-1.5 text-[11px] bg-black/30 p-2.5 rounded-lg border border-white/[0.06]">
+                      <div className="flex items-center gap-2 text-zinc-200">
+                        <Mail className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                        <span>Email: <strong className="text-white font-medium">{forgotEmail}</strong></span>
+                      </div>
+                      {forgotTelegramSent && (
+                        <div className="flex items-center gap-2 text-emerald-300">
+                          <Send className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span>Telegram: <strong className="text-emerald-200 font-medium">Instant Bot Alert Sent</strong></span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-zinc-400 pt-1">
+                      Check your Telegram app or email inbox (including spam folder) and enter the 6 digits below. Valid for 15 minutes.
+                    </p>
+                  </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-zinc-300 mb-1">
-                      6-Digit Verification Code *
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-medium text-zinc-300">
+                        Enter 6-Digit Verification Code *
+                      </label>
+                      <button
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() => handleSendResetCode()}
+                        className="text-[11px] text-blue-400 hover:text-blue-300 hover:underline cursor-pointer disabled:opacity-50"
+                      >
+                        Resend Code
+                      </button>
+                    </div>
                     <input
                       type="text"
+                      inputMode="numeric"
                       value={forgotCode}
                       onChange={(e) => setForgotCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      placeholder="e.g. 123456"
+                      placeholder="• • • • • •"
                       maxLength={6}
+                      autoFocus
                       required
-                      className="w-full px-3 py-2 text-sm tracking-widest font-mono text-center bg-black/40 border border-white/[0.08] rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                      className="w-full px-3 py-2.5 text-base tracking-[0.35em] font-mono text-center bg-black/50 border border-white/[0.12] rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                     />
                   </div>
 

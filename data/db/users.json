@@ -1,0 +1,30 @@
+{
+  "usr_kb270102": {
+    "id": "usr_kb270102",
+    "email": "kb270102@gmail.com",
+    "full_name": "Kartik Bhatt",
+    "password_hash": "39b3a5dda13c4f7dcd080e3caf53b0dd5315d4f7e96595e6da0a456f2ef3f85d4610f9f683ce2cf5fa9c98b498bbb48da553d2deadfb0aabdfbd4170a3ad6563",
+    "salt": "eafe4e684701233938f6901880cf09e5",
+    "created_at": "2026-01-01T00:00:00.000Z",
+    "last_login_at": "2026-09-24T15:04:32.140Z"
+  },
+  "usr_demo": {
+    "id": "usr_demo",
+    "email": "demo@careerops.ai",
+    "full_name": "Demo Candidate",
+    "password_hash": "33f206611559b2fca81e5492061fe9cde9fcc36f5e63dd08f424c57d84b4bdd9fa1771d7e0e1547834ca4181a3a65f5c50d7b1f47a4fbc807ea2c14f571f6264",
+    "salt": "522964533c5e917db6eee08d0fd7f290",
+    "created_at": "2026-01-01T00:00:00.000Z",
+    "last_login_at": "2026-09-23T15:07:58.793Z"
+  },
+  "usr_1c17ab7bbea3a5b5": {
+    "id": "usr_1c17ab7bbea3a5b5",
+    "email": "alex.dev@example.com",
+    "full_name": "Alex Developer",
+    "password_hash": "1fd49dde41a5f997a9a17847fcfa1e1e15fe21e6427d146eb93a309cb6d28162c2d312629e9e5367ee8eec51cedfd603f539c454e159f6e3b72b54da8024d24b",
+    "salt": "9f54084b851b4937b146e5e6703bd982",
+    "created_at": "2026-09-23T15:23:52.852Z",
+    "last_login_at": "2026-09-23T15:23:52.852Z",
+    "telegram_chat_id": "1368681854"
+  }
+}

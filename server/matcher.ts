@@ -1,4 +1,4 @@
-import { UserProfile, MatchResult } from '../src/types.js';
+import type { UserProfile, MatchResult } from '../src/types.js';
 import { getGeminiClient, cleanJsonResponse } from './gemini.js';
 import { resolveExperienceYears, estimateSalaryLpa } from './salaryEstimator.js';
 import crypto from 'crypto';
