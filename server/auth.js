@@ -140,12 +140,16 @@ function createDefaultPartitionForUser(user, preferences) {
     auto_notify_telegram: hasTelegram,
     runs: []
   };
-  const isDemoAccount = (user?.id === PRIMARY_USER_ID || user?.email === "demo@careerops.ai") && !preferences;
-  const sampleJobs = isDemoAccount ? INITIAL_JOBS.slice(0, 8).map((j, idx) => ({
+  const activeSeedJobs = userPartitions[PRIMARY_USER_ID]?.jobListings && userPartitions[PRIMARY_USER_ID].jobListings.length > 0 ? userPartitions[PRIMARY_USER_ID].jobListings.map((j) => ({
+    ...j,
+    id: j.id,
+    status: j.status || "discovered"
+  })) : INITIAL_JOBS.slice(0, 8).map((j, idx) => ({
     ...j,
     id: computeSafeJobId(j.title, `${j.company_name}_${user?.id || "sample"}_${idx}`),
     status: idx === 0 ? "discovered" : idx === 1 ? "notified" : "discovered"
-  })) : [];
+  }));
+  const sampleJobs = activeSeedJobs;
   const partitionRegistry = {};
   for (const j of sampleJobs) {
     const sig = `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`;
@@ -258,7 +262,7 @@ function attachSessionCookie(res, req, token) {
   res.cookie(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     maxAge: SESSION_MAX_AGE_MS,
-    sameSite: "lax",
+    sameSite: isHttps ? "none" : "lax",
     secure: isHttps,
     path: "/"
   });

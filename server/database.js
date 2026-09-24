@@ -215,12 +215,17 @@ function decomposePartitionToDb(userId, partition) {
         dbJobs[job.id] = normalizeToJobEntity(job);
       }
       const relId = `rel_${userId}_${job.id}`;
-      if (!dbUserJobs[relId]) {
-        dbUserJobs[relId] = buildUserJobRelation(userId, job, {
-          deleted: deletedSet.has(job.id),
-          notified_telegram: notifiedSet.has(job.id)
-        });
-      }
+      const existingRel = dbUserJobs[relId];
+      dbUserJobs[relId] = buildUserJobRelation(userId, job, {
+        status: job.status || existingRel?.status || "discovered",
+        fit: job.fit || existingRel?.fit,
+        tailored: job.tailored || existingRel?.tailored,
+        tailored_resume: job.tailored_resume || existingRel?.tailored_resume,
+        cover_letter: job.cover_letter || existingRel?.cover_letter,
+        notes: job.notes !== void 0 ? job.notes : existingRel?.notes,
+        deleted: deletedSet.has(job.id),
+        notified_telegram: notifiedSet.has(job.id)
+      });
     }
   }
 }
