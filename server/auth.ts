@@ -3,6 +3,15 @@ import express from 'express';
 import type { UserProfile, JobListing, AppSettings, WorkflowState } from '../src/types.js';
 import { INITIAL_PROFILE, INITIAL_JOBS, INITIAL_SETTINGS } from './seedData.js';
 import { computeSafeJobId, normalizeJobUrl } from './jobSearch.js';
+import {
+  dbUsers,
+  dbUserProfiles,
+  dbUserJobs,
+  recomposePartitionFromDb,
+  decomposePartitionToDb,
+  saveRelationalDatabase,
+  getHydratedJobsForUser,
+} from './database.js';
 
 export interface UserAccountRecord {
   id: string;
@@ -231,36 +240,10 @@ export function createDefaultPartitionForUser(
     runs: [],
   };
 
-  // Ensure every registered candidate gets the rich catalog of viable jobs matched to tech/automation
-  const activeSeedJobs = (userPartitions[PRIMARY_USER_ID]?.jobListings && userPartitions[PRIMARY_USER_ID].jobListings.length > 0)
-    ? userPartitions[PRIMARY_USER_ID].jobListings.map((j) => ({
-        ...j,
-        id: j.id,
-        status: (j.status || 'discovered') as any,
-      }))
-    : INITIAL_JOBS.slice(0, 8).map((j, idx) => ({
-        ...j,
-        id: computeSafeJobId(j.title, `${j.company_name}_${user?.id || 'sample'}_${idx}`),
-        status: (idx === 0 ? 'discovered' : idx === 1 ? 'notified' : 'discovered') as any,
-      }));
-
-  const sampleJobs = activeSeedJobs;
-
+  // New users start with a clean dashboard (0 jobs).
+  // Existing candidate jobs are managed strictly in the relational database (dbUserJobs).
+  const sampleJobs: JobListing[] = [];
   const partitionRegistry: Record<string, any> = {};
-  for (const j of sampleJobs) {
-    const sig = `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`;
-    const normLink = normalizeJobUrl(j.apply_link);
-    partitionRegistry[j.id] = {
-      id: j.id,
-      signature: sig,
-      normalized_url: normLink,
-      company_name: j.company_name,
-      title: j.title,
-      status: j.status || 'discovered',
-      discovered_at: new Date().toISOString(),
-      last_seen_at: new Date().toISOString(),
-    };
-  }
 
   return {
     currentProfile: userProfile,
@@ -351,7 +334,24 @@ export function resolveAuthUser(req: express.Request): UserAccountRecord | null 
  */
 export function getUserPartition(userId: string, initialPreferences?: InitialCareerPreferences): UserPartitionData {
   if (!userPartitions[userId]) {
-    userPartitions[userId] = createDefaultPartitionForUser(users[userId], initialPreferences);
+    const hasDbRecord =
+      Boolean(dbUsers[userId]) ||
+      Boolean(dbUserProfiles[userId]) ||
+      Object.values(dbUserJobs).some((r) => r.user_id === userId);
+
+    if (hasDbRecord) {
+      userPartitions[userId] = recomposePartitionFromDb(userId);
+    } else {
+      userPartitions[userId] = createDefaultPartitionForUser(users[userId], initialPreferences);
+      decomposePartitionToDb(userId, userPartitions[userId]);
+      saveRelationalDatabase();
+    }
+  } else {
+    // If the relational database has candidate relations for this user, ensure partition matches relational DB
+    const candidateRels = Object.values(dbUserJobs).filter((r) => r.user_id === userId);
+    if (candidateRels.length > 0) {
+      userPartitions[userId].jobListings = getHydratedJobsForUser(userId);
+    }
   }
   return userPartitions[userId];
 }

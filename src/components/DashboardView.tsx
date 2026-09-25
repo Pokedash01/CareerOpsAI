@@ -60,15 +60,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   isWorkflowRunning,
   setActiveTab,
 }) => {
-  const isNewCandidate = !workflow?.last_run || (workflow?.total_runs || 0) === 0 || jobs.length === 0;
-  const highFitJobs = isNewCandidate ? [] : jobs.filter((j) => (j.fit?.match_score || 0) >= 75);
-  const pendingEvaluation = isNewCandidate ? [] : jobs.filter((j) => !j.fit);
+  const hasZeroJobs = jobs.length === 0;
+  const isNewCandidate = hasZeroJobs || (!workflow?.last_run && (workflow?.total_runs || 0) === 0);
+  const highFitJobs = jobs.filter((j) => (j.fit?.match_score || 0) >= 75);
+  const pendingEvaluation = jobs.filter((j) => !j.fit);
 
   const [remainingTime, setRemainingTime] = useState<string>('03h 48m 22s');
 
   useEffect(() => {
     const updateCountdown = () => {
-      if (isNewCandidate && !workflow?.is_running && !isWorkflowRunning) {
+      if (hasZeroJobs && !workflow?.is_running && !isWorkflowRunning) {
         setRemainingTime('Awaiting 1st Execution');
         return;
       }
@@ -83,12 +84,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [workflow?.next_run, workflow?.interval_hours, isWorkflowRunning, workflow?.is_running, isNewCandidate]);
+  }, [workflow?.next_run, workflow?.interval_hours, isWorkflowRunning, workflow?.is_running, hasZeroJobs]);
 
   const metrics = [
     {
       title: 'Total Scanned',
-      value: isNewCandidate ? 0 : jobs.length,
+      value: jobs.length,
       subtitle: 'ATS & Portal Listings',
       icon: Briefcase,
       color: 'text-zinc-100',
@@ -96,7 +97,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     },
     {
       title: 'Viable Fit',
-      value: isNewCandidate ? 0 : jobs.filter((j) => j.fit?.is_viable).length,
+      value: jobs.filter((j) => j.fit?.is_viable).length,
       subtitle: 'Passed Hard Constraints',
       icon: ShieldCheck,
       color: 'text-cyan-400',
@@ -104,7 +105,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     },
     {
       title: 'High Match (≥75%)',
-      value: isNewCandidate ? 0 : highFitJobs.length,
+      value: highFitJobs.length,
       subtitle: 'Ready for Application',
       icon: TrendingUp,
       color: 'text-emerald-400',
@@ -112,7 +113,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     },
     {
       title: 'Applied',
-      value: isNewCandidate ? 0 : jobs.filter((j) => j.status === 'applied').length,
+      value: jobs.filter((j) => j.status === 'applied').length,
       subtitle: 'Tracked In Pipeline',
       icon: CheckCircle2,
       color: 'text-blue-400',
@@ -224,8 +225,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         })}
       </div>
 
-      {/* Prompt to Initiate First Execution for New Users */}
-      {isNewCandidate && (
+      {/* Prompt to Initiate First Execution for New Users (Clean Dashboard) */}
+      {hasZeroJobs && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

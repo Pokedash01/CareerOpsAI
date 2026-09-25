@@ -70,8 +70,7 @@
       "SQL",
       "Python",
       "Process Automation",
-      "VBA Macros",
-      "Lean Six Sigma"
+      "VBA Macros"
     ],
     "certifications": [
       "Microsoft Certified: Azure AI Fundamentals (AI-901)",
@@ -103,7 +102,8 @@
     "salary_expectation": {
       "min_lpa": 10,
       "max_lpa": 18
-    }
+    },
+    "summary": "Results-driven Technology & Automation Analyst with 3+ years of experience specializing in Power Platform, Copilot Studio, GenAI agents, and business process automation. Proven track record delivering enterprise-grade automated workflows, data migrations, and executive BI dashboards saving 3,000+ hours annually."
   },
   "usr_demo": {
     "full_name": "Demo Candidate",
@@ -200,5 +200,155 @@
       "Delhi NCR",
       "Hybrid"
     ]
+  },
+  "usr_6444bf5e7ff7dfa3": {
+    "full_name": "Test New User",
+    "contact": {
+      "email": "newcandidate7271@test.com",
+      "phone": "",
+      "location": "Remote",
+      "links": ""
+    },
+    "total_years_experience": 2.5,
+    "seniority_tier": "Mid",
+    "education": [
+      {
+        "institution": "University / Institute",
+        "degree": "Bachelor of Science / Technology",
+        "details": "Engineering / Computer Science",
+        "dates": "2020 – 2024"
+      }
+    ],
+    "experience": [],
+    "skills": [
+      "Python",
+      "SQL",
+      "TypeScript",
+      "React",
+      "Node.js",
+      "System Design"
+    ],
+    "certifications": [],
+    "target_roles": [
+      "Software Engineer",
+      "Full Stack Developer",
+      "Data Analyst",
+      "Solutions Architect"
+    ],
+    "anti_targets": [
+      "Telemarketing",
+      "Cold Calling Sales",
+      "Unpaid Internships"
+    ],
+    "preferred_locations": [
+      "Remote",
+      "Bengaluru",
+      "Delhi NCR",
+      "Hybrid"
+    ],
+    "salary_expectation": {
+      "min_lpa": 12,
+      "max_lpa": 25
+    }
+  },
+  "usr_66f6982219b97950": {
+    "full_name": "Test New User",
+    "contact": {
+      "email": "newcandidate3168@test.com",
+      "phone": "",
+      "location": "Remote",
+      "links": ""
+    },
+    "total_years_experience": 2.5,
+    "seniority_tier": "Mid",
+    "education": [
+      {
+        "institution": "University / Institute",
+        "degree": "Bachelor of Science / Technology",
+        "details": "Engineering / Computer Science",
+        "dates": "2020 – 2024"
+      }
+    ],
+    "experience": [],
+    "skills": [
+      "Python",
+      "SQL",
+      "TypeScript",
+      "React",
+      "Node.js",
+      "System Design"
+    ],
+    "certifications": [],
+    "target_roles": [
+      "Software Engineer",
+      "Full Stack Developer",
+      "Data Analyst",
+      "Solutions Architect"
+    ],
+    "anti_targets": [
+      "Telemarketing",
+      "Cold Calling Sales",
+      "Unpaid Internships"
+    ],
+    "preferred_locations": [
+      "Remote",
+      "Bengaluru",
+      "Delhi NCR",
+      "Hybrid"
+    ],
+    "salary_expectation": {
+      "min_lpa": 12,
+      "max_lpa": 25
+    }
+  },
+  "usr_c3345140eba4a541": {
+    "full_name": "Clean Dashboard User",
+    "contact": {
+      "email": "clean60266@test.com",
+      "phone": "",
+      "location": "Remote",
+      "links": ""
+    },
+    "total_years_experience": 2.5,
+    "seniority_tier": "Mid",
+    "education": [
+      {
+        "institution": "University / Institute",
+        "degree": "Bachelor of Science / Technology",
+        "details": "Engineering / Computer Science",
+        "dates": "2020 – 2024"
+      }
+    ],
+    "experience": [],
+    "skills": [
+      "Python",
+      "SQL",
+      "TypeScript",
+      "React",
+      "Node.js",
+      "System Design"
+    ],
+    "certifications": [],
+    "target_roles": [
+      "Software Engineer",
+      "Full Stack Developer",
+      "Data Analyst",
+      "Solutions Architect"
+    ],
+    "anti_targets": [
+      "Telemarketing",
+      "Cold Calling Sales",
+      "Unpaid Internships"
+    ],
+    "preferred_locations": [
+      "Remote",
+      "Bengaluru",
+      "Delhi NCR",
+      "Hybrid"
+    ],
+    "salary_expectation": {
+      "min_lpa": 12,
+      "max_lpa": 25
+    }
   }
 }

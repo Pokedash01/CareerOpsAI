@@ -160,6 +160,13 @@ function generateFallbackTailored(job: JobListing, candidate: UserProfile) {
   };
 }
 
+function persistUserJobs(userId: string | undefined, jobsList: JobListing[]) {
+  if (!userId) return;
+  try {
+    localStorage.setItem(`careerops_jobs_${userId}`, JSON.stringify(jobsList));
+  } catch {}
+}
+
 export function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'jobs' | 'tailor' | 'profile' | 'automation'>('dashboard');
 
@@ -177,11 +184,17 @@ export function App() {
   const [jobs, setJobs] = useState<JobListing[]>(() => {
     const deleted = getDeletedJobIds();
     try {
-      const cached = localStorage.getItem('careerops_jobs');
-      if (cached !== null) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) {
-          return parsed.filter((j: JobListing) => !deleted.has(j.id));
+      const cachedUser = localStorage.getItem('careerops_user');
+      if (cachedUser) {
+        const u = JSON.parse(cachedUser);
+        if (u?.id) {
+          const userJobCache = localStorage.getItem(`careerops_jobs_${u.id}`);
+          if (userJobCache) {
+            const parsed = JSON.parse(userJobCache);
+            if (Array.isArray(parsed)) {
+              return parsed.filter((j: JobListing) => !deleted.has(j.id));
+            }
+          }
         }
       }
     } catch {}
@@ -369,6 +382,8 @@ export function App() {
       if (res && res.success && res.user) {
         const norm = normalizeUserRecord(res.user);
         setCurrentUser(norm);
+        setJobs([]);
+        setSelectedJobId(null);
         const sessionToken = res.session_token || res.token;
         if (sessionToken) {
           try { localStorage.setItem('careerops_auth_token', sessionToken); } catch {}
@@ -421,6 +436,8 @@ export function App() {
       if (res && res.success && res.user) {
         const norm = normalizeUserRecord(res.user);
         setCurrentUser(norm);
+        setJobs([]);
+        setSelectedJobId(null);
         const sessionToken = res.session_token || res.token;
         if (sessionToken) {
           try { localStorage.setItem('careerops_auth_token', sessionToken); } catch {}
@@ -453,6 +470,8 @@ export function App() {
       if (res && res.success && res.user) {
         const norm = normalizeUserRecord(res.user);
         setCurrentUser(norm);
+        setJobs([]);
+        setSelectedJobId(null);
         const sessionToken = res.session_token || res.token;
         if (sessionToken) {
           try { localStorage.setItem('careerops_auth_token', sessionToken); } catch {}
@@ -479,6 +498,8 @@ export function App() {
       if (res && res.success && res.user) {
         const norm = normalizeUserRecord(res.user);
         setCurrentUser(norm);
+        setJobs([]);
+        setSelectedJobId(null);
         const sessionToken = res.session_token || res.token;
         if (sessionToken) {
           try { localStorage.setItem('careerops_auth_token', sessionToken); } catch {}
@@ -502,6 +523,13 @@ export function App() {
     try {
       localStorage.removeItem('careerops_auth_token');
       localStorage.removeItem('careerops_user');
+      if (currentUser?.id) {
+        localStorage.removeItem(`careerops_jobs_${currentUser.id}`);
+        localStorage.removeItem(`careerops_profile_${currentUser.id}`);
+        localStorage.removeItem(`careerops_stats_${currentUser.id}`);
+        localStorage.removeItem(`careerops_workflow_${currentUser.id}`);
+        localStorage.removeItem(`careerops_settings_${currentUser.id}`);
+      }
       localStorage.removeItem('careerops_jobs');
       localStorage.removeItem('careerops_profile');
       localStorage.removeItem('careerops_stats');
@@ -510,6 +538,7 @@ export function App() {
     } catch {}
     setCurrentUser(null);
     setJobs([]);
+    setSelectedJobId(null);
     setIsAuthModalOpen(false);
     showToast('Signed out of workspace.', 'success');
   };
@@ -558,34 +587,11 @@ export function App() {
         const deleted = getDeletedJobIds();
 
         // Use server partition as authority for the authenticated user session
-        let serverJobs = syncRes.jobs.filter((j: JobListing) => !deleted.has(j.id));
-
-        // If server returned 0 jobs for this partition, restore from per-user cache or current cache
-        if (serverJobs.length === 0) {
-          const userJobCache = activeUserId ? localStorage.getItem(`careerops_jobs_${activeUserId}`) : null;
-          const globalJobCache = localStorage.getItem('careerops_jobs');
-          const fallbackRaw = userJobCache || globalJobCache;
-          if (fallbackRaw) {
-            try {
-              const parsed = JSON.parse(fallbackRaw);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                const restored = parsed.filter((j: JobListing) => !deleted.has(j.id));
-                if (restored.length > 0) {
-                  serverJobs = restored;
-                  // Heal the server partition immediately
-                  syncStateToCloud({ jobs: restored }, activeToken || undefined).catch(() => {});
-                }
-              }
-            } catch {}
-          }
-        }
+        const serverJobs = syncRes.jobs.filter((j: JobListing) => !deleted.has(j.id));
 
         setJobs(serverJobs);
         setIsBackendConnected(true);
-        try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(serverJobs));
-          if (activeUserId) localStorage.setItem(`careerops_jobs_${activeUserId}`, JSON.stringify(serverJobs));
-        } catch {}
+        persistUserJobs(activeUserId, serverJobs);
 
         if (syncRes.searched_registry && typeof syncRes.searched_registry === 'object') {
           const currentReg = getSearchedRegistry();
@@ -672,7 +678,7 @@ export function App() {
             const deleted = getDeletedJobIds();
             const cleanJobs = jobsRes.filter((j: JobListing) => !deleted.has(j.id));
             setJobs(cleanJobs);
-            try { localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs)); } catch {}
+            try { persistUserJobs(currentUser?.id, cleanJobs); } catch {}
           }
 
           if (stateRes) {
@@ -716,65 +722,21 @@ export function App() {
   useEffect(() => {
     const fetchLatest = async () => {
       try {
-        const syncRes = await safeFetchJson<any>('/api/state/sync', undefined, 8000);
-        if (syncRes && Array.isArray(syncRes.jobs)) {
+        if (!currentUser?.id) return;
+        const activeToken = typeof window !== 'undefined' ? localStorage.getItem('careerops_auth_token') : null;
+        const headers: Record<string, string> = {};
+        if (activeToken) headers['Authorization'] = `Bearer ${activeToken}`;
+
+        const syncRes = await safeFetchJson<any>('/api/state/sync', { headers }, 8000);
+        if (syncRes && syncRes.authenticated !== false && Array.isArray(syncRes.jobs)) {
           if (Array.isArray(syncRes.deleted_ids)) {
             addDeletedJobIds(syncRes.deleted_ids);
           }
           setIsBackendConnected(true);
           const deleted = getDeletedJobIds();
           const incomingValid = syncRes.jobs.filter((j: JobListing) => !deleted.has(j.id));
-          const incomingMap = new Map<string, JobListing>(incomingValid.map((j: JobListing) => [j.id, j]));
-
-          let didAddLocalNewer = false;
-          setJobs((prev) => {
-            const cleanPrev = prev.filter((j) => !deleted.has(j.id));
-            const prevMap = new Map<string, JobListing>(cleanPrev.map((j) => [j.id, j]));
-            const brandNewJobs = incomingValid.filter((j: JobListing) => !prevMap.has(j.id));
-
-            let hasChange = cleanPrev.length !== prev.length;
-            let merged = cleanPrev.map((pj) => {
-              const nj = incomingMap.get(pj.id);
-              if (!nj) return pj;
-              if (
-                pj.status !== nj.status ||
-                pj.verification_status !== nj.verification_status ||
-                (!pj.tailored_resume && nj.tailored_resume) ||
-                pj.notes !== nj.notes
-              ) {
-                hasChange = true;
-                return { ...pj, ...nj };
-              }
-              return pj;
-            });
-
-            if (brandNewJobs.length > 0) {
-              merged = [...brandNewJobs, ...merged];
-              hasChange = true;
-            }
-
-            // If local state has valid jobs the incoming server response omitted, retain them!
-            if (cleanPrev.length > incomingValid.length) {
-              didAddLocalNewer = true;
-            }
-
-            if (hasChange) {
-              try { localStorage.setItem('careerops_jobs', JSON.stringify(merged)); } catch {}
-              return merged;
-            }
-            return prev;
-          });
-
-          // If client has local jobs that server didn't include, heal the server
-          if (didAddLocalNewer) {
-            const currentCache = localStorage.getItem('careerops_jobs');
-            if (currentCache) {
-              try {
-                const parsed = JSON.parse(currentCache);
-                syncStateToCloud({ jobs: parsed }).catch(() => {});
-              } catch {}
-            }
-          }
+          setJobs(incomingValid);
+          persistUserJobs(currentUser.id, incomingValid);
 
           if (syncRes.searched_registry && typeof syncRes.searched_registry === 'object') {
             const currentReg = getSearchedRegistry();
@@ -823,7 +785,7 @@ export function App() {
             setSettings(syncRes.settings);
             try { localStorage.setItem('careerops_settings', JSON.stringify(syncRes.settings)); } catch {}
           }
-          if (syncRes.profile?.full_name && Date.now() - lastProfileUpdateRef.current > 15000) {
+          if (syncRes.profile?.full_name && Date.now() - lastProfileUpdateRef.current > 30000) {
             setProfile(syncRes.profile);
             try { localStorage.setItem('careerops_profile', JSON.stringify(syncRes.profile)); } catch {}
           }
@@ -888,7 +850,7 @@ export function App() {
           const brandNew = incomingValid.filter((j: JobListing) => !prevMap.has(j.id));
           const merged = [...brandNew, ...cleanPrev];
           try {
-            localStorage.setItem('careerops_jobs', JSON.stringify(merged));
+            persistUserJobs(currentUser?.id, merged);
           } catch {}
           return merged;
         });
@@ -912,7 +874,7 @@ export function App() {
         setJobs(clientCycle.jobs);
         setWorkflow(clientCycle.workflow);
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(clientCycle.jobs));
+          persistUserJobs(currentUser?.id, clientCycle.jobs);
           localStorage.setItem('careerops_workflow', JSON.stringify(clientCycle.workflow));
         } catch {}
       }
@@ -1001,7 +963,7 @@ export function App() {
           const brandNew = validResJobs.filter((j: JobListing) => !prevMap.has(j.id));
           mergedList = [...brandNew, ...cleanPrev];
           try {
-            localStorage.setItem('careerops_jobs', JSON.stringify(mergedList));
+            persistUserJobs(currentUser?.id, mergedList);
           } catch {}
           return mergedList;
         });
@@ -1053,7 +1015,7 @@ export function App() {
         setJobs((prev) => {
           const updated = prev.map((j) => (j.id === jobId ? res.job : j));
           try {
-            localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+            persistUserJobs(currentUser?.id, updated);
           } catch {}
           return updated;
         });
@@ -1095,7 +1057,7 @@ export function App() {
         setJobs((prev) => {
           const updated = prev.map((j) => (j.id === jobId ? tailoredJob! : j));
           try {
-            localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+            persistUserJobs(currentUser?.id, updated);
           } catch {}
           return updated;
         });
@@ -1175,7 +1137,7 @@ export function App() {
       const updated = jobs.map((j) => (j.id === jobId ? { ...j, status } : j));
       setJobs(updated);
       try {
-        localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+        persistUserJobs(currentUser?.id, updated);
       } catch {}
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
         try {
@@ -1204,7 +1166,7 @@ export function App() {
         setJobs((prev) => {
           const fresh = prev.map((j) => (j.id === jobId ? res.job : j));
           try {
-            localStorage.setItem('careerops_jobs', JSON.stringify(fresh));
+            persistUserJobs(currentUser?.id, fresh);
           } catch {}
           return fresh;
         });
@@ -1227,7 +1189,7 @@ export function App() {
       const updated = jobs.filter((j) => j.id !== jobId);
       setJobs(updated);
       try {
-        localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+        persistUserJobs(currentUser?.id, updated);
       } catch {}
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
         try {
@@ -1251,7 +1213,7 @@ export function App() {
         const cleanJobs = res.jobs.filter((j: JobListing) => !deleted.has(j.id));
         setJobs(cleanJobs);
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs));
+          persistUserJobs(currentUser?.id, cleanJobs);
         } catch {}
       }
       showToast('Job removed.');
@@ -1277,7 +1239,7 @@ export function App() {
       setJobs((prev) => {
         const updated = prev.map((j) => (idSet.has(j.id) ? { ...j, status } : j));
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+          persistUserJobs(currentUser?.id, updated);
         } catch {}
         return updated;
       });
@@ -1293,7 +1255,7 @@ export function App() {
         const cleanJobs = res.jobs.filter((j: JobListing) => !deleted.has(j.id));
         setJobs(cleanJobs);
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs));
+          persistUserJobs(currentUser?.id, cleanJobs);
         } catch {}
       }
       const statusTitle = status ? (status.charAt(0).toUpperCase() + status.slice(1)) : 'Updated';
@@ -1319,7 +1281,7 @@ export function App() {
       const updated = jobs.filter((j) => !idSet.has(j.id));
       setJobs(updated);
       try {
-        localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+        persistUserJobs(currentUser?.id, updated);
       } catch {}
 
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -1350,7 +1312,7 @@ export function App() {
         const cleanJobs = res.jobs.filter((j: JobListing) => !deleted.has(j.id));
         setJobs(cleanJobs);
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs));
+          persistUserJobs(currentUser?.id, cleanJobs);
         } catch {}
       }
       await refreshState();
@@ -1371,7 +1333,7 @@ export function App() {
       const updated = jobs.filter((j) => j.status !== 'expired' && j.verification_status !== 'expired_or_invalid');
       setJobs(updated);
       try {
-        localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+        persistUserJobs(currentUser?.id, updated);
       } catch {}
 
       syncStateToCloud({
@@ -1388,7 +1350,7 @@ export function App() {
         const cleanJobs = res.jobs.filter((j: JobListing) => !deleted.has(j.id));
         setJobs(cleanJobs);
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(cleanJobs));
+          persistUserJobs(currentUser?.id, cleanJobs);
         } catch {}
       }
       await refreshState();
@@ -1422,7 +1384,7 @@ export function App() {
     setJobs((prev) => {
       const updated = [newJob, ...prev];
       try {
-        localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+        persistUserJobs(currentUser?.id, updated);
       } catch {}
       return updated;
     });
@@ -1439,7 +1401,7 @@ export function App() {
         setJobs((prev) => {
           const updated = [res.job, ...prev.filter((j) => j.id !== newJob.id)];
           try {
-            localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+            persistUserJobs(currentUser?.id, updated);
           } catch {}
           return updated;
         });
@@ -1594,7 +1556,7 @@ export function App() {
         setJobs((prev) => {
           const updated = prev.map((j) => (j.id === jobId ? res.job : j));
           try {
-            localStorage.setItem('careerops_jobs', JSON.stringify(updated));
+            persistUserJobs(currentUser?.id, updated);
           } catch {}
           return updated;
         });
@@ -1629,7 +1591,7 @@ export function App() {
       if (res?.jobs) {
         setJobs(res.jobs);
         try {
-          localStorage.setItem('careerops_jobs', JSON.stringify(res.jobs));
+          persistUserJobs(currentUser?.id, res.jobs);
         } catch {}
         showToast(`Successfully verified ${res.verified_count || res.jobs.length} postings live!`);
       }

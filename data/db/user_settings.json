@@ -14,7 +14,7 @@
     "workflow_interval_hours": 4,
     "auto_notify_telegram": true,
     "serpapi_key": "GNLQpQWpHAMcEL9MguEkrxq1",
-    "last_updated": "2026-09-24T15:04:32.141Z"
+    "last_updated": "2026-09-25T14:22:19.381Z"
   },
   "usr_demo": {
     "min_match_score": 75,
@@ -45,5 +45,50 @@
     "workflow_enabled": true,
     "workflow_interval_hours": 4,
     "auto_notify_telegram": true
+  },
+  "usr_6444bf5e7ff7dfa3": {
+    "min_match_score": 75,
+    "telegram_configured": false,
+    "telegram_chat_id": "",
+    "telegram_bot_token": "8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas",
+    "telegram_bot_name": "CareerOps Bot",
+    "telegram_custom_header": "🎯 Test New User High-Fit Role!",
+    "telegram_include_salary": true,
+    "telegram_include_skill_gap": true,
+    "telegram_include_apply_link": true,
+    "seen_ttl_days": 14,
+    "workflow_enabled": true,
+    "workflow_interval_hours": 4,
+    "auto_notify_telegram": false
+  },
+  "usr_66f6982219b97950": {
+    "min_match_score": 75,
+    "telegram_configured": false,
+    "telegram_chat_id": "",
+    "telegram_bot_token": "8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas",
+    "telegram_bot_name": "CareerOps Bot",
+    "telegram_custom_header": "🎯 Test New User High-Fit Role!",
+    "telegram_include_salary": true,
+    "telegram_include_skill_gap": true,
+    "telegram_include_apply_link": true,
+    "seen_ttl_days": 14,
+    "workflow_enabled": true,
+    "workflow_interval_hours": 4,
+    "auto_notify_telegram": false
+  },
+  "usr_c3345140eba4a541": {
+    "min_match_score": 75,
+    "telegram_configured": false,
+    "telegram_chat_id": "",
+    "telegram_bot_token": "8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas",
+    "telegram_bot_name": "CareerOps Bot",
+    "telegram_custom_header": "🎯 Clean Dashboard User High-Fit Role!",
+    "telegram_include_salary": true,
+    "telegram_include_skill_gap": true,
+    "telegram_include_apply_link": true,
+    "seen_ttl_days": 14,
+    "workflow_enabled": true,
+    "workflow_interval_hours": 4,
+    "auto_notify_telegram": false
   }
 }

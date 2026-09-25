@@ -88,9 +88,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   // Track local edits to prevent background poll from reverting local changes
   const lastLocalEditRef = useRef<number>(0);
 
-  // Sync state when profile changes externally (guarding against clobbering recent edits)
+  // Sync state when profile changes externally (e.g. account switch, initial mount, or resume parse)
   React.useEffect(() => {
-    if (Date.now() - lastLocalEditRef.current > 6000) {
+    const isAccountChange = profile.contact?.email !== formData.contact?.email || profile.full_name !== formData.full_name;
+    if (isAccountChange || lastLocalEditRef.current === 0) {
       setFormData(profile);
     }
   }, [profile]);
