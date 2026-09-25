@@ -9,6 +9,7 @@ import {
   PlayCircle,
   Loader2,
   Lock,
+  Key,
   User,
   LogOut,
   ChevronDown,
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PipelineStats, UserAccount } from '../types.js';
+import { ChangePasswordModal } from './ChangePasswordModal.js';
 
 interface NavbarProps {
   activeTab: 'dashboard' | 'jobs' | 'tailor' | 'profile' | 'automation';
@@ -43,6 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -277,32 +280,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                                       </p>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-medium mt-2 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
-                                    <Lock className="w-2.5 h-2.5" />
-                                    <span>Saved on device via encrypted cookie</span>
-                                  </div>
                                 </div>
 
                                 <div className="py-1">
                                   <button
                                     onClick={() => {
                                       setShowUserDropdown(false);
-                                      setActiveTab('profile');
+                                      setShowPasswordModal(true);
                                     }}
                                     className="w-full text-left px-3 py-2 text-xs hover:bg-white/[0.06] rounded-xl flex items-center gap-2 text-zinc-300 hover:text-white transition-colors cursor-pointer"
                                   >
-                                    <User className="w-3.5 h-3.5 text-blue-400" />
-                                    <span>Profile & Career Preferences</span>
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setShowUserDropdown(false);
-                                      setActiveTab('automation');
-                                    }}
-                                    className="w-full text-left px-3 py-2 text-xs hover:bg-white/[0.06] rounded-xl flex items-center gap-2 text-zinc-300 hover:text-white transition-colors cursor-pointer"
-                                  >
-                                    <Send className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span>Telegram Push & Alerts</span>
+                                    <Key className="w-3.5 h-3.5 text-blue-400" />
+                                    <span>Change Password</span>
                                   </button>
                                 </div>
 
@@ -352,6 +341,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Structural layout spacer guaranteeing page content never gets covered by fixed navbar */}
       <div className="h-16 shrink-0 w-full" aria-hidden="true" />
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        userEmail={currentUser?.email}
+      />
     </>
   );
 };

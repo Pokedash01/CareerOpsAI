@@ -65,7 +65,7 @@ export function experienceOk(candExp: number, expRange?: [number, number], toler
 
 export function salaryOk(
   salaryRangeLpa?: [number, number],
-  expectation?: { min_lpa: number; max_lpa: number },
+  expectation?: { min_lpa: number; max_lpa?: number },
   tolerance: number = 1.0
 ): { ok: boolean; reason?: string } {
   if (!salaryRangeLpa || !expectation) return { ok: true };

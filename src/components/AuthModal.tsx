@@ -336,8 +336,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setErrorMessage('Please select or add at least one preferred location.');
       return;
     }
-    if (salaryMin <= 0 || salaryMax <= 0 || salaryMin > salaryMax) {
-      setErrorMessage('Minimum package cannot exceed maximum package.');
+    if (salaryMin <= 0) {
+      setErrorMessage('Please enter a valid minimum expected salary.');
       return;
     }
     setRegisterStep(4);
@@ -417,7 +417,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     try {
       const details = {
         target_roles: targetRoles,
-        salary_expectation: { min_lpa: Number(salaryMin) || 12, max_lpa: Number(salaryMax) || 25 },
+        salary_expectation: { min_lpa: Number(salaryMin) || 12 },
         preferred_locations: preferredLocations,
         total_years_experience: currentSeniority.expYears,
         seniority_tier: currentSeniority.tier,
@@ -846,7 +846,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="w-3.5 h-3.5 rounded bg-black/40 border border-white/[0.2] text-blue-500 focus:ring-0 cursor-pointer"
                   />
-                  <span>Remember me (Encrypted session cookie)</span>
+                  <span>Remember me</span>
                 </label>
               </div>
 
@@ -1285,38 +1285,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-white flex items-center gap-1.5">
                     <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
-                    Expected Salary Range (LPA) *
+                    Minimum Expected Salary (₹ LPA) *
                   </label>
                   <span className="text-[11px] font-mono text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                    ₹{salaryMin} – ₹{salaryMax} LPA
+                    ₹{salaryMin}+ LPA
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-[10px] text-zinc-400 block mb-1">Minimum (₹ LPA)</span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={120}
-                      value={salaryMin}
-                      onChange={(e) => setSalaryMin(Math.max(1, Number(e.target.value)))}
-                      required
-                      className="w-full px-3 py-1.5 text-xs bg-black/40 border border-white/[0.08] rounded-xl text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-zinc-400 block mb-1">Maximum (₹ LPA)</span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={200}
-                      value={salaryMax}
-                      onChange={(e) => setSalaryMax(Math.max(salaryMin, Number(e.target.value)))}
-                      required
-                      className="w-full px-3 py-1.5 text-xs bg-black/40 border border-white/[0.08] rounded-xl text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </div>
+                <div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={200}
+                    value={salaryMin}
+                    onChange={(e) => setSalaryMin(Math.max(1, Number(e.target.value)))}
+                    required
+                    placeholder="e.g. 15"
+                    className="w-full px-3 py-2 text-xs bg-black/40 border border-white/[0.08] rounded-xl text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                  <p className="text-[10px] text-zinc-400 mt-1">
+                    Filters out roles below this baseline compensation.
+                  </p>
                 </div>
               </div>
 
@@ -1489,7 +1478,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <span className="text-zinc-400">Target Roles:</span> {targetRoles.slice(0, 3).join(', ')}
                 </p>
                 <p className="text-zinc-200">
-                  <span className="text-zinc-400">Package Range:</span> ₹{salaryMin} – ₹{salaryMax} LPA
+                  <span className="text-zinc-400">Min Salary:</span> ₹{salaryMin}+ LPA
                 </p>
                 <p className="text-zinc-200">
                   <span className="text-zinc-400">Locations:</span> {preferredLocations.slice(0, 3).join(', ')}

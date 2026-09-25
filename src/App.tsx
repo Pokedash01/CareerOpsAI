@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Navbar } from './components/Navbar.js';
 import { DashboardView } from './components/DashboardView.js';
 import { JobFeedView } from './components/JobFeedView.js';
@@ -23,79 +23,46 @@ import {
   getRegistryStats,
 } from './lib/searchedRegistry.js';
 
-const LIVE_PRIMARY_ORIGIN = 'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app';
-const LIVE_PREVIEW_ORIGIN = 'https://ais-pre-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app';
-
 async function safeFetchJson<T>(url: string, init?: RequestInit, timeoutMs = 20000): Promise<T | null> {
-  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-  const candidateUrls: string[] = [url];
-
-  if (url.startsWith('/api/')) {
-    if (!currentOrigin.includes('ais-dev-w2ikgh4niy7jalbtjcsxj4')) {
-      candidateUrls.push(`${LIVE_PRIMARY_ORIGIN}${url}`);
-    }
-    if (!currentOrigin.includes('ais-pre-w2ikgh4niy7jalbtjcsxj4')) {
-      candidateUrls.push(`${LIVE_PREVIEW_ORIGIN}${url}`);
-    }
-  }
-
   const token = typeof window !== 'undefined' ? localStorage.getItem('careerops_auth_token') : null;
   const authHeaders: Record<string, string> = {};
   if (token) {
     authHeaders['Authorization'] = `Bearer ${token}`;
   }
 
-  for (const candidate of candidateUrls) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-      const isCross = candidate.startsWith('http') && !candidate.startsWith(currentOrigin);
-      const res = await fetch(candidate, {
-        ...init,
-        credentials: isCross ? 'omit' : 'include',
-        headers: {
-          Accept: 'application/json',
-          ...authHeaders,
-          ...(init?.headers || {}),
-        },
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (!res.ok) {
-        const contentType = res.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-          try {
-            const errData = await res.json();
-            return errData;
-          } catch {}
-        }
-        continue;
-      }
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(url, {
+      ...init,
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        ...authHeaders,
+        ...(init?.headers || {}),
+      },
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) {
       const contentType = res.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) continue;
-      const data = await res.json();
-
-      // If this request modified state, replicate across peer origins in the background
-      if (init?.method && init.method !== 'GET' && candidateUrls.length > 1) {
-        for (const alt of candidateUrls) {
-          if (alt !== candidate) {
-            const isAltCross = alt.startsWith('http') && !alt.startsWith(currentOrigin);
-            fetch(alt, {
-              ...init,
-              credentials: isAltCross ? 'omit' : 'include',
-              headers: { Accept: 'application/json', ...authHeaders, ...(init?.headers || {}) },
-              keepalive: true,
-            }).catch(() => {});
-          }
-        }
+      if (contentType.includes('application/json')) {
+        try {
+          const errData = await res.json();
+          return errData;
+        } catch {}
       }
-
-      return data;
-    } catch {
-      // Continue to next failover URL
+      return null;
     }
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) return null;
+    return await res.json();
+  } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      console.warn(`[safeFetchJson] Request to ${url} timed out`);
+    }
+    return null;
   }
-  return null;
 }
 
 const DELETED_JOBS_KEY = 'careerops_deleted_job_ids';
@@ -137,14 +104,7 @@ export async function syncStateToCloud(
   },
   explicitToken?: string
 ) {
-  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
   const endpoints = ['/api/state/sync'];
-  if (!currentOrigin.includes('ais-dev-w2ikgh4niy7jalbtjcsxj4')) {
-    endpoints.push(`${LIVE_PRIMARY_ORIGIN}/api/state/sync`);
-  }
-  if (!currentOrigin.includes('ais-pre-w2ikgh4niy7jalbtjcsxj4')) {
-    endpoints.push(`${LIVE_PREVIEW_ORIGIN}/api/state/sync`);
-  }
 
   const token = explicitToken || (typeof window !== 'undefined' ? localStorage.getItem('careerops_auth_token') : null);
   const authHeaders: Record<string, string> = {};
@@ -262,6 +222,8 @@ export function App() {
     } catch {}
     return INITIAL_SETTINGS;
   });
+
+  const lastProfileUpdateRef = useRef<number>(0);
 
   // Dynamically computed stats strictly calculated from current job inventory to prevent stale resets
   const computedStats: PipelineStats = useMemo(() => {
@@ -861,7 +823,7 @@ export function App() {
             setSettings(syncRes.settings);
             try { localStorage.setItem('careerops_settings', JSON.stringify(syncRes.settings)); } catch {}
           }
-          if (syncRes.profile?.full_name) {
+          if (syncRes.profile?.full_name && Date.now() - lastProfileUpdateRef.current > 15000) {
             setProfile(syncRes.profile);
             try { localStorage.setItem('careerops_profile', JSON.stringify(syncRes.profile)); } catch {}
           }
@@ -1493,6 +1455,7 @@ export function App() {
 
   // 8. Update Profile
   const handleUpdateProfile = async (updated: UserProfile) => {
+    lastProfileUpdateRef.current = Date.now();
     setProfile(updated);
     try {
       localStorage.setItem('careerops_profile', JSON.stringify(updated));
@@ -1507,6 +1470,9 @@ export function App() {
 
       if (res?.profile) {
         setProfile(res.profile);
+        try {
+          localStorage.setItem('careerops_profile', JSON.stringify(res.profile));
+        } catch {}
       }
       showToast('Candidate profile updated successfully!');
     } catch {

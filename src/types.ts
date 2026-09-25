@@ -42,6 +42,7 @@ export interface UserProfile {
   };
   total_years_experience: number;
   seniority_tier: string;
+  summary?: string;
   education: Education[];
   experience: WorkExperience[];
   skills: string[];
@@ -51,7 +52,7 @@ export interface UserProfile {
   preferred_locations: string[];
   salary_expectation?: {
     min_lpa: number;
-    max_lpa: number;
+    max_lpa?: number;
   };
   scraped_sources?: ScrapedLinkSource[];
   portfolio_projects?: CandidateProject[];

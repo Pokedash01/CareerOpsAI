@@ -287,7 +287,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
                 </span>
-                <span>Active Every {intervalHours}h</span>
+                <span>Active Every 4h</span>
               </span>
             </div>
 
@@ -300,24 +300,17 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 <span className="font-mono text-sm font-bold text-cyan-400">{remainingTime}</span>
               </div>
 
-              <div>
-                <label className="font-semibold text-zinc-300 block mb-1.5">Search Frequency</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[2, 4, 8, 12].map((hrs) => (
-                    <button
-                      key={hrs}
-                      type="button"
-                      onClick={() => handleSelectCadence(hrs)}
-                      className={`py-2 rounded-xl font-semibold text-xs border transition cursor-pointer ${
-                        intervalHours === hrs
-                          ? 'bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-600/20'
-                          : 'bg-white/[0.02] text-zinc-400 border-white/[0.07] hover:text-white hover:bg-white/[0.05]'
-                      }`}
-                    >
-                      {hrs}h {hrs === 4 ? '(Default)' : ''}
-                    </button>
-                  ))}
+              <div className="p-3 bg-white/[0.02] rounded-xl border border-white/[0.07] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                  <div>
+                    <span className="font-semibold text-zinc-200 block text-xs">Search Cadence</span>
+                    <span className="text-zinc-500 text-[11px]">Automated recurring schedule</span>
+                  </div>
                 </div>
+                <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                  Every 4 Hours
+                </span>
               </div>
 
               <div className="space-y-2.5 pt-2 border-t border-white/[0.07]">

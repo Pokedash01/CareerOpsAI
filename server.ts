@@ -206,10 +206,7 @@ export function getCanonicalNextRun(intervalHours = 4): string {
   return new Date(nextTimestamp).toISOString();
 }
 
-const PEER_ENDPOINTS = [
-  'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app',
-  'https://ais-pre-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app',
-];
+const PEER_ENDPOINTS: string[] = [];
 
 const workflowState: WorkflowState = {
   enabled: true,
@@ -1274,6 +1271,21 @@ app.use((req, res, next) => {
     try {
       const { partition, userId } = getRequestContext(req);
       partition.currentProfile = { ...partition.currentProfile, ...req.body };
+      if (Array.isArray(req.body.skills)) {
+        partition.currentProfile.skills = [...req.body.skills];
+      }
+      if (Array.isArray(req.body.target_roles)) {
+        partition.currentProfile.target_roles = [...req.body.target_roles];
+      }
+      if (Array.isArray(req.body.preferred_locations)) {
+        partition.currentProfile.preferred_locations = [...req.body.preferred_locations];
+      }
+      if (Array.isArray(req.body.certifications)) {
+        partition.currentProfile.certifications = [...req.body.certifications];
+      }
+      if (req.body.summary !== undefined) {
+        partition.currentProfile.summary = req.body.summary;
+      }
       partition.lastUpdated = new Date().toISOString();
       if (userId === PRIMARY_USER_ID) currentProfile = partition.currentProfile;
       saveStoreToDisk();
@@ -2953,6 +2965,21 @@ ${(e.bullets || []).map((b) => `• ${b}`).join('\n')}
 
     if (profile && profile.full_name) {
       partition.currentProfile = { ...partition.currentProfile, ...profile };
+      if (Array.isArray(profile.skills)) {
+        partition.currentProfile.skills = [...profile.skills];
+      }
+      if (Array.isArray(profile.target_roles)) {
+        partition.currentProfile.target_roles = [...profile.target_roles];
+      }
+      if (Array.isArray(profile.preferred_locations)) {
+        partition.currentProfile.preferred_locations = [...profile.preferred_locations];
+      }
+      if (Array.isArray(profile.certifications)) {
+        partition.currentProfile.certifications = [...profile.certifications];
+      }
+      if (profile.summary !== undefined) {
+        partition.currentProfile.summary = profile.summary;
+      }
       modified = true;
     }
 

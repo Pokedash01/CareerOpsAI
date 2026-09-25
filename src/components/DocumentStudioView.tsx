@@ -106,7 +106,7 @@ export const DocumentStudioView: React.FC<DocumentStudioViewProps> = ({
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 text-xs font-medium mb-1 border border-blue-500/20">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>ATS Document Tailoring Engine</span>
+              <span>Tailored Documents Studio</span>
             </div>
             <h2 className="font-display font-bold text-white text-lg sm:text-xl tracking-tight">
               Target: {activeJob.title}
@@ -116,7 +116,7 @@ export const DocumentStudioView: React.FC<DocumentStudioViewProps> = ({
               <span>•</span>
               <span>{activeJob.location}</span>
               <span>•</span>
-              <span className="text-blue-400 font-medium">{activeJob.ats_source} ATS</span>
+              <span className="text-blue-400 font-medium">{activeJob.ats_source || 'Verified Portal'}</span>
             </div>
           </div>
 

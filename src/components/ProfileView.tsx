@@ -61,14 +61,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [parseText, setParseText] = useState('');
   const [showParseModal, setShowParseModal] = useState(false);
 
-  // Password & Security State
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [pwLoading, setPwLoading] = useState(false);
-  const [pwError, setPwError] = useState<string | null>(null);
-  const [pwSuccess, setPwSuccess] = useState<string | null>(null);
-
   // Work Experience Editing State
   const [editingExpIdx, setEditingExpIdx] = useState<number | null>(null);
   const [editExpData, setEditExpData] = useState<WorkExperience | null>(null);
@@ -93,93 +85,69 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [parsingStage, setParsingStage] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync state if profile prop changes
+  // Track local edits to prevent background poll from reverting local changes
+  const lastLocalEditRef = useRef<number>(0);
+
+  // Sync state when profile changes externally (guarding against clobbering recent edits)
   React.useEffect(() => {
-    setFormData(profile);
+    if (Date.now() - lastLocalEditRef.current > 6000) {
+      setFormData(profile);
+    }
   }, [profile]);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    lastLocalEditRef.current = Date.now();
     await onUpdateProfile(formData);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2500);
   };
 
   const handleAddSkill = () => {
-    if (!newSkill.trim()) return;
-    if (!formData.skills.includes(newSkill.trim())) {
-      setFormData({ ...formData, skills: [...formData.skills, newSkill.trim()] });
+    const trimmed = newSkill.trim();
+    if (!trimmed) return;
+    lastLocalEditRef.current = Date.now();
+    if (!formData.skills.includes(trimmed)) {
+      const updated = { ...formData, skills: [...formData.skills, trimmed] };
+      setFormData(updated);
+      onUpdateProfile(updated);
     }
     setNewSkill('');
   };
 
   const handleRemoveSkill = (skill: string) => {
-    setFormData({ ...formData, skills: formData.skills.filter((s) => s !== skill) });
+    lastLocalEditRef.current = Date.now();
+    const updatedSkills = formData.skills.filter((s) => s !== skill);
+    const updated = { ...formData, skills: updatedSkills };
+    setFormData(updated);
+    onUpdateProfile(updated);
   };
 
   const handleAddRole = () => {
-    if (!newRole.trim()) return;
-    if (!formData.target_roles.includes(newRole.trim())) {
-      setFormData({ ...formData, target_roles: [...formData.target_roles, newRole.trim()] });
+    const trimmed = newRole.trim();
+    if (!trimmed) return;
+    if (!formData.target_roles.includes(trimmed)) {
+      const updated = { ...formData, target_roles: [...formData.target_roles, trimmed] };
+      setFormData(updated);
+      onUpdateProfile(updated);
     }
     setNewRole('');
   };
 
   const handleAddPresetRole = (role: string) => {
     if (!formData.target_roles.includes(role)) {
-      setFormData({ ...formData, target_roles: [...formData.target_roles, role] });
+      const updated = { ...formData, target_roles: [...formData.target_roles, role] };
+      setFormData(updated);
+      onUpdateProfile(updated);
     }
   };
 
   const handleRemoveRole = (role: string) => {
-    setFormData({ ...formData, target_roles: formData.target_roles.filter((r) => r !== role) });
-  };
-
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPwError(null);
-    setPwSuccess(null);
-    if (!newPassword || newPassword.length < 6) {
-      setPwError('New password must be at least 6 characters long.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPwError('Passwords do not match.');
-      return;
-    }
-
-    setPwLoading(true);
-    try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('careerops_auth_token') : null;
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const res = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          current_password: currentPassword.trim() || undefined,
-          new_password: newPassword.trim(),
-        }),
-      });
-      const data = await res.json().catch(() => null);
-      if (res.ok && data?.success) {
-        const nextToken = data.session_token || data.token;
-        if (nextToken) {
-          try { localStorage.setItem('careerops_auth_token', nextToken); } catch {}
-        }
-        setPwSuccess('Password successfully updated!');
-        setNewPassword('');
-        setConfirmPassword('');
-        setCurrentPassword('');
-      } else {
-        setPwError(data?.error || 'Failed to update password.');
-      }
-    } catch (err: any) {
-      setPwError(err.message || 'Error updating password.');
-    } finally {
-      setPwLoading(false);
-    }
+    lastLocalEditRef.current = Date.now();
+    const updatedRoles = formData.target_roles.filter((r) => r !== role);
+    const updated = { ...formData, target_roles: updatedRoles };
+    setFormData(updated);
+    onUpdateProfile(updated);
   };
 
   // Experience handlers
@@ -267,25 +235,42 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   };
 
   const handleAddLocation = () => {
-    if (!newLocation.trim()) return;
-    if (!formData.preferred_locations.includes(newLocation.trim())) {
-      setFormData({ ...formData, preferred_locations: [...formData.preferred_locations, newLocation.trim()] });
+    const trimmed = newLocation.trim();
+    if (!trimmed) return;
+    if (!formData.preferred_locations.includes(trimmed)) {
+      const updated = { ...formData, preferred_locations: [...formData.preferred_locations, trimmed] };
+      setFormData(updated);
+      onUpdateProfile(updated);
     }
     setNewLocation('');
   };
 
   const handleRemoveLocation = (loc: string) => {
-    setFormData({ ...formData, preferred_locations: formData.preferred_locations.filter((l) => l !== loc) });
+    lastLocalEditRef.current = Date.now();
+    const nextLocs = formData.preferred_locations.filter((l) => l !== loc);
+    const updated = { ...formData, preferred_locations: nextLocs };
+    setFormData(updated);
+    onUpdateProfile(updated);
   };
 
   const handleAddCert = () => {
-    if (!newCert.trim()) return;
-    setFormData({ ...formData, certifications: [...formData.certifications, newCert.trim()] });
+    const trimmed = newCert.trim();
+    if (!trimmed) return;
+    lastLocalEditRef.current = Date.now();
+    if (!formData.certifications.includes(trimmed)) {
+      const updated = { ...formData, certifications: [...formData.certifications, trimmed] };
+      setFormData(updated);
+      onUpdateProfile(updated);
+    }
     setNewCert('');
   };
 
   const handleRemoveCert = (cert: string) => {
-    setFormData({ ...formData, certifications: formData.certifications.filter((c) => c !== cert) });
+    lastLocalEditRef.current = Date.now();
+    const nextCerts = formData.certifications.filter((c) => c !== cert);
+    const updated = { ...formData, certifications: nextCerts };
+    setFormData(updated);
+    onUpdateProfile(updated);
   };
 
   const handleFileSelect = (file: File) => {
@@ -374,14 +359,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       {/* Top Banner & Quick Actions */}
       <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="font-display font-bold text-white text-lg sm:text-xl tracking-tight flex items-center gap-2">
-            <span>Candidate Knowledge Graph</span>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-              Source of Truth
-            </span>
+          <h2 className="font-display font-bold text-white text-lg sm:text-xl tracking-tight">
+            Candidate Profile
           </h2>
           <p className="text-xs text-zinc-400 mt-1">
-            Deterministic filters and document tailoring strictly use these facts. Upload a PDF/Word resume to parse and deeply scrape all portfolio links.
+            Manage your experience, target criteria, skills, and resume details.
           </p>
         </div>
 
@@ -640,98 +622,49 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
           </div>
 
-          {/* Security & Password Card */}
-          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl space-y-4 border border-blue-500/20 bg-blue-950/10">
+          {/* Professional Summary Card */}
+          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl space-y-3.5">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-white text-xs uppercase tracking-wider flex items-center gap-2">
-                <Shield className="w-4 h-4 text-blue-400" />
-                <span>Account Security</span>
-              </h3>
-              {currentUser?.email && (
-                <span className="text-[10px] bg-blue-500/20 text-blue-300 font-mono px-2 py-0.5 rounded-md border border-blue-500/30">
-                  {currentUser.email}
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-blue-400" />
+                <h3 className="font-semibold text-white text-xs uppercase tracking-wider">
+                  Professional Summary
+                </h3>
+              </div>
+              <span className="text-[11px] text-zinc-400">
+                {(formData.summary || '').length} characters
+              </span>
             </div>
-
-            <p className="text-[11px] text-neutral-400 leading-relaxed">
-              Your saved jobs, search settings, and notification preferences are tied to your account. You can update your password below at any time.
+            <p className="text-xs text-neutral-400">
+              Your high-level career summary used for matching job descriptions and generating tailored resumes.
             </p>
-
-            {pwSuccess && (
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-300 text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-                <span>{pwSuccess}</span>
-              </div>
-            )}
-
-            {pwError && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-                <span>{pwError}</span>
-              </div>
-            )}
-
-            <div className="space-y-3 text-xs pt-1">
-              <div>
-                <label className="block text-neutral-400 font-medium mb-1 flex items-center gap-1.5">
-                  <Lock className="w-3 h-3 text-neutral-500" />
-                  <span>Current Password (optional if signed in)</span>
-                </label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Enter current password"
-                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 text-xs focus:outline-none focus:border-blue-500/50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-neutral-400 font-medium mb-1 flex items-center gap-1.5">
-                  <Key className="w-3 h-3 text-blue-400" />
-                  <span>New Password</span>
-                </label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="At least 6 characters"
-                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 text-xs focus:outline-none focus:border-blue-500/50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-neutral-400 font-medium mb-1 flex items-center gap-1.5">
-                  <Key className="w-3 h-3 text-blue-400" />
-                  <span>Confirm New Password</span>
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
-                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 text-xs focus:outline-none focus:border-blue-500/50"
-                />
-              </div>
-
+            <textarea
+              rows={4}
+              value={formData.summary || ''}
+              onChange={(e) => {
+                lastLocalEditRef.current = Date.now();
+                const updated = { ...formData, summary: e.target.value };
+                setFormData(updated);
+              }}
+              placeholder="e.g. Senior Full-Stack Engineer with 5+ years of experience architecting scalable distributed systems..."
+              className="w-full px-3.5 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 text-xs focus:outline-none focus:border-blue-500/50 leading-relaxed resize-y min-h-[100px]"
+            />
+            <div className="flex items-center justify-between pt-1">
+              <p className="text-[11px] text-zinc-500">
+                Tip: Highlight your primary technologies, domain expertise, and years in the industry.
+              </p>
               <button
                 type="button"
-                onClick={handleUpdatePassword}
-                disabled={pwLoading || !newPassword || newPassword.length < 6 || newPassword !== confirmPassword}
-                className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-xs transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-sm"
+                onClick={() => {
+                  lastLocalEditRef.current = Date.now();
+                  onUpdateProfile(formData);
+                  setSaveSuccess(true);
+                  setTimeout(() => setSaveSuccess(false), 2500);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl transition cursor-pointer shadow-sm"
               >
-                {pwLoading ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Updating Password...</span>
-                  </>
-                ) : (
-                  <>
-                    <Key className="w-3.5 h-3.5" />
-                    <span>Update Password</span>
-                  </>
-                )}
+                <Save className="w-3.5 h-3.5" />
+                <span>Save Summary</span>
               </button>
             </div>
           </div>
@@ -751,9 +684,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     type="number"
                     step="0.1"
                     value={formData.total_years_experience}
-                    onChange={(e) =>
-                      setFormData({ ...formData, total_years_experience: parseFloat(e.target.value) || 0 })
-                    }
+                    onChange={(e) => {
+                      lastLocalEditRef.current = Date.now();
+                      setFormData({ ...formData, total_years_experience: parseFloat(e.target.value) || 0 });
+                    }}
                     className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 font-semibold focus:outline-none focus:border-blue-500/50"
                   />
                 </div>
@@ -761,7 +695,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <label className="block text-neutral-400 font-medium mb-1">Seniority Tier</label>
                   <select
                     value={formData.seniority_tier}
-                    onChange={(e) => setFormData({ ...formData, seniority_tier: e.target.value })}
+                    onChange={(e) => {
+                      lastLocalEditRef.current = Date.now();
+                      setFormData({ ...formData, seniority_tier: e.target.value });
+                    }}
                     className="w-full px-3 py-2 bg-[#12161F] border border-white/[0.08] rounded-xl text-neutral-200 font-semibold focus:outline-none focus:border-blue-500/50 cursor-pointer"
                   >
                     <option value="Entry">Entry (0-2 yrs)</option>
@@ -772,42 +709,30 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 </div>
               </div>
 
-              {/* Salary LPA Expectation */}
+              {/* Minimum Salary Expectation */}
               <div>
-                <label className="block text-neutral-400 font-medium mb-1">Expected Salary (LPA)</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    placeholder="Min"
-                    value={formData.salary_expectation?.min_lpa || 10}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        salary_expectation: {
-                          min_lpa: parseFloat(e.target.value) || 0,
-                          max_lpa: formData.salary_expectation?.max_lpa || 18,
-                        },
-                      })
-                    }
-                    className="w-1/2 px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 focus:outline-none focus:border-blue-500/50"
-                  />
-                  <span className="text-neutral-500 font-bold">-</span>
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    value={formData.salary_expectation?.max_lpa || 18}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        salary_expectation: {
-                          min_lpa: formData.salary_expectation?.min_lpa || 10,
-                          max_lpa: parseFloat(e.target.value) || 0,
-                        },
-                      })
-                    }
-                    className="w-1/2 px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 focus:outline-none focus:border-blue-500/50"
-                  />
-                </div>
+                <label className="block text-neutral-400 font-medium mb-1">Minimum Expected Salary (₹ LPA)</label>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="1"
+                  placeholder="e.g. 14"
+                  value={formData.salary_expectation?.min_lpa || 12}
+                  onChange={(e) => {
+                    lastLocalEditRef.current = Date.now();
+                    const minVal = parseFloat(e.target.value) || 0;
+                    const updated = {
+                      ...formData,
+                      salary_expectation: {
+                        min_lpa: minVal,
+                      },
+                    };
+                    setFormData(updated);
+                    onUpdateProfile(updated);
+                  }}
+                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 font-semibold focus:outline-none focus:border-blue-500/50"
+                />
+                <p className="text-[10px] text-zinc-500 mt-1">Jobs offering below this baseline package will be marked as lower fit.</p>
               </div>
 
               {/* Preferred Locations */}
@@ -1522,7 +1447,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                         <span>Ready for deep extraction & live web scraping</span>
                       </div>
                       <p className="text-[11px] text-gray-400 leading-relaxed">
-                        CareerOps will read the document structure, extract experience metrics, find every external hyperlink (GitHub repositories, personal portfolio, LinkedIn), and scrape their contents into your candidate knowledge graph.
+                        CareerOps will extract your experience, skills, and portfolio links directly into your profile.
                       </p>
                     </div>
                   </div>

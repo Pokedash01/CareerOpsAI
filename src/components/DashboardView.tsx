@@ -111,14 +111,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       badgeBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-sm shadow-emerald-500/10',
     },
     {
-      title: 'Telegram Alerts',
-      value: isNewCandidate ? 0 : jobs.filter((j) => j.status === 'notified').length,
-      subtitle: 'Dispatched to Bot',
-      icon: Send,
-      color: 'text-violet-400',
-      badgeBg: 'bg-violet-500/10 text-violet-400 border-violet-500/30 shadow-sm shadow-violet-500/10',
-    },
-    {
       title: 'Applied',
       value: isNewCandidate ? 0 : jobs.filter((j) => j.status === 'applied').length,
       subtitle: 'Tracked In Pipeline',
@@ -201,7 +193,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </motion.div>
 
       {/* Metrics Funnel Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3.5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
         {metrics.map((metric, idx) => {
           const Icon = metric.icon;
           return (
@@ -211,9 +203,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.08 + idx * 0.04 }}
               whileHover={{ y: -3 }}
-              className={`glass-panel glass-panel-hover rounded-xl p-3.5 sm:p-4 flex flex-col justify-between group ${
-                idx === 4 ? 'col-span-2 sm:col-span-1' : ''
-              }`}
+              className="glass-panel glass-panel-hover rounded-xl p-3.5 sm:p-4 flex flex-col justify-between group"
             >
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
@@ -259,7 +249,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               Welcome, <span className="text-white font-semibold">{profile.full_name}</span>! Your career targets are active for{' '}
               <span className="text-cyan-300 font-medium">{(profile.target_roles || []).slice(0, 3).join(', ') || 'Target Roles'}</span>{' '}
               in <span className="text-blue-300 font-medium">{(profile.preferred_locations || []).slice(0, 2).join(', ') || 'Locations'}</span>{' '}
-              ({profile.salary_expectation ? `₹${profile.salary_expectation.min_lpa}–₹${profile.salary_expectation.max_lpa} LPA` : 'Market Competitive'}).
+              ({profile.salary_expectation?.min_lpa ? `₹${profile.salary_expectation.min_lpa}+ LPA` : 'Market Competitive'}).
             </p>
             <p className="text-xs text-zinc-400">
               Your dashboard is ready. Start your first job search to find verified openings matching your experience, filter out closed listings, and view your match scores.
@@ -458,7 +448,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="bg-white/[0.02] p-2 rounded-lg border border-white/[0.05]">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 block mb-0.5">Expected Comp</span>
                 <span className="font-semibold font-mono text-emerald-400">
-                  {profile.salary_expectation ? `₹${profile.salary_expectation.min_lpa} - ₹${profile.salary_expectation.max_lpa} LPA` : 'Open'}
+                  {profile.salary_expectation?.min_lpa ? `₹${profile.salary_expectation.min_lpa}+ LPA` : 'Open'}
                 </span>
               </div>
             </div>

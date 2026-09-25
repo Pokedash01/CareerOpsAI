@@ -22,6 +22,9 @@ import {
   Square,
   X,
   FolderInput,
+  ArrowUpDown,
+  Filter,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { JobListing, UserProfile, JobStatus } from '../types.js';
@@ -66,6 +69,9 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'discovered' | 'applied' | 'interviewing' | 'rejected' | 'all'>('discovered');
+  const [sortBy, setSortBy] = useState<'score_desc' | 'discovered_desc' | 'discovered_asc' | 'salary_desc' | 'exp_asc' | 'exp_desc'>('score_desc');
+  const [locationFilter, setLocationFilter] = useState<string>('all');
+  const [expFilter, setExpFilter] = useState<string>('all');
   const [expandedJdId, setExpandedJdId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
@@ -79,6 +85,18 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
     }, 30000);
     return () => clearInterval(timer);
   }, []);
+
+  // Compute available locations from jobs and user preferred locations
+  const availableLocations = React.useMemo(() => {
+    const locSet = new Set<string>();
+    (profile?.preferred_locations || []).forEach((l) => { if (l && l.trim()) locSet.add(l.trim()); });
+    jobs.forEach((j) => {
+      if (j.location && j.location.trim()) {
+        locSet.add(j.location.trim());
+      }
+    });
+    return Array.from(locSet).slice(0, 16);
+  }, [jobs, profile?.preferred_locations]);
 
   const expiredCount = jobs.filter(
     (j) => j.status === 'expired' || j.verification_status === 'expired_or_invalid' || j.company_name.toLowerCase().includes('state street')
@@ -94,6 +112,21 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
       job.description.toLowerCase().includes(q);
 
     if (!matchQuery) return false;
+
+    // Location filter
+    if (locationFilter !== 'all') {
+      const jobLoc = (job.location || '').toLowerCase();
+      if (!jobLoc.includes(locationFilter.toLowerCase())) return false;
+    }
+
+    // Experience filter
+    if (expFilter !== 'all') {
+      const exp = job.experience_years_required ?? 0;
+      if (expFilter === 'entry' && exp > 2) return false;
+      if (expFilter === 'mid' && (exp < 2 || exp > 5)) return false;
+      if (expFilter === 'senior' && (exp < 5 || exp > 8)) return false;
+      if (expFilter === 'lead' && exp < 8) return false;
+    }
 
     if (statusFilter === 'discovered') {
       return (
@@ -120,12 +153,38 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
     return true;
   });
 
-  // Sort: keep active high fit at top, expired/rejected at bottom
+  // Sort: keep active high fit at top, expired/rejected at bottom, then apply chosen sort
   const sortedJobs = [...filteredJobs].sort((a, b) => {
     const aIsBad = a.status === 'expired' || a.verification_status === 'expired_or_invalid' || a.status === 'rejected';
     const bIsBad = b.status === 'expired' || b.verification_status === 'expired_or_invalid' || b.status === 'rejected';
     if (aIsBad && !bIsBad) return 1;
     if (!aIsBad && bIsBad) return -1;
+
+    if (sortBy === 'discovered_desc') {
+      const timeA = new Date(a.discovered_at || a.posted_date || 0).getTime();
+      const timeB = new Date(b.discovered_at || b.posted_date || 0).getTime();
+      return timeB - timeA;
+    }
+    if (sortBy === 'discovered_asc') {
+      const timeA = new Date(a.discovered_at || a.posted_date || 0).getTime();
+      const timeB = new Date(b.discovered_at || b.posted_date || 0).getTime();
+      return timeA - timeB;
+    }
+    if (sortBy === 'salary_desc') {
+      const salA = a.salary_lpa || 0;
+      const salB = b.salary_lpa || 0;
+      if (salA !== salB) return salB - salA;
+    }
+    if (sortBy === 'exp_asc') {
+      const expA = a.experience_years_required ?? 99;
+      const expB = b.experience_years_required ?? 99;
+      if (expA !== expB) return expA - expB;
+    }
+    if (sortBy === 'exp_desc') {
+      const expA = a.experience_years_required ?? 0;
+      const expB = b.experience_years_required ?? 0;
+      if (expA !== expB) return expB - expA;
+    }
     return (b.fit?.match_score || 0) - (a.fit?.match_score || 0);
   });
 
@@ -348,6 +407,83 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
               <Plus className="w-3.5 h-3.5" />
               <span>Add Job</span>
             </motion.button>
+          </div>
+        </div>
+
+        {/* Sorting & Filter Strip */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-white/[0.06] text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Sort Dropdown */}
+            <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-zinc-300">
+              <ArrowUpDown className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+              <span className="text-[11px] text-zinc-400 font-medium">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer pr-1"
+              >
+                <option value="score_desc" className="bg-[#121620] text-white">Best Match Score</option>
+                <option value="discovered_desc" className="bg-[#121620] text-white">Recently Found (Newest)</option>
+                <option value="discovered_asc" className="bg-[#121620] text-white">Oldest Found</option>
+                <option value="salary_desc" className="bg-[#121620] text-white">Highest Salary</option>
+                <option value="exp_asc" className="bg-[#121620] text-white">Experience (Low to High)</option>
+                <option value="exp_desc" className="bg-[#121620] text-white">Experience (High to Low)</option>
+              </select>
+            </div>
+
+            {/* Location Filter Dropdown */}
+            <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-zinc-300">
+              <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="text-[11px] text-zinc-400 font-medium">Location:</span>
+              <select
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+                className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer max-w-[140px] truncate pr-1"
+              >
+                <option value="all" className="bg-[#121620] text-white">All Locations</option>
+                {availableLocations.map((loc) => (
+                  <option key={loc} value={loc} className="bg-[#121620] text-white">{loc}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Experience Filter Dropdown */}
+            <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-zinc-300">
+              <Briefcase className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span className="text-[11px] text-zinc-400 font-medium">Experience:</span>
+              <select
+                value={expFilter}
+                onChange={(e) => setExpFilter(e.target.value)}
+                className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer pr-1"
+              >
+                <option value="all" className="bg-[#121620] text-white">All Experience</option>
+                <option value="entry" className="bg-[#121620] text-white">0–2 Yrs (Entry)</option>
+                <option value="mid" className="bg-[#121620] text-white">2–5 Yrs (Mid)</option>
+                <option value="senior" className="bg-[#121620] text-white">5–8 Yrs (Senior)</option>
+                <option value="lead" className="bg-[#121620] text-white">8+ Yrs (Lead)</option>
+              </select>
+            </div>
+
+            {/* Reset Filter Button */}
+            {(locationFilter !== 'all' || expFilter !== 'all' || sortBy !== 'score_desc' || searchQuery) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLocationFilter('all');
+                  setExpFilter('all');
+                  setSortBy('score_desc');
+                  setSearchQuery('');
+                }}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-xl transition cursor-pointer border border-white/[0.08]"
+              >
+                <RotateCcw className="w-3 h-3 text-zinc-400" />
+                <span>Reset Filters</span>
+              </button>
+            )}
+          </div>
+
+          <div className="text-[11px] text-zinc-400 font-mono">
+            Showing <span className="text-white font-semibold">{sortedJobs.length}</span> {sortedJobs.length === 1 ? 'role' : 'roles'}
           </div>
         </div>
       </motion.div>
