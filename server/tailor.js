@@ -1,4 +1,4 @@
-import { getGeminiClient, cleanJsonResponse } from "./gemini.js";
+import { getGeminiClient, cleanJsonResponse, isGeminiConfigured } from "./gemini.js";
 const NUMBER_REGEX = /\d[\d,]*\.?\d*%?/g;
 function extractNumbers(text) {
   if (!text) return /* @__PURE__ */ new Set();
@@ -95,20 +95,22 @@ Target Role: ${jobTitle} at ${company}
 Job Description:
 ${jobDesc.substring(0, 3500)}`;
   let rawTailored = null;
-  try {
-    const ai = getGeminiClient();
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        systemInstruction: sysPrompt,
-        temperature: 0.2,
-        responseMimeType: "application/json"
-      }
-    });
-    rawTailored = cleanJsonResponse(response.text || "{}");
-  } catch (error) {
-    console.error("[Tailor] LLM generation failed, generating fallback tailored output:", error);
+  if (isGeminiConfigured()) {
+    try {
+      const ai = getGeminiClient();
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          systemInstruction: sysPrompt,
+          temperature: 0.2,
+          responseMimeType: "application/json"
+        }
+      });
+      rawTailored = cleanJsonResponse(response.text || "{}");
+    } catch (error) {
+      console.warn("[Tailor] LLM generation note, generating fallback tailored output:", error?.message);
+    }
   }
   const companySourceMap = /* @__PURE__ */ new Map();
   for (const exp of profile.experience || []) {

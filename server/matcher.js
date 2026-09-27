@@ -1,4 +1,4 @@
-import { getGeminiClient, cleanJsonResponse } from "./gemini.js";
+import { getGeminiClient, cleanJsonResponse, isGeminiConfigured } from "./gemini.js";
 import crypto from "crypto";
 const FIT_CACHE = /* @__PURE__ */ new Map();
 const KNOWN_ALIASES = {
@@ -189,10 +189,15 @@ Job Description:
 ${jobDesc.substring(0, 1e4)}
 
 Analyze fit thoroughly and output valid JSON.`;
+  if (!isGeminiConfigured()) {
+    const heuristic = computeHeuristicFit(profile, jobTitle, company, location, jobDesc, salaryFact, experienceFact, experienceRangeYears, candExp);
+    FIT_CACHE.set(cacheKey, heuristic);
+    return heuristic;
+  }
   try {
     const ai = getGeminiClient();
     const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         systemInstruction: systemPrompt,
@@ -246,72 +251,78 @@ Analyze fit thoroughly and output valid JSON.`;
     return matchRes;
   } catch (error) {
     console.error("[Matcher] Gemini evaluation failed, computing heuristic score:", error);
-    const jdLower = jobDesc.toLowerCase();
-    const candSkillsLower = (profile.skills || []).map((s) => s.toLowerCase());
-    let score = 65;
-    const matchedSkills = [];
-    const missingSkills = [];
-    const targetRoles = profile.target_roles || [];
-    const isDirectRoleMatch = targetRoles.some((r) => {
-      const rl = r.toLowerCase();
-      return titleLower.includes(rl) || rl.includes(titleLower) || titleLower.includes("business analyst") && rl.includes("business analyst") || titleLower.includes("analyst") && rl.includes("analyst") || titleLower.includes("solutions") && rl.includes("solutions") || titleLower.includes("power") && rl.includes("power") || titleLower.includes("automation") && rl.includes("automation") || titleLower.includes("data") && rl.includes("data");
-    });
-    if (isDirectRoleMatch) {
-      score += 12;
-    }
-    if (locationMatches(location, profile.preferred_locations)) {
-      score += 5;
-    }
-    if (experienceRangeYears) {
-      const [minExp, maxExp] = experienceRangeYears;
-      if (candExp >= minExp - 0.5 && candExp <= maxExp + 1.5) {
-        score += 6;
-      }
-    } else {
-      score += 3;
-    }
-    for (const skill of profile.skills) {
-      const sl = skill.toLowerCase();
-      if (jdLower.includes(sl) || sl.includes("excel") && jdLower.includes("excel") || sl.includes("sql") && jdLower.includes("sql")) {
-        score += 4;
-        matchedSkills.push(skill);
-      }
-    }
-    const isPowerDeveloperRole = titleLower.includes("developer") || titleLower.includes("lead") || titleLower.includes("architect") || titleLower.includes("power platform consultant");
-    if (isPowerDeveloperRole) {
-      if ((jdLower.includes("power fx") || jdLower.includes("powerfx")) && !candSkillsLower.some((s) => s.includes("power fx") || s.includes("powerfx"))) {
-        missingSkills.push("Power Fx");
-      }
-      if ((jdLower.includes("rest api") || jdLower.includes("rest apis")) && !candSkillsLower.some((s) => s.includes("rest api") || s.includes("rest apis") || s.includes("rest"))) {
-        missingSkills.push("REST APIs");
-      }
-      if (jdLower.includes("spfx") && !candSkillsLower.some((s) => s.includes("spfx"))) {
-        missingSkills.push("SPFx");
-      }
-      if ((jdLower.includes("pcf") || jdLower.includes("power apps component framework")) && !candSkillsLower.some((s) => s.includes("pcf"))) {
-        missingSkills.push("PCF");
-      }
-    }
-    if (matchedSkills.length >= 3) score += 6;
-    if (missingSkills.length > 0) score = Math.max(50, score - missingSkills.length * 6);
-    score = Math.min(95, score);
-    const isViable = score >= 70 && missingSkills.length <= 1;
-    return {
-      is_viable: isViable,
-      match_score: score,
-      detected_experience: experienceFact,
-      salary_range: salaryFact,
-      location,
-      skills_gap: missingSkills.length > 0 ? missingSkills.join(", ") : "None",
-      summary_reasoning: isDirectRoleMatch ? `Direct target role match for ${jobTitle}. Strong alignment with ${matchedSkills.slice(0, 3).join(", ")} in ${location}.` : `Candidate aligns with key requirements (${matchedSkills.slice(0, 3).join(", ")})${missingSkills.length > 0 ? `, but lacks specific tools (${missingSkills.join(", ")})` : ""}.`,
-      strengths: [
-        ...isDirectRoleMatch ? [`Direct match with candidate target role: ${jobTitle}`] : [],
-        ...matchedSkills.map((s) => `Demonstrated competency in ${s}`)
-      ],
-      weaknesses: missingSkills.map((m) => `Missing required skill: ${m}`),
-      evaluated_at: (/* @__PURE__ */ new Date()).toISOString()
-    };
+    const heuristic = computeHeuristicFit(profile, jobTitle, company, location, jobDesc, salaryFact, experienceFact, experienceRangeYears, candExp);
+    FIT_CACHE.set(cacheKey, heuristic);
+    return heuristic;
   }
+}
+function computeHeuristicFit(profile, jobTitle, company, location, jobDesc, salaryFact, experienceFact, experienceRangeYears, candExp = 3) {
+  const jdLower = jobDesc.toLowerCase();
+  const titleLower = jobTitle.toLowerCase();
+  const candSkillsLower = (profile.skills || []).map((s) => s.toLowerCase());
+  let score = 65;
+  const matchedSkills = [];
+  const missingSkills = [];
+  const targetRoles = profile.target_roles || [];
+  const isDirectRoleMatch = targetRoles.some((r) => {
+    const rl = r.toLowerCase();
+    return titleLower.includes(rl) || rl.includes(titleLower) || titleLower.includes("business analyst") && rl.includes("business analyst") || titleLower.includes("analyst") && rl.includes("analyst") || titleLower.includes("solutions") && rl.includes("solutions") || titleLower.includes("power") && rl.includes("power") || titleLower.includes("automation") && rl.includes("automation") || titleLower.includes("data") && rl.includes("data");
+  });
+  if (isDirectRoleMatch) {
+    score += 12;
+  }
+  if (locationMatches(location, profile.preferred_locations)) {
+    score += 5;
+  }
+  if (experienceRangeYears) {
+    const [minExp, maxExp] = experienceRangeYears;
+    if (candExp >= minExp - 0.5 && candExp <= maxExp + 1.5) {
+      score += 6;
+    }
+  } else {
+    score += 3;
+  }
+  for (const skill of profile.skills) {
+    const sl = skill.toLowerCase();
+    if (jdLower.includes(sl) || sl.includes("excel") && jdLower.includes("excel") || sl.includes("sql") && jdLower.includes("sql")) {
+      score += 4;
+      matchedSkills.push(skill);
+    }
+  }
+  const isPowerDeveloperRole = titleLower.includes("developer") || titleLower.includes("lead") || titleLower.includes("architect") || titleLower.includes("power platform consultant");
+  if (isPowerDeveloperRole) {
+    if ((jdLower.includes("power fx") || jdLower.includes("powerfx")) && !candSkillsLower.some((s) => s.includes("power fx") || s.includes("powerfx"))) {
+      missingSkills.push("Power Fx");
+    }
+    if ((jdLower.includes("rest api") || jdLower.includes("rest apis")) && !candSkillsLower.some((s) => s.includes("rest api") || s.includes("rest apis") || s.includes("rest"))) {
+      missingSkills.push("REST APIs");
+    }
+    if (jdLower.includes("spfx") && !candSkillsLower.some((s) => s.includes("spfx"))) {
+      missingSkills.push("SPFx");
+    }
+    if ((jdLower.includes("pcf") || jdLower.includes("power apps component framework")) && !candSkillsLower.some((s) => s.includes("pcf"))) {
+      missingSkills.push("PCF");
+    }
+  }
+  if (matchedSkills.length >= 3) score += 6;
+  if (missingSkills.length > 0) score = Math.max(50, score - missingSkills.length * 6);
+  score = Math.min(95, score);
+  const isViable = score >= 70 && missingSkills.length <= 1;
+  return {
+    is_viable: isViable,
+    match_score: score,
+    detected_experience: experienceFact,
+    salary_range: salaryFact,
+    location,
+    skills_gap: missingSkills.length > 0 ? missingSkills.join(", ") : "None",
+    summary_reasoning: isDirectRoleMatch ? `Direct target role match for ${jobTitle}. Strong alignment with ${matchedSkills.slice(0, 3).join(", ")} in ${location}.` : `Candidate aligns with key requirements (${matchedSkills.slice(0, 3).join(", ")})${missingSkills.length > 0 ? `, but lacks specific tools (${missingSkills.join(", ")})` : ""}.`,
+    strengths: [
+      ...isDirectRoleMatch ? [`Direct match with candidate target role: ${jobTitle}`] : [],
+      ...matchedSkills.map((s) => `Demonstrated competency in ${s}`)
+    ],
+    weaknesses: missingSkills.map((m) => `Missing required skill: ${m}`),
+    evaluated_at: (/* @__PURE__ */ new Date()).toISOString()
+  };
 }
 export {
   evaluateJobFit,

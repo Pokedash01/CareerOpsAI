@@ -1,5 +1,5 @@
 import mammoth from "mammoth";
-import { getGeminiClient, cleanJsonResponse } from "./gemini.js";
+import { getGeminiClient, cleanJsonResponse, isGeminiConfigured } from "./gemini.js";
 function ensureCanvasPolyfills() {
   if (typeof globalThis.DOMMatrix === "undefined") {
     globalThis.DOMMatrix = class DOMMatrix {
@@ -241,30 +241,32 @@ async function extractDocumentContent(buffer, fileName, mimeType) {
     } catch (pdfErr) {
       console.warn("[ResumeScraper] PDFParse error or missing canvas runtime, attempting Gemini multimodal extraction:", pdfErr?.message || pdfErr);
     }
-    try {
-      const ai = getGeminiClient();
-      const response = await ai.models.generateContent({
-        model: "gemini-3.8-flash",
-        contents: [
-          {
-            inlineData: {
-              data: buffer.toString("base64"),
-              mimeType: "application/pdf"
-            }
-          },
-          "Extract and output the full text of this resume document accurately, preserving sections, skills, work experience, education, email, phone, location, and URLs."
-        ]
-      });
-      const geminiText = response.text || "";
-      if (geminiText.trim().length > 20) {
-        return {
-          text: geminiText,
-          links: extractLinksFromText(geminiText),
-          fileType: "pdf"
-        };
+    if (isGeminiConfigured()) {
+      try {
+        const ai = getGeminiClient();
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: [
+            {
+              inlineData: {
+                data: buffer.toString("base64"),
+                mimeType: "application/pdf"
+              }
+            },
+            "Extract and output the full text of this resume document accurately, preserving sections, skills, work experience, education, email, phone, location, and URLs."
+          ]
+        });
+        const geminiText = response.text || "";
+        if (geminiText.trim().length > 20) {
+          return {
+            text: geminiText,
+            links: extractLinksFromText(geminiText),
+            fileType: "pdf"
+          };
+        }
+      } catch (geminiErr) {
+        console.warn("[ResumeScraper] Gemini multimodal PDF fallback warning:", geminiErr?.message || geminiErr);
       }
-    } catch (geminiErr) {
-      console.warn("[ResumeScraper] Gemini multimodal PDF fallback warning:", geminiErr?.message || geminiErr);
     }
     const rawBufferStr = buffer.toString("utf-8").replace(/[^\x20-\x7E\n\r\t]/g, " ");
     return {
@@ -414,49 +416,46 @@ ${externalEvidenceBlocks ? `=== SCRAPED WEB EVIDENCE (LinkedIn, GitHub, Portfoli
 ${externalEvidenceBlocks}` : `(No active external hyperlinks were scrapeable)`}`;
   const ai = getGeminiClient();
   let parsed = null;
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3.8-flash",
-        contents: userPrompt,
-        config: {
-          systemInstruction: sysPrompt,
-          temperature: 0.1,
-          responseMimeType: "application/json"
+  if (isGeminiConfigured()) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: userPrompt,
+          config: {
+            systemInstruction: sysPrompt,
+            temperature: 0.1,
+            responseMimeType: "application/json"
+          }
+        });
+        parsed = cleanJsonResponse(response.text || "{}");
+        if (parsed?.full_name) {
+          break;
         }
-      });
-      parsed = cleanJsonResponse(response.text || "{}");
-      if (parsed?.full_name) {
-        break;
-      }
-    } catch (apiErr) {
-      console.warn(`[Resume Parser] Gemini attempt ${attempt} warning:`, apiErr.message);
-      if (attempt === 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-      } else {
-        const nameMatch = resumeText.match(/^([A-Z][a-z]+ [A-Z][a-z]+)/m);
-        const emailMatch = resumeText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-        const phoneMatch = resumeText.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
-        parsed = {
-          full_name: nameMatch ? nameMatch[1] : params.existingProfile?.full_name || "Kartik Bhatnagar",
-          contact: {
-            email: emailMatch ? emailMatch[0] : params.existingProfile?.contact.email || "",
-            phone: phoneMatch ? phoneMatch[0] : params.existingProfile?.contact.phone || "",
-            location: "Gurugram, India",
-            links: discoveredLinks.join(", ")
-          },
-          total_years_experience: params.existingProfile?.total_years_experience || 4,
-          seniority_tier: params.existingProfile?.seniority_tier || "Mid",
-          skills: params.existingProfile?.skills || ["SQL", "Python", "Product Analytics", "PowerBI"],
-          target_roles: params.existingProfile?.target_roles || ["Product Business Analyst"]
-        };
+      } catch (apiErr) {
+        console.warn(`[Resume Parser] Gemini attempt ${attempt} warning:`, apiErr.message);
+        if (attempt === 1) {
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
       }
     }
   }
   if (!parsed || !parsed.full_name) {
+    const nameMatch = resumeText.match(/^([A-Z][a-z]+ [A-Z][a-z]+)/m);
+    const emailMatch = resumeText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    const phoneMatch = resumeText.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
     parsed = {
-      full_name: params.existingProfile?.full_name || "Kartik Bhatnagar",
-      contact: { ...params.existingProfile?.contact, links: discoveredLinks.join(", ") }
+      full_name: nameMatch ? nameMatch[1] : params.existingProfile?.full_name || "Kartik Bhatnagar",
+      contact: {
+        email: emailMatch ? emailMatch[0] : params.existingProfile?.contact.email || "",
+        phone: phoneMatch ? phoneMatch[0] : params.existingProfile?.contact.phone || "",
+        location: "Gurugram, India",
+        links: discoveredLinks.join(", ")
+      },
+      total_years_experience: params.existingProfile?.total_years_experience || 4,
+      seniority_tier: params.existingProfile?.seniority_tier || "Mid",
+      skills: params.existingProfile?.skills || ["SQL", "Python", "Product Analytics", "PowerBI"],
+      target_roles: params.existingProfile?.target_roles || ["Product Business Analyst"]
     };
   }
   const mergedProfile = {

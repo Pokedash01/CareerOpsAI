@@ -8,6 +8,7 @@ const INITIAL_PROFILE = {
   },
   "total_years_experience": 3.2,
   "seniority_tier": "Mid",
+  "summary": "Results-driven Technology & Automation Analyst with 3+ years of experience specializing in Power Platform, Copilot Studio, GenAI agents, and business process automation. Proven track record delivering enterprise-grade automated workflows, data migrations, and executive BI dashboards saving 3,000+ hours annually.",
   "education": [
     {
       "institution": "Maharaja Surajmal Institute",

@@ -12,7 +12,8 @@ import {
   DB_DIR,
   BUNDLED_DB_DIR
 } from "./database.js";
-const DATA_DIR = process.env.VERCEL ? "/tmp" : path.join(process.cwd(), "data");
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const DATA_DIR = IS_SERVERLESS ? "/tmp" : path.join(process.cwd(), "data");
 const STORE_FILE = path.join(DATA_DIR, "careerops_store.json");
 const BUNDLED_STORE_FILE = path.join(process.cwd(), "data", "careerops_store.json");
 const KV_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
@@ -142,14 +143,33 @@ function saveToDisk(data) {
     }
     saveRelationalDatabase();
     if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+      try {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      } catch {
+      }
     }
-    fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2), "utf-8");
-    if (STORE_FILE !== BUNDLED_STORE_FILE && fs.existsSync(path.dirname(BUNDLED_STORE_FILE))) {
-      fs.writeFileSync(BUNDLED_STORE_FILE, JSON.stringify(data, null, 2), "utf-8");
+    try {
+      fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2), "utf-8");
+    } catch (writeErr) {
+      if (writeErr?.code !== "EROFS") {
+        console.warn("[Storage] Notice writing store file:", writeErr?.message || writeErr);
+      }
+    }
+    if (!IS_SERVERLESS && STORE_FILE !== BUNDLED_STORE_FILE) {
+      try {
+        if (fs.existsSync(path.dirname(BUNDLED_STORE_FILE))) {
+          fs.writeFileSync(BUNDLED_STORE_FILE, JSON.stringify(data, null, 2), "utf-8");
+        }
+      } catch (bundleErr) {
+        if (bundleErr?.code !== "EROFS") {
+          console.warn("[Storage] Notice writing bundled store:", bundleErr?.message || bundleErr);
+        }
+      }
     }
   } catch (err) {
-    console.error("[Storage] Failed to save store to disk:", err);
+    if (err?.code !== "EROFS") {
+      console.error("[Storage] Failed to save store to disk:", err);
+    }
   }
 }
 export {

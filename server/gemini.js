@@ -1,10 +1,14 @@
 import { GoogleGenAI } from "@google/genai";
 let geminiClient = null;
+function isGeminiConfigured() {
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  return Boolean(apiKey && apiKey !== "dummy-key-for-dev" && !apiKey.startsWith("dummy") && apiKey.length > 15);
+}
 function getGeminiClient() {
   if (!geminiClient) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.warn("[CareerOps AI] Warning: GEMINI_API_KEY is not set in environment.");
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
+    if (!apiKey || apiKey === "dummy-key-for-dev") {
+      console.warn("[CareerOps AI] Notice: GEMINI_API_KEY is not configured. Heuristic models will be utilized.");
     }
     geminiClient = new GoogleGenAI({
       apiKey: apiKey || "dummy-key-for-dev",
@@ -38,5 +42,6 @@ function cleanJsonResponse(rawText) {
 }
 export {
   cleanJsonResponse,
-  getGeminiClient
+  getGeminiClient,
+  isGeminiConfigured
 };

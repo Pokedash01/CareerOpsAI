@@ -1,6 +1,15 @@
 import crypto from "crypto";
-import { INITIAL_PROFILE, INITIAL_JOBS, INITIAL_SETTINGS } from "./seedData.js";
-import { computeSafeJobId, normalizeJobUrl } from "./jobSearch.js";
+import { INITIAL_PROFILE, INITIAL_SETTINGS } from "./seedData.js";
+import {
+  dbUsers,
+  dbUserProfiles,
+  dbUserJobs,
+  recomposePartitionFromDb,
+  decomposePartitionToDb,
+  saveRelationalDatabase,
+  getHydratedJobsForUser,
+  removeUserFromDatabase
+} from "./database.js";
 const SESSION_COOKIE_NAME = "careerops_session";
 const SESSION_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1e3;
 const PRIMARY_USER_ID = "usr_kb270102";
@@ -14,46 +23,85 @@ function createPasswordResetCode(email) {
   const cleanEmail = email.toLowerCase().trim();
   const code = Math.floor(1e5 + Math.random() * 9e5).toString();
   const now = Date.now();
+  const expiresAt = new Date(now + 15 * 60 * 1e3).toISOString();
   passwordResetCodes[cleanEmail] = {
     email: cleanEmail,
     code,
     created_at: new Date(now).toISOString(),
-    expires_at: new Date(now + 15 * 60 * 1e3).toISOString()
-    // 15 mins
+    expires_at: expiresAt
   };
+  const userId = userEmailIndex[cleanEmail];
+  if (userId) {
+    if (users[userId]) {
+      users[userId].reset_code = code;
+      users[userId].reset_expires_at = expiresAt;
+    }
+    if (dbUsers[userId]) {
+      dbUsers[userId].reset_code = code;
+      dbUsers[userId].reset_expires_at = expiresAt;
+    }
+  }
   return code;
 }
 function verifyAndResetPassword(email, code, newPassword) {
   const cleanEmail = email.toLowerCase().trim();
-  const record = passwordResetCodes[cleanEmail];
+  let record = passwordResetCodes[cleanEmail];
+  const userId = userEmailIndex[cleanEmail];
+  const user = userId ? users[userId] || dbUsers[userId] : null;
+  if (!record && user && user.reset_code) {
+    record = {
+      email: cleanEmail,
+      code: user.reset_code,
+      created_at: user.created_at,
+      expires_at: user.reset_expires_at || new Date(Date.now() + 15 * 60 * 1e3).toISOString()
+    };
+  }
   if (!record) {
     return { success: false, error: "No active password reset request found for this email. Please request a new code." };
   }
   if (new Date(record.expires_at).getTime() < Date.now()) {
     delete passwordResetCodes[cleanEmail];
+    if (user) {
+      delete user.reset_code;
+      delete user.reset_expires_at;
+    }
     return { success: false, error: "The verification code has expired. Please request a new one." };
   }
   if (record.code.trim() !== code.trim()) {
     return { success: false, error: "Incorrect verification code. Please check and try again." };
   }
-  const userId = userEmailIndex[cleanEmail];
-  if (!userId || !users[userId]) {
+  if (!userId || !user) {
     return { success: false, error: "User account not found." };
   }
   if (!newPassword || newPassword.length < 6) {
     return { success: false, error: "New password must be at least 6 characters long." };
   }
   const { hash, salt } = hashPassword(newPassword);
-  users[userId].password_hash = hash;
-  users[userId].salt = salt;
-  users[userId].last_login_at = (/* @__PURE__ */ new Date()).toISOString();
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  if (users[userId]) {
+    users[userId].password_hash = hash;
+    users[userId].salt = salt;
+    users[userId].last_login_at = now;
+    delete users[userId].reset_code;
+    delete users[userId].reset_expires_at;
+  }
+  if (dbUsers[userId]) {
+    dbUsers[userId].password_hash = hash;
+    dbUsers[userId].salt = salt;
+    dbUsers[userId].last_login_at = now;
+    delete dbUsers[userId].reset_code;
+    delete dbUsers[userId].reset_expires_at;
+  } else if (users[userId]) {
+    dbUsers[userId] = { ...users[userId] };
+  }
   for (const [token, sess] of Object.entries(sessions)) {
     if (sess.user_id === userId) {
       delete sessions[token];
     }
   }
   delete passwordResetCodes[cleanEmail];
-  return { success: true, user: users[userId] };
+  const activeUser = users[userId] || dbUsers[userId];
+  return { success: true, user: activeUser };
 }
 function hashPassword(password, customSalt) {
   const salt = customSalt || crypto.randomBytes(16).toString("hex");
@@ -140,31 +188,8 @@ function createDefaultPartitionForUser(user, preferences) {
     auto_notify_telegram: hasTelegram,
     runs: []
   };
-  const activeSeedJobs = userPartitions[PRIMARY_USER_ID]?.jobListings && userPartitions[PRIMARY_USER_ID].jobListings.length > 0 ? userPartitions[PRIMARY_USER_ID].jobListings.map((j) => ({
-    ...j,
-    id: j.id,
-    status: j.status || "discovered"
-  })) : INITIAL_JOBS.slice(0, 8).map((j, idx) => ({
-    ...j,
-    id: computeSafeJobId(j.title, `${j.company_name}_${user?.id || "sample"}_${idx}`),
-    status: idx === 0 ? "discovered" : idx === 1 ? "notified" : "discovered"
-  }));
-  const sampleJobs = activeSeedJobs;
+  const sampleJobs = [];
   const partitionRegistry = {};
-  for (const j of sampleJobs) {
-    const sig = `${j.company_name.toLowerCase()}_${j.title.toLowerCase()}`;
-    const normLink = normalizeJobUrl(j.apply_link);
-    partitionRegistry[j.id] = {
-      id: j.id,
-      signature: sig,
-      normalized_url: normLink,
-      company_name: j.company_name,
-      title: j.title,
-      status: j.status || "discovered",
-      discovered_at: (/* @__PURE__ */ new Date()).toISOString(),
-      last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
-    };
-  }
   return {
     currentProfile: userProfile,
     jobListings: sampleJobs,
@@ -232,7 +257,19 @@ function resolveAuthUser(req) {
 }
 function getUserPartition(userId, initialPreferences) {
   if (!userPartitions[userId]) {
-    userPartitions[userId] = createDefaultPartitionForUser(users[userId], initialPreferences);
+    const hasDbRecord = Boolean(dbUsers[userId]) || Boolean(dbUserProfiles[userId]) || Object.values(dbUserJobs).some((r) => r.user_id === userId);
+    if (hasDbRecord) {
+      userPartitions[userId] = recomposePartitionFromDb(userId);
+    } else {
+      userPartitions[userId] = createDefaultPartitionForUser(users[userId], initialPreferences);
+      decomposePartitionToDb(userId, userPartitions[userId]);
+      saveRelationalDatabase();
+    }
+  } else {
+    const candidateRels = Object.values(dbUserJobs).filter((r) => r.user_id === userId);
+    if (candidateRels.length > 0) {
+      userPartitions[userId].jobListings = getHydratedJobsForUser(userId);
+    }
   }
   return userPartitions[userId];
 }
@@ -280,6 +317,48 @@ function getSavedAccountsList() {
     last_active_at: u.last_login_at || (/* @__PURE__ */ new Date()).toISOString(),
     last_login_at: u.last_login_at
   }));
+}
+function getAllUsersWithStats() {
+  return Object.values(users).map((u) => {
+    const partition = userPartitions[u.id];
+    const profile = partition?.currentProfile || dbUserProfiles[u.id];
+    const jobList = partition?.jobListings || (u.id ? getHydratedJobsForUser(u.id) : []);
+    const jobCount = jobList ? jobList.length : 0;
+    const isPrimary = u.id === PRIMARY_USER_ID || u.email.toLowerCase() === "kb270102@gmail.com";
+    return {
+      id: u.id,
+      email: u.email,
+      full_name: u.full_name || profile?.full_name || u.email.split("@")[0],
+      avatar_url: u.avatar_url,
+      created_at: u.created_at || (/* @__PURE__ */ new Date()).toISOString(),
+      last_login_at: u.last_login_at || u.created_at || (/* @__PURE__ */ new Date()).toISOString(),
+      is_primary_admin: isPrimary,
+      target_roles: profile?.target_roles || [],
+      preferred_locations: profile?.preferred_locations || [],
+      job_count: jobCount,
+      has_resume: Boolean(profile?.parsed_from_document || profile?.raw_resume_text || (profile?.experience?.length || 0) > 0)
+    };
+  });
+}
+function deleteUserAccount(userId) {
+  if (userId === PRIMARY_USER_ID) {
+    return { success: false, error: "Cannot delete the primary administrator account (Kartik Bhatt)." };
+  }
+  const u = users[userId];
+  if (!u) {
+    return { success: false, error: "User account not found." };
+  }
+  const emailLower = u.email.toLowerCase();
+  delete users[userId];
+  delete userEmailIndex[emailLower];
+  delete userPartitions[userId];
+  for (const [token, s] of Object.entries(sessions)) {
+    if (s.user_id === userId) {
+      delete sessions[token];
+    }
+  }
+  removeUserFromDatabase(userId);
+  return { success: true };
 }
 function serializeAuthData() {
   return {
@@ -346,9 +425,11 @@ export {
   createDefaultPartitionForUser,
   createPasswordResetCode,
   createSessionForUser,
+  deleteUserAccount,
   deserializeAuthData,
   generateSessionToken,
   getAllUserPartitions,
+  getAllUsersWithStats,
   getCanonicalNextRun,
   getSavedAccountsList,
   getUserPartition,

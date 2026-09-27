@@ -10,7 +10,8 @@ const dbUserProfiles = {};
 const dbUserSettings = {};
 const dbUserWorkflows = {};
 const dbUserRegistries = {};
-const ROOT_DATA_DIR = process.env.VERCEL ? "/tmp" : path.join(process.cwd(), "data");
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const ROOT_DATA_DIR = IS_SERVERLESS ? "/tmp" : path.join(process.cwd(), "data");
 const DB_DIR = path.join(ROOT_DATA_DIR, "db");
 const BUNDLED_DB_DIR = path.join(process.cwd(), "data", "db");
 const TABLES = {
@@ -28,11 +29,16 @@ function ensureDbDirectory() {
     if (!fs.existsSync(DB_DIR)) {
       fs.mkdirSync(DB_DIR, { recursive: true });
     }
-    if (BUNDLED_DB_DIR !== DB_DIR && !fs.existsSync(BUNDLED_DB_DIR)) {
-      fs.mkdirSync(BUNDLED_DB_DIR, { recursive: true });
+    if (!IS_SERVERLESS && BUNDLED_DB_DIR !== DB_DIR && !fs.existsSync(BUNDLED_DB_DIR)) {
+      try {
+        fs.mkdirSync(BUNDLED_DB_DIR, { recursive: true });
+      } catch {
+      }
     }
   } catch (err) {
-    console.warn("[DB] Directory creation note:", err);
+    if (err?.code !== "EROFS") {
+      console.warn("[DB] Directory creation note:", err?.message || err);
+    }
   }
 }
 function readJsonFile(filename) {
@@ -59,9 +65,11 @@ function writeJsonFile(filename, data) {
   try {
     fs.writeFileSync(primaryPath, JSON.stringify(data, null, 2), "utf-8");
   } catch (err) {
-    console.error(`[DB] Failed to write ${primaryPath}:`, err.message);
+    if (err?.code !== "EROFS") {
+      console.error(`[DB] Failed to write ${primaryPath}:`, err.message);
+    }
   }
-  if (BUNDLED_DB_DIR !== DB_DIR) {
+  if (!IS_SERVERLESS && BUNDLED_DB_DIR !== DB_DIR) {
     try {
       const secondaryPath = path.join(BUNDLED_DB_DIR, filename);
       fs.writeFileSync(secondaryPath, JSON.stringify(data, null, 2), "utf-8");
@@ -352,6 +360,24 @@ function saveRelationalDatabase() {
     console.error("[DB] Error saving relational database:", err.message);
   }
 }
+function removeUserFromDatabase(userId) {
+  delete dbUsers[userId];
+  delete dbUserProfiles[userId];
+  delete dbUserSettings[userId];
+  delete dbUserWorkflows[userId];
+  delete dbUserRegistries[userId];
+  for (const [key, rel] of Object.entries(dbUserJobs)) {
+    if (rel.user_id === userId) {
+      delete dbUserJobs[key];
+    }
+  }
+  for (const [key, sess] of Object.entries(dbSessions)) {
+    if (sess.user_id === userId) {
+      delete dbSessions[key];
+    }
+  }
+  saveRelationalDatabase();
+}
 function getRelationalStats() {
   const statusCounts = {
     discovered: 0,
@@ -413,6 +439,7 @@ export {
   migrateLegacyStoreToRelational,
   normalizeToJobEntity,
   recomposePartitionFromDb,
+  removeUserFromDatabase,
   saveRelationalDatabase,
   updateCandidateJobRelation,
   upsertCandidateJob
