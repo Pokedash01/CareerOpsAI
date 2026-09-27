@@ -69,12 +69,27 @@ export function createPasswordResetCode(email: string): string {
   const cleanEmail = email.toLowerCase().trim();
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const now = Date.now();
+  const expiresAt = new Date(now + 15 * 60 * 1000).toISOString(); // 15 mins
   passwordResetCodes[cleanEmail] = {
     email: cleanEmail,
     code,
     created_at: new Date(now).toISOString(),
-    expires_at: new Date(now + 15 * 60 * 1000).toISOString(), // 15 mins
+    expires_at: expiresAt,
   };
+
+  // Persist code on user object to survive serverless instance rotation
+  const userId = userEmailIndex[cleanEmail];
+  if (userId) {
+    if (users[userId]) {
+      (users[userId] as any).reset_code = code;
+      (users[userId] as any).reset_expires_at = expiresAt;
+    }
+    if (dbUsers[userId]) {
+      (dbUsers[userId] as any).reset_code = code;
+      (dbUsers[userId] as any).reset_expires_at = expiresAt;
+    }
+  }
+
   return code;
 }
 
@@ -84,13 +99,30 @@ export function verifyAndResetPassword(
   newPassword: string
 ): { success: boolean; error?: string; user?: UserAccountRecord } {
   const cleanEmail = email.toLowerCase().trim();
-  const record = passwordResetCodes[cleanEmail];
+  let record = passwordResetCodes[cleanEmail];
+  const userId = userEmailIndex[cleanEmail];
+  const user = userId ? users[userId] || dbUsers[userId] : null;
+
+  // Fallback to persisted record on user object if in-memory cache was lost due to serverless cold start
+  if (!record && user && (user as any).reset_code) {
+    record = {
+      email: cleanEmail,
+      code: (user as any).reset_code,
+      created_at: user.created_at,
+      expires_at: (user as any).reset_expires_at || new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+    };
+  }
+
   if (!record) {
     return { success: false, error: 'No active password reset request found for this email. Please request a new code.' };
   }
 
   if (new Date(record.expires_at).getTime() < Date.now()) {
     delete passwordResetCodes[cleanEmail];
+    if (user) {
+      delete (user as any).reset_code;
+      delete (user as any).reset_expires_at;
+    }
     return { success: false, error: 'The verification code has expired. Please request a new one.' };
   }
 
@@ -98,8 +130,7 @@ export function verifyAndResetPassword(
     return { success: false, error: 'Incorrect verification code. Please check and try again.' };
   }
 
-  const userId = userEmailIndex[cleanEmail];
-  if (!userId || !users[userId]) {
+  if (!userId || !user) {
     return { success: false, error: 'User account not found.' };
   }
 
@@ -108,9 +139,25 @@ export function verifyAndResetPassword(
   }
 
   const { hash, salt } = hashPassword(newPassword);
-  users[userId].password_hash = hash;
-  users[userId].salt = salt;
-  users[userId].last_login_at = new Date().toISOString();
+  const now = new Date().toISOString();
+
+  // Synchronize both users and dbUsers immediately
+  if (users[userId]) {
+    users[userId].password_hash = hash;
+    users[userId].salt = salt;
+    users[userId].last_login_at = now;
+    delete (users[userId] as any).reset_code;
+    delete (users[userId] as any).reset_expires_at;
+  }
+  if (dbUsers[userId]) {
+    dbUsers[userId].password_hash = hash;
+    dbUsers[userId].salt = salt;
+    dbUsers[userId].last_login_at = now;
+    delete (dbUsers[userId] as any).reset_code;
+    delete (dbUsers[userId] as any).reset_expires_at;
+  } else if (users[userId]) {
+    dbUsers[userId] = { ...users[userId] };
+  }
 
   // Invalidate any existing sessions for security
   for (const [token, sess] of Object.entries(sessions)) {
@@ -120,7 +167,8 @@ export function verifyAndResetPassword(
   }
 
   delete passwordResetCodes[cleanEmail];
-  return { success: true, user: users[userId] };
+  const activeUser = users[userId] || dbUsers[userId];
+  return { success: true, user: activeUser };
 }
 
 export function hashPassword(password: string, customSalt?: string): { hash: string; salt: string } {

@@ -452,13 +452,13 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
           </div>
         </div>
 
-        {/* Bottom Row: Geographic Location Pills + Working Sort Control */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-3 border-t border-white/[0.06] text-xs">
+        {/* Bottom Row: Geographic Location Pills + Working Sort Control - Strictly Single Row */}
+        <div className="flex items-center justify-between gap-2.5 pt-3 border-t border-white/[0.06] text-xs flex-nowrap w-full overflow-hidden">
           {/* Geographic Location Pills - Locked to single row with smooth horizontal scroll */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-nowrap min-w-0 flex-1 py-0.5">
             <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1 mr-1 shrink-0">
               <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Location:</span>
+              <span className="hidden sm:inline">Location:</span>
             </span>
 
             <button
@@ -474,7 +474,7 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
               <span className="ml-1 opacity-75 font-mono text-[10px]">({jobsInActiveTab.length})</span>
             </button>
 
-            {availableLocations.slice(0, 4).map((loc) => {
+            {availableLocations.slice(0, 5).map((loc) => {
               const isSelected = locationFilter === loc.id;
               return (
                 <button
@@ -493,22 +493,22 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
               );
             })}
 
-            {/* Additional Locations Select if more than 4 */}
-            {availableLocations.length > 4 && (
+            {/* Additional Locations Select if more than 5 */}
+            {availableLocations.length > 5 && (
               <div className="relative inline-block shrink-0">
                 <select
-                  value={availableLocations.slice(4).some((l) => l.id === locationFilter) ? locationFilter : ''}
+                  value={availableLocations.slice(5).some((l) => l.id === locationFilter) ? locationFilter : ''}
                   onChange={(e) => {
                     if (e.target.value) setLocationFilter(e.target.value);
                   }}
                   className={`px-2 py-1 rounded-lg text-xs font-medium transition cursor-pointer bg-white/[0.02] border focus:outline-none shrink-0 ${
-                    availableLocations.slice(4).some((l) => l.id === locationFilter)
+                    availableLocations.slice(5).some((l) => l.id === locationFilter)
                       ? 'border-cyan-500/40 text-cyan-300 bg-cyan-500/20'
                       : 'border-white/[0.06] text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
                   <option value="" className="bg-[#121620] text-zinc-400">More Locations...</option>
-                  {availableLocations.slice(4).map((loc) => (
+                  {availableLocations.slice(5).map((loc) => (
                     <option key={loc.id} value={loc.id} className="bg-[#121620] text-white">
                       {loc.label} ({loc.count})
                     </option>
@@ -519,22 +519,22 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
           </div>
 
           {/* Right Controls: Sort Dropdown & Showing Count & Reset */}
-          <div className="flex items-center gap-2.5 shrink-0 self-end lg:self-center">
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
             {/* Sort Control */}
-            <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] rounded-xl px-2.5 py-1.5 text-zinc-300 transition">
+            <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] rounded-xl px-2.5 py-1 text-zinc-300 transition">
               <ArrowUpDown className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-              <span className="text-[11px] text-zinc-400 font-medium">Sort:</span>
+              <span className="text-[11px] text-zinc-400 font-medium hidden sm:inline">Sort:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
                 className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer pr-1"
               >
-                <option value="score_desc" className="bg-[#121620] text-white">Best Match Score</option>
+                <option value="score_desc" className="bg-[#121620] text-white">Best Match</option>
                 <option value="discovered_desc" className="bg-[#121620] text-white">Newest Discovered</option>
                 <option value="discovered_asc" className="bg-[#121620] text-white">Oldest Discovered</option>
                 <option value="salary_desc" className="bg-[#121620] text-white">Highest Salary (LPA)</option>
-                <option value="company_asc" className="bg-[#121620] text-white">Company (A to Z)</option>
-                <option value="title_asc" className="bg-[#121620] text-white">Role Title (A to Z)</option>
+                <option value="company_asc" className="bg-[#121620] text-white">Company (A-Z)</option>
+                <option value="title_asc" className="bg-[#121620] text-white">Role Title (A-Z)</option>
               </select>
             </div>
 
@@ -547,15 +547,15 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
                   setSortBy('score_desc');
                   setSearchQuery('');
                 }}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-xl transition cursor-pointer border border-white/[0.08]"
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-cyan-300 hover:text-white bg-cyan-500/10 hover:bg-cyan-500/20 rounded-xl transition cursor-pointer border border-cyan-500/30"
                 title="Reset active search and location filters"
               >
-                <RotateCcw className="w-3 h-3 text-zinc-400" />
+                <RotateCcw className="w-3 h-3 text-cyan-400" />
                 <span className="hidden sm:inline">Reset</span>
               </button>
             )}
 
-            <div className="text-[11px] text-zinc-400 font-mono hidden sm:block pl-1">
+            <div className="text-[11px] text-zinc-400 font-mono hidden md:block pl-0.5">
               <span className="text-white font-semibold">{sortedJobs.length}</span> {sortedJobs.length === 1 ? 'role' : 'roles'}
             </div>
           </div>
@@ -711,22 +711,55 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
               <Briefcase className="w-8 h-8 text-blue-400" />
             </div>
             <div className="space-y-1.5">
-              <h3 className="font-display font-bold text-white text-base sm:text-lg">No matching job requisitions found</h3>
+              <h3 className="font-display font-bold text-white text-base sm:text-lg">
+                {searchQuery || locationFilter !== 'all'
+                  ? 'No matching jobs found for this filter'
+                  : statusFilter !== 'discovered' && statusFilter !== 'all'
+                  ? `No jobs in the ${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} pipeline yet`
+                  : 'No matching job requisitions found'}
+              </h3>
               <p className="text-xs text-zinc-400 max-w-sm mx-auto leading-relaxed">
-                Try clearing your search query, adjusting your filters, or launching an automated discovery sweep.
+                {searchQuery || locationFilter !== 'all'
+                  ? 'Try clearing your search query or location filter to see other opportunities in this tab.'
+                  : statusFilter !== 'discovered' && statusFilter !== 'all'
+                  ? 'Jobs moved to this status will appear here. Switch to Discovered to review fresh opportunities.'
+                  : 'Try adjusting your target preferences or launch an automated discovery sweep.'}
               </p>
             </div>
-            <div className="pt-2">
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setLocationFilter('all');
-                }}
-                className="inline-flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-blue-300 border border-blue-500/30 transition shadow-sm cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-blue-400" />
-                <span>Reset Filters</span>
-              </button>
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-2.5">
+              {(searchQuery || locationFilter !== 'all' || sortBy !== 'score_desc') ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setLocationFilter('all');
+                    setSortBy('score_desc');
+                  }}
+                  className="inline-flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/35 transition shadow-sm cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Reset Filters</span>
+                </button>
+              ) : statusFilter !== 'discovered' && statusFilter !== 'all' ? (
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('discovered')}
+                  className="inline-flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition shadow-sm cursor-pointer border border-blue-400/30"
+                >
+                  <Briefcase className="w-3.5 h-3.5" />
+                  <span>View Discovered Jobs</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onDiscoverJobs}
+                  disabled={isDiscovering}
+                  className="inline-flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition shadow-sm cursor-pointer border border-blue-400/30 disabled:opacity-50"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{isDiscovering ? 'Scanning portals...' : 'Discover Fresh Jobs'}</span>
+                </button>
+              )}
             </div>
           </div>
         ) : (

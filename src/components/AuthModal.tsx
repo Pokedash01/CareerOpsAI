@@ -51,6 +51,7 @@ interface AuthModalProps {
     }
   ) => Promise<{ success: boolean; error?: string; code?: string; email?: string; redirectTo?: string }>;
   onQuickSwitch?: (accountId: string) => Promise<{ success: boolean; error?: string }>;
+  onAuthSuccess?: (user: any, token?: string) => Promise<void> | void;
   onLogout: () => Promise<void>;
   requireAuthToDismiss?: boolean;
   initialTab?: 'login' | 'register' | 'forgot-password';
@@ -141,6 +142,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   currentUser,
   onLogin,
   onRegister,
+  onQuickSwitch,
+  onAuthSuccess,
   onLogout,
   requireAuthToDismiss = false,
   initialTab = 'login',
@@ -551,8 +554,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           try { localStorage.setItem('careerops_auth_token', token); } catch {}
         }
         setSuccessMessage('🎉 Password successfully updated! Signing into your workspace...');
-        // Automatically sign in with new credentials
-        await onLogin(forgotEmail.trim(), forgotNewPassword, true);
+        if (onAuthSuccess && data.user) {
+          await onAuthSuccess(data.user, token);
+        } else {
+          await onLogin(forgotEmail.trim(), forgotNewPassword, true);
+        }
         setTimeout(() => {
           if (onClose) onClose();
         }, 700);

@@ -423,6 +423,20 @@ export function App() {
     }
   };
 
+  const handleAuthSuccess = async (userRecord: any, sessionToken?: string) => {
+    const norm = normalizeUserRecord(userRecord);
+    setCurrentUser(norm);
+    setJobs([]);
+    setSelectedJobId(null);
+    if (sessionToken) {
+      try { localStorage.setItem('careerops_auth_token', sessionToken); } catch {}
+    }
+    try { localStorage.setItem('careerops_user', JSON.stringify(norm)); } catch {}
+    updateSavedAccount(norm);
+    showToast(`Welcome back, ${norm.name}!`, 'success');
+    await loadUserData(sessionToken, norm.id);
+  };
+
   const handleRegister = async (
     email: string,
     pass: string,
@@ -1839,6 +1853,7 @@ export function App() {
         onLogin={handleLogin}
         onRegister={handleRegister}
         onQuickSwitch={handleQuickSwitch}
+        onAuthSuccess={handleAuthSuccess}
         onLogout={handleLogout}
         initialTab={authModalInitialTab}
       />

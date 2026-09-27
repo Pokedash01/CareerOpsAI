@@ -83,6 +83,7 @@ import {
   getRelationalStats,
   saveRelationalDatabase,
   dbUsers,
+  dbSessions,
   dbJobs,
   dbUserJobs,
   dbUserProfiles,
@@ -551,6 +552,9 @@ function saveStoreToDisk(shouldReplicate = true) {
         decomposePartitionToDb(uid, part);
       }
     }
+    // Ensure dbUsers and dbSessions are always synchronized before writing to disk
+    Object.assign(dbUsers, users);
+    Object.assign(dbSessions, sessions);
     saveRelationalDatabase();
 
     const authData = serializeAuthData();
@@ -871,6 +875,7 @@ app.use((req, res, next) => {
     };
 
     users[userId] = newAccount;
+    dbUsers[userId] = newAccount;
     userEmailIndex[cleanEmail] = userId;
 
     // Build initial preferences from registration
@@ -1063,6 +1068,7 @@ app.use((req, res, next) => {
 
     const user = users[userId];
     const code = createPasswordResetCode(cleanEmail);
+    saveStoreToDisk(false);
 
     // 1. Dispatch 6-digit verification code to candidate's registered email
     let emailSent = false;

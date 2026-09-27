@@ -85,6 +85,69 @@ const LOCATION_MAPPINGS: Array<{
   },
 ];
 
+const INVALID_LOCATION_WORDS = new Set([
+  'not specified',
+  'unspecified',
+  'unknown',
+  'n/a',
+  'na',
+  'none',
+  'open',
+  'hybrid',
+  'flexible',
+  'various',
+  'multiple',
+  'pan india',
+  'tbd',
+  'null',
+  'undefined',
+]);
+
+export function isGenericPlaceholderLocation(raw: string | undefined | null): boolean {
+  if (!raw) return true;
+  const stripped = raw
+    .replace(/\b(india|usa|united states|uk|in|us)\b/gi, '')
+    .replace(/[/\\,|\\-]+/g, ' ')
+    .trim()
+    .toLowerCase();
+
+  if (!stripped || stripped.length < 2) return true;
+  if (INVALID_LOCATION_WORDS.has(stripped)) return true;
+  if (/\b(not\s*specified|unspecified|unknown|n\/?a|none|open|hybrid|flexible|various|tbd|null|undefined)\b/i.test(stripped)) {
+    // If it ONLY contains placeholder tokens and no valid city
+    const withoutNoise = stripped
+      .replace(/\b(not\s*specified|unspecified|unknown|n\/?a|none|open|hybrid|flexible|various|multiple|pan\s*india|tbd|null|undefined)\b/gi, '')
+      .trim();
+    if (!withoutNoise || withoutNoise.length < 2) return true;
+  }
+  return false;
+}
+
+/**
+ * Cleans a raw location string by stripping generic countries and excess punctuation
+ */
+function cleanRawLocation(raw: string): string {
+  if (isGenericPlaceholderLocation(raw)) return '';
+  let cleaned = raw
+    .replace(/\b(india|usa|united states|uk)\b/gi, '')
+    .replace(/[/\\,|\\-]+/g, ' ')
+    .trim();
+
+  if (isGenericPlaceholderLocation(cleaned)) {
+    return '';
+  }
+
+  // Capitalize words
+  if (cleaned.length > 2) {
+    return cleaned
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return '';
+}
+
 /**
  * Extracts canonical location IDs for a given job location string.
  * A single job like "Remote / Gurgaon, India" can match both 'remote' and 'gurugram'.
@@ -92,19 +155,6 @@ const LOCATION_MAPPINGS: Array<{
 export function getCanonicalLocationsForJob(rawLocation: string | undefined): string[] {
   if (!rawLocation) return [];
   const normalized = rawLocation.trim().toLowerCase();
-
-  // Ignore placeholder or non-geographic values
-  if (
-    normalized === 'not specified' ||
-    normalized === 'unspecified' ||
-    normalized === 'unknown' ||
-    normalized === 'n/a' ||
-    normalized === 'na' ||
-    normalized === 'none' ||
-    normalized === 'open'
-  ) {
-    return [];
-  }
 
   const matched = new Set<string>();
 
@@ -117,40 +167,19 @@ export function getCanonicalLocationsForJob(rawLocation: string | undefined): st
     }
   }
 
+  if (matched.size > 0) {
+    return Array.from(matched);
+  }
+
   // If no canonical mapping matches, fallback to cleaned city name (e.g. "Chandigarh")
-  if (matched.size === 0) {
+  if (!isGenericPlaceholderLocation(rawLocation)) {
     const cleaned = cleanRawLocation(rawLocation);
-    if (cleaned && cleaned.toLowerCase() !== 'not specified') {
+    if (cleaned && !isGenericPlaceholderLocation(cleaned)) {
       matched.add(cleaned.toLowerCase());
     }
   }
 
   return Array.from(matched);
-}
-
-/**
- * Cleans a raw location string by stripping generic countries and excess punctuation
- */
-function cleanRawLocation(raw: string): string {
-  let cleaned = raw
-    .replace(/\b(india|usa|united states|uk)\b/gi, '')
-    .replace(/[/\\,|]+/g, ' ')
-    .trim();
-
-  // If it resolves to empty or placeholder, discard
-  if (/^(not specified|unspecified|unknown|n\/a|na|none)$/i.test(cleaned)) {
-    return '';
-  }
-
-  // Capitalize words
-  if (cleaned.length > 2) {
-    return cleaned
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(' ');
-  }
-  return raw.trim();
 }
 
 /**
@@ -202,7 +231,14 @@ export function getAvailableCanonicalLocations(
     .filter((id) => {
       if (onlyWithJobs && (!counts[id] || counts[id] <= 0)) return false;
       const label = (labelMap[id] || id).toLowerCase();
-      if (label === 'not specified' || label === 'unspecified' || label === 'unknown' || label === 'n/a') {
+      if (
+        isGenericPlaceholderLocation(label) ||
+        label === 'not specified' ||
+        label === 'unspecified' ||
+        label === 'unknown' ||
+        label === 'n/a' ||
+        label === 'hybrid'
+      ) {
         return false;
       }
       return true;

@@ -1,5 +1,5 @@
 import type { UserProfile, TailoredContent } from '../src/types.js';
-import { getGeminiClient, cleanJsonResponse } from './gemini.js';
+import { getGeminiClient, cleanJsonResponse, isGeminiConfigured } from './gemini.js';
 
 const NUMBER_REGEX = /\d[\d,]*\.?\d*%?/g;
 
@@ -121,21 +121,23 @@ ${jobDesc.substring(0, 3500)}`;
 
   let rawTailored: any = null;
 
-  try {
-    const ai = getGeminiClient();
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: prompt,
-      config: {
-        systemInstruction: sysPrompt,
-        temperature: 0.2,
-        responseMimeType: 'application/json',
-      },
-    });
+  if (isGeminiConfigured()) {
+    try {
+      const ai = getGeminiClient();
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: sysPrompt,
+          temperature: 0.2,
+          responseMimeType: 'application/json',
+        },
+      });
 
-    rawTailored = cleanJsonResponse(response.text || '{}');
-  } catch (error) {
-    console.error('[Tailor] LLM generation failed, generating fallback tailored output:', error);
+      rawTailored = cleanJsonResponse(response.text || '{}');
+    } catch (error) {
+      console.warn('[Tailor] LLM generation note, generating fallback tailored output:', (error as any)?.message);
+    }
   }
 
   // Validate and Ground against Source Profile
