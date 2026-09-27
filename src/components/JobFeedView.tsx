@@ -25,10 +25,12 @@ import {
   ArrowUpDown,
   Filter,
   SlidersHorizontal,
+  Compass,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { JobListing, UserProfile, JobStatus } from '../types.js';
 import { calculateIstRecency } from '../lib/dateUtils.js';
+import { getAvailableCanonicalLocations, jobMatchesLocationFilter } from '../lib/locationUtils.js';
 
 interface JobFeedViewProps {
   jobs: JobListing[];
@@ -69,9 +71,8 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'discovered' | 'applied' | 'interviewing' | 'rejected' | 'all'>('discovered');
-  const [sortBy, setSortBy] = useState<'score_desc' | 'discovered_desc' | 'discovered_asc' | 'salary_desc' | 'exp_asc' | 'exp_desc'>('score_desc');
+  const [sortBy, setSortBy] = useState<'score_desc' | 'discovered_desc' | 'discovered_asc' | 'salary_desc' | 'company_asc' | 'title_asc'>('score_desc');
   const [locationFilter, setLocationFilter] = useState<string>('all');
-  const [expFilter, setExpFilter] = useState<string>('all');
   const [expandedJdId, setExpandedJdId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
@@ -86,16 +87,10 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  // Compute available locations from jobs and user preferred locations
+  // Compute canonical geographic locations (cleanly deduplicated: Remote, Gurugram / Gurgaon, Bengaluru, etc.)
   const availableLocations = React.useMemo(() => {
-    const locSet = new Set<string>();
-    (profile?.preferred_locations || []).forEach((l) => { if (l && l.trim()) locSet.add(l.trim()); });
-    jobs.forEach((j) => {
-      if (j.location && j.location.trim()) {
-        locSet.add(j.location.trim());
-      }
-    });
-    return Array.from(locSet).slice(0, 16);
+    const jobLocs = jobs.map((j) => j.location).filter(Boolean);
+    return getAvailableCanonicalLocations(jobLocs, profile?.preferred_locations || []);
   }, [jobs, profile?.preferred_locations]);
 
   const expiredCount = jobs.filter(
@@ -113,19 +108,11 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
 
     if (!matchQuery) return false;
 
-    // Location filter
+    // Standardized Geographic Location filter (no duplicates)
     if (locationFilter !== 'all') {
-      const jobLoc = (job.location || '').toLowerCase();
-      if (!jobLoc.includes(locationFilter.toLowerCase())) return false;
-    }
-
-    // Experience filter
-    if (expFilter !== 'all') {
-      const exp = job.experience_years_required ?? 0;
-      if (expFilter === 'entry' && exp > 2) return false;
-      if (expFilter === 'mid' && (exp < 2 || exp > 5)) return false;
-      if (expFilter === 'senior' && (exp < 5 || exp > 8)) return false;
-      if (expFilter === 'lead' && exp < 8) return false;
+      if (!jobMatchesLocationFilter(job.location, locationFilter)) {
+        return false;
+      }
     }
 
     if (statusFilter === 'discovered') {
@@ -153,6 +140,22 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
     return true;
   });
 
+  // Helper to reliably parse job timestamp
+  const getJobTimestamp = (j: JobListing): number => {
+    const raw = j.discovered_at || j.posted_date || j.verified_at;
+    if (!raw) return 0;
+    const t = new Date(raw).getTime();
+    return isNaN(t) ? 0 : t;
+  };
+
+  // Helper to resolve salary safely (lpa)
+  const getJobSalaryMax = (j: JobListing): number => {
+    if (j.salary_range_lpa && Array.isArray(j.salary_range_lpa)) {
+      return j.salary_range_lpa[1] || j.salary_range_lpa[0] || 0;
+    }
+    return 0;
+  };
+
   // Sort: keep active high fit at top, expired/rejected at bottom, then apply chosen sort
   const sortedJobs = [...filteredJobs].sort((a, b) => {
     const aIsBad = a.status === 'expired' || a.verification_status === 'expired_or_invalid' || a.status === 'rejected';
@@ -161,31 +164,46 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
     if (!aIsBad && bIsBad) return -1;
 
     if (sortBy === 'discovered_desc') {
-      const timeA = new Date(a.discovered_at || a.posted_date || 0).getTime();
-      const timeB = new Date(b.discovered_at || b.posted_date || 0).getTime();
-      return timeB - timeA;
+      const timeA = getJobTimestamp(a);
+      const timeB = getJobTimestamp(b);
+      if (timeB !== timeA) return timeB - timeA;
+      return (b.fit?.match_score || 0) - (a.fit?.match_score || 0);
     }
+
     if (sortBy === 'discovered_asc') {
-      const timeA = new Date(a.discovered_at || a.posted_date || 0).getTime();
-      const timeB = new Date(b.discovered_at || b.posted_date || 0).getTime();
-      return timeA - timeB;
+      const timeA = getJobTimestamp(a);
+      const timeB = getJobTimestamp(b);
+      if (timeA !== timeB) return timeA - timeB;
+      return (b.fit?.match_score || 0) - (a.fit?.match_score || 0);
     }
+
     if (sortBy === 'salary_desc') {
-      const salA = a.salary_lpa || 0;
-      const salB = b.salary_lpa || 0;
-      if (salA !== salB) return salB - salA;
+      const salA = getJobSalaryMax(a);
+      const salB = getJobSalaryMax(b);
+      if (salB !== salA) return salB - salA;
+      return (b.fit?.match_score || 0) - (a.fit?.match_score || 0);
     }
-    if (sortBy === 'exp_asc') {
-      const expA = a.experience_years_required ?? 99;
-      const expB = b.experience_years_required ?? 99;
-      if (expA !== expB) return expA - expB;
+
+    if (sortBy === 'company_asc') {
+      const cmp = a.company_name.localeCompare(b.company_name);
+      if (cmp !== 0) return cmp;
+      return (b.fit?.match_score || 0) - (a.fit?.match_score || 0);
     }
-    if (sortBy === 'exp_desc') {
-      const expA = a.experience_years_required ?? 0;
-      const expB = b.experience_years_required ?? 0;
-      if (expA !== expB) return expB - expA;
+
+    if (sortBy === 'title_asc') {
+      const cmp = a.title.localeCompare(b.title);
+      if (cmp !== 0) return cmp;
+      return (b.fit?.match_score || 0) - (a.fit?.match_score || 0);
     }
-    return (b.fit?.match_score || 0) - (a.fit?.match_score || 0);
+
+    // Default: 'score_desc' (Best Fit Match, secondary sort by recency)
+    const scoreA = a.fit?.match_score ?? 0;
+    const scoreB = b.fit?.match_score ?? 0;
+    if (scoreB !== scoreA) {
+      return scoreB - scoreA;
+    }
+    // Tie-breaker: newest discovery date
+    return getJobTimestamp(b) - getJobTimestamp(a);
   });
 
   const filterTabs = [
@@ -324,97 +342,176 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 glass-panel p-4 rounded-xl shadow-sm"
+        className="glass-panel p-4 rounded-2xl shadow-sm space-y-3.5 border border-white/[0.08]"
       >
-        <div className="flex-1 relative">
-          <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search roles, companies, tech stacks, or locations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.14] text-zinc-100 placeholder-zinc-500 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/30 transition"
-          />
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full lg:w-auto">
-          {/* Status Filter Tabs */}
-          <div className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.07] text-xs overflow-x-auto no-scrollbar max-w-full">
-            {filterTabs.map((tab) => {
-              const isActive = statusFilter === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id as any)}
-                  className={`px-3 py-1.5 rounded-lg transition-all font-semibold cursor-pointer text-xs whitespace-nowrap shrink-0 ${
-                    isActive
-                      ? `${tab.activeColor} shadow-sm`
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]'
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  <span className="ml-1.5 opacity-80 text-[11px] font-mono font-medium">({tab.count})</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Multi-select toggle */}
-            {sortedJobs.length > 0 && (
+        {/* Top Row: Search Input + Status Tabs + Primary Actions */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
+          <div className="flex-1 relative min-w-[240px]">
+            <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search by role title, company, skills, or city..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-9 py-2 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] text-zinc-100 placeholder-zinc-500 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/30 transition"
+            />
+            {searchQuery && (
               <button
                 type="button"
-                onClick={toggleSelectAll}
-                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 min-h-[38px] rounded-xl border transition cursor-pointer ${
-                  isAllSelected
-                    ? 'bg-blue-600/25 text-blue-300 border-blue-500/40 hover:bg-blue-600/35'
-                    : isSomeSelected
-                    ? 'bg-blue-500/10 text-blue-300 border-blue-500/25 hover:bg-blue-500/20'
-                    : 'bg-white/[0.03] text-zinc-300 border-white/[0.08] hover:bg-white/[0.06]'
-                }`}
-                title={isAllSelected ? 'Deselect all jobs' : 'Select all jobs in this view'}
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-1 rounded-full cursor-pointer"
+                title="Clear search"
               >
-                {isAllSelected ? (
-                  <CheckSquare className="w-3.5 h-3.5 text-blue-400" />
-                ) : (
-                  <Square className="w-3.5 h-3.5 text-zinc-400" />
-                )}
-                <span className="hidden sm:inline">{isAllSelected ? 'Deselect All' : `Select All (${sortedJobs.length})`}</span>
-                <span className="sm:hidden">{isAllSelected ? 'Deselect' : 'All'}</span>
+                <X className="w-3.5 h-3.5" />
               </button>
             )}
+          </div>
 
-            {/* Remove Expired button */}
-            {expiredCount > 0 && onRemoveExpiredJobs && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full lg:w-auto">
+            {/* Status Filter Tabs */}
+            <div className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.07] text-xs overflow-x-auto no-scrollbar max-w-full">
+              {filterTabs.map((tab) => {
+                const isActive = statusFilter === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id as any)}
+                    className={`px-3 py-1.5 rounded-lg transition-all font-semibold cursor-pointer text-xs whitespace-nowrap shrink-0 ${
+                      isActive
+                        ? `${tab.activeColor} shadow-sm`
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span className="ml-1.5 opacity-80 text-[11px] font-mono font-medium">({tab.count})</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Multi-select toggle */}
+              {sortedJobs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={toggleSelectAll}
+                  className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 min-h-[38px] rounded-xl border transition cursor-pointer ${
+                    isAllSelected
+                      ? 'bg-blue-600/25 text-blue-300 border-blue-500/40 hover:bg-blue-600/35'
+                      : isSomeSelected
+                      ? 'bg-blue-500/10 text-blue-300 border-blue-500/25 hover:bg-blue-500/20'
+                      : 'bg-white/[0.03] text-zinc-300 border-white/[0.08] hover:bg-white/[0.06]'
+                  }`}
+                  title={isAllSelected ? 'Deselect all jobs' : 'Select all jobs in this view'}
+                >
+                  {isAllSelected ? (
+                    <CheckSquare className="w-3.5 h-3.5 text-blue-400" />
+                  ) : (
+                    <Square className="w-3.5 h-3.5 text-zinc-400" />
+                  )}
+                  <span className="hidden sm:inline">{isAllSelected ? 'Deselect All' : `Select All (${sortedJobs.length})`}</span>
+                  <span className="sm:hidden">{isAllSelected ? 'Deselect' : 'All'}</span>
+                </button>
+              )}
+
+              {/* Remove Expired button */}
+              {expiredCount > 0 && onRemoveExpiredJobs && (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => onRemoveExpiredJobs()}
+                  title="Remove expired or closed jobs"
+                  className="flex items-center gap-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold px-3 py-2 min-h-[38px] rounded-xl border border-rose-500/25 transition cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                  <span className="hidden sm:inline">Clean Expired</span>
+                </motion.button>
+              )}
+
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => onRemoveExpiredJobs()}
-                title="Remove expired or closed jobs"
-                className="flex items-center gap-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold px-3 py-2 min-h-[38px] rounded-xl border border-rose-500/25 transition cursor-pointer"
+                onClick={onOpenAddJob}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-semibold px-3.5 py-2 min-h-[38px] rounded-xl shadow-md shadow-blue-600/20 transition cursor-pointer border border-blue-400/25"
               >
-                <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-                <span className="hidden sm:inline">Clean Expired</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Job</span>
               </motion.button>
-            )}
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onOpenAddJob}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-semibold px-3.5 py-2 min-h-[38px] rounded-xl shadow-md shadow-blue-600/20 transition cursor-pointer border border-blue-400/25"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Job</span>
-            </motion.button>
+            </div>
           </div>
         </div>
 
-        {/* Sorting & Filter Strip */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-white/[0.06] text-xs">
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Sort Dropdown */}
-            <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-zinc-300">
+        {/* Bottom Row: Geographic Location Pills + Working Sort Control */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-3 border-t border-white/[0.06] text-xs">
+          {/* Geographic Location Pills */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1 mr-1">
+              <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Location:</span>
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setLocationFilter('all')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
+                locationFilter === 'all'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10'
+                  : 'bg-white/[0.02] text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] border border-white/[0.06]'
+              }`}
+            >
+              All
+            </button>
+
+            {availableLocations.slice(0, 5).map((loc) => {
+              const isSelected = locationFilter === loc.id;
+              return (
+                <button
+                  key={loc.id}
+                  type="button"
+                  onClick={() => setLocationFilter(loc.id)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                    isSelected
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10'
+                      : 'bg-white/[0.02] text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] border border-white/[0.06]'
+                  }`}
+                >
+                  <span>{loc.label}</span>
+                  {loc.count > 0 && (
+                    <span className="text-[10px] opacity-75 font-mono">({loc.count})</span>
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Additional Locations Select if more than 5 */}
+            {availableLocations.length > 5 && (
+              <div className="relative inline-block">
+                <select
+                  value={availableLocations.slice(5).some((l) => l.id === locationFilter) ? locationFilter : ''}
+                  onChange={(e) => {
+                    if (e.target.value) setLocationFilter(e.target.value);
+                  }}
+                  className={`px-2 py-1 rounded-lg text-xs font-medium transition cursor-pointer bg-white/[0.02] border focus:outline-none ${
+                    availableLocations.slice(5).some((l) => l.id === locationFilter)
+                      ? 'border-cyan-500/40 text-cyan-300 bg-cyan-500/20'
+                      : 'border-white/[0.06] text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  <option value="" className="bg-[#121620] text-zinc-400">More Locations...</option>
+                  {availableLocations.slice(5).map((loc) => (
+                    <option key={loc.id} value={loc.id} className="bg-[#121620] text-white">
+                      {loc.label} {loc.count > 0 ? `(${loc.count})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* Right Controls: Sort Dropdown & Showing Count & Reset */}
+          <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+            {/* Sort Control */}
+            <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] rounded-xl px-2.5 py-1.5 text-zinc-300 transition">
               <ArrowUpDown className="w-3.5 h-3.5 text-blue-400 shrink-0" />
               <span className="text-[11px] text-zinc-400 font-medium">Sort:</span>
               <select
@@ -423,67 +520,34 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
                 className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer pr-1"
               >
                 <option value="score_desc" className="bg-[#121620] text-white">Best Match Score</option>
-                <option value="discovered_desc" className="bg-[#121620] text-white">Recently Found (Newest)</option>
-                <option value="discovered_asc" className="bg-[#121620] text-white">Oldest Found</option>
-                <option value="salary_desc" className="bg-[#121620] text-white">Highest Salary</option>
-                <option value="exp_asc" className="bg-[#121620] text-white">Experience (Low to High)</option>
-                <option value="exp_desc" className="bg-[#121620] text-white">Experience (High to Low)</option>
+                <option value="discovered_desc" className="bg-[#121620] text-white">Newest Discovered</option>
+                <option value="discovered_asc" className="bg-[#121620] text-white">Oldest Discovered</option>
+                <option value="salary_desc" className="bg-[#121620] text-white">Highest Salary (LPA)</option>
+                <option value="company_asc" className="bg-[#121620] text-white">Company (A to Z)</option>
+                <option value="title_asc" className="bg-[#121620] text-white">Role Title (A to Z)</option>
               </select>
             </div>
 
-            {/* Location Filter Dropdown */}
-            <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-zinc-300">
-              <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-              <span className="text-[11px] text-zinc-400 font-medium">Location:</span>
-              <select
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
-                className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer max-w-[140px] truncate pr-1"
-              >
-                <option value="all" className="bg-[#121620] text-white">All Locations</option>
-                {availableLocations.map((loc) => (
-                  <option key={loc} value={loc} className="bg-[#121620] text-white">{loc}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Experience Filter Dropdown */}
-            <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-zinc-300">
-              <Briefcase className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span className="text-[11px] text-zinc-400 font-medium">Experience:</span>
-              <select
-                value={expFilter}
-                onChange={(e) => setExpFilter(e.target.value)}
-                className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer pr-1"
-              >
-                <option value="all" className="bg-[#121620] text-white">All Experience</option>
-                <option value="entry" className="bg-[#121620] text-white">0–2 Yrs (Entry)</option>
-                <option value="mid" className="bg-[#121620] text-white">2–5 Yrs (Mid)</option>
-                <option value="senior" className="bg-[#121620] text-white">5–8 Yrs (Senior)</option>
-                <option value="lead" className="bg-[#121620] text-white">8+ Yrs (Lead)</option>
-              </select>
-            </div>
-
-            {/* Reset Filter Button */}
-            {(locationFilter !== 'all' || expFilter !== 'all' || sortBy !== 'score_desc' || searchQuery) && (
+            {/* Active Filter Clear / Reset */}
+            {(locationFilter !== 'all' || sortBy !== 'score_desc' || searchQuery) && (
               <button
                 type="button"
                 onClick={() => {
                   setLocationFilter('all');
-                  setExpFilter('all');
                   setSortBy('score_desc');
                   setSearchQuery('');
                 }}
                 className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-xl transition cursor-pointer border border-white/[0.08]"
+                title="Reset active search and location filters"
               >
                 <RotateCcw className="w-3 h-3 text-zinc-400" />
-                <span>Reset Filters</span>
+                <span className="hidden sm:inline">Reset</span>
               </button>
             )}
-          </div>
 
-          <div className="text-[11px] text-zinc-400 font-mono">
-            Showing <span className="text-white font-semibold">{sortedJobs.length}</span> {sortedJobs.length === 1 ? 'role' : 'roles'}
+            <div className="text-[11px] text-zinc-400 font-mono hidden sm:block pl-1">
+              <span className="text-white font-semibold">{sortedJobs.length}</span> {sortedJobs.length === 1 ? 'role' : 'roles'}
+            </div>
           </div>
         </div>
       </motion.div>

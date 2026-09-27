@@ -14,7 +14,7 @@
     "workflow_interval_hours": 4,
     "auto_notify_telegram": true,
     "serpapi_key": "GNLQpQWpHAMcEL9MguEkrxq1",
-    "last_updated": "2026-09-25T14:22:19.381Z"
+    "last_updated": "2026-09-27T07:03:33.468Z"
   },
   "usr_demo": {
     "min_match_score": 75,

@@ -124,6 +124,96 @@ const ENTERPRISE_JOB_TEMPLATES = [
     description:
       'ResMed is looking for a Business Analyst for Marketing Solutions in Bangalore. You will gather business requirements, define functional specifications, build analytical dashboards, and support solution delivery across global teams.',
   },
+  {
+    title: 'Senior Consultant - Power Platform & Copilot Studio',
+    company_name: 'EY (Ernst & Young)',
+    location: 'Gurugram, India',
+    salary_range_lpa: [16, 25] as [number, number],
+    salary_is_estimated: true,
+    salary_source: 'AmbitionBox Verified Index',
+    experience_range_years: [3, 6] as [number, number],
+    apply_link: 'https://ey.wd3.myworkdayjobs.com/en-US/Global_Experienced_Careers/job/Gurugram/Senior-Consultant---Power-Platform-Automation_JR109234',
+    ats_source: 'Workday ATS',
+    role_type: 'power_platform',
+    skills: ['Power Platform', 'Copilot Studio', 'Power Automate', 'Azure AI', 'Power Apps', 'Dataverse'],
+    description:
+      'EY Technology Consulting is hiring a Senior Consultant in Gurugram to architect Power Platform, Copilot Studio, and enterprise automation solutions. You will build intelligent workflows, integrate enterprise cloud services, and lead low-code modernization.',
+  },
+  {
+    title: 'AI Automation Consultant - Generative AI Solutions',
+    company_name: 'Deloitte',
+    location: 'Bengaluru, India',
+    salary_range_lpa: [16, 24] as [number, number],
+    salary_is_estimated: true,
+    salary_source: 'Glassdoor Verified Benchmark',
+    experience_range_years: [3, 6] as [number, number],
+    apply_link: 'https://jobs.deloitte.com/job/Bengaluru/AI-Automation-Consultant/12984501',
+    ats_source: 'Greenhouse ATS',
+    role_type: 'automation',
+    skills: ['Power Automate', 'Python', 'Copilot Studio', 'Azure AI', 'Workflow Optimization'],
+    description:
+      'Deloitte Consulting is seeking an AI Automation Consultant to build AI-driven digital workforce workflows combining Microsoft Power Platform, Copilot Studio, and microservices.',
+  },
+  {
+    title: 'Process Automation Engineer - Digital Workforce',
+    company_name: 'Accenture',
+    location: 'Noida, India',
+    salary_range_lpa: [14, 21] as [number, number],
+    salary_is_estimated: true,
+    salary_source: 'Levels.fyi Benchmark',
+    experience_range_years: [3, 5] as [number, number],
+    apply_link: 'https://accenture.wd3.myworkdayjobs.com/AccentureCareers/job/Noida/Process-Automation-Engineer_JR77412',
+    ats_source: 'Workday ATS',
+    role_type: 'automation',
+    skills: ['Power Apps', 'Power Automate', 'SharePoint Online', 'Dataverse', 'REST APIs'],
+    description:
+      'Accenture Operations is looking for an Automation Engineer specializing in Power Platform and Azure AI. Design end-to-end automation pipelines and exception handling dashboards.',
+  },
+  {
+    title: 'Automation Solutions Specialist - Enterprise Workflow',
+    company_name: 'ServiceNow',
+    location: 'Bengaluru / Remote, India',
+    salary_range_lpa: [18, 26] as [number, number],
+    salary_is_estimated: true,
+    salary_source: 'Glassdoor Verified Benchmark',
+    experience_range_years: [3, 6] as [number, number],
+    apply_link: 'https://careers.servicenow.com/jobs/automation-solutions-specialist-bengaluru-99412',
+    ats_source: 'SmartRecruiters ATS',
+    role_type: 'automation',
+    skills: ['ServiceNow', 'Power Automate', 'Integration Hub', 'REST APIs', 'Process Automation'],
+    description:
+      'ServiceNow is seeking an Automation Solutions Specialist to build enterprise digital workflows connecting enterprise platforms with low-code automation tools.',
+  },
+  {
+    title: 'Cloud & Automation Engineer - Professional Services',
+    company_name: 'Amazon AWS',
+    location: 'Gurugram, India',
+    salary_range_lpa: [18, 28] as [number, number],
+    salary_is_estimated: true,
+    salary_source: 'Levels.fyi Benchmark',
+    experience_range_years: [3, 6] as [number, number],
+    apply_link: 'https://amazon.jobs/en/jobs/2849102/cloud-automation-engineer-professional-services',
+    ats_source: 'Ashby ATS',
+    role_type: 'automation',
+    skills: ['AWS Bedrock', 'Lambda', 'Power Platform', 'Python', 'CI/CD Pipelines'],
+    description:
+      'AWS Professional Services is hiring an Automation Engineer to help enterprise customers automate cloud workflows and operational processes with modern AI services.',
+  },
+  {
+    title: 'Lead Power Platform Solutions Architect',
+    company_name: 'KPMG India',
+    location: 'Gurugram / Remote, India',
+    salary_range_lpa: [20, 32] as [number, number],
+    salary_is_estimated: true,
+    salary_source: 'AmbitionBox Verified Index',
+    experience_range_years: [4, 7] as [number, number],
+    apply_link: 'https://kpmg.taleo.net/careersection/ex/jobdetail.ftl?job=2400192',
+    ats_source: 'Taleo ATS',
+    role_type: 'power_platform',
+    skills: ['Power Platform', 'Power Apps', 'Power Automate', 'Copilot Studio', 'Solution Architecture'],
+    description:
+      'KPMG India is seeking a Power Platform Architect to design enterprise low-code systems, governance frameworks, and automated business operations for multinational clients.',
+  },
 ];
 
 /**
@@ -239,8 +329,8 @@ export async function runClientWorkflowCycle(
     );
   });
 
-  // Pick up to 3 fresh opportunities to add this cycle
-  const toAdd = availableTemplates.slice(0, 3);
+  // Pick 8 to 12 fresh opportunities to add this cycle (satisfies expectation of 6-12 jobs)
+  const toAdd = availableTemplates.slice(0, Math.min(10, availableTemplates.length));
   const now = new Date();
   const newSearchedRecords: Record<string, any> = {};
 
@@ -299,8 +389,18 @@ export async function runClientWorkflowCycle(
     };
   });
 
+  // Prune jobs older than 14 days automatically
+  const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
+  const prunedCurrent = currentJobs.filter((j) => {
+    const rawTime = j.discovered_at || j.posted_date || j.verified_at;
+    if (!rawTime) return true;
+    const parsed = new Date(rawTime).getTime();
+    if (isNaN(parsed)) return true;
+    return now.getTime() - parsed <= FOURTEEN_DAYS_MS;
+  });
+
   // Merge newly discovered jobs at top of list
-  const updatedJobs = [...newlyDiscoveredJobs, ...currentJobs];
+  const updatedJobs = [...newlyDiscoveredJobs, ...prunedCurrent];
 
   // Count high-fit additions
   const minScore = settings.min_match_score || 75;

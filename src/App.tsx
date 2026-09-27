@@ -8,9 +8,10 @@ import { AutomationView } from './components/AutomationView.js';
 import { AddJobModal } from './components/AddJobModal.js';
 import { MobileBottomNav } from './components/MobileBottomNav.js';
 import { AuthModal } from './components/AuthModal.js';
+import { AdminUsersModal } from './components/AdminUsersModal.js';
 import { HomeLandingView } from './components/HomeLandingView.js';
 import { UserProfile, JobListing, PipelineStats, AppSettings, WorkflowState, JobStatus, UserAccount, SavedDeviceAccount } from './types.js';
-import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, Save, RotateCcw, AlertTriangle, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { INITIAL_PROFILE, INITIAL_JOBS, INITIAL_SETTINGS, INITIAL_WORKFLOW, INITIAL_STATS } from './seedData.js';
 import { dispatchJobNotification } from './lib/telegramClient.js';
@@ -169,6 +170,20 @@ function persistUserJobs(userId: string | undefined, jobsList: JobListing[]) {
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'jobs' | 'tailor' | 'profile' | 'automation'>('dashboard');
+  const [isAdminUsersOpen, setIsAdminUsersOpen] = useState(false);
+  const [isProfileDirty, setIsProfileDirty] = useState(false);
+  const [profileDraft, setProfileDraft] = useState<UserProfile | null>(null);
+  const [pendingTabSwitch, setPendingTabSwitch] = useState<'dashboard' | 'jobs' | 'tailor' | 'profile' | 'automation' | null>(null);
+  const [showUnsavedProfileModal, setShowUnsavedProfileModal] = useState(false);
+
+  const handleTabSwitchRequest = (nextTab: 'dashboard' | 'jobs' | 'tailor' | 'profile' | 'automation') => {
+    if (activeTab === 'profile' && isProfileDirty && nextTab !== 'profile') {
+      setPendingTabSwitch(nextTab);
+      setShowUnsavedProfileModal(true);
+      return;
+    }
+    setActiveTab(nextTab);
+  };
 
   const [profile, setProfile] = useState<UserProfile>(() => {
     try {
@@ -885,6 +900,8 @@ export function App() {
       }
       if (notifCount > 0) {
         msg += ` Dispatched ${notifCount} Telegram alert(s).`;
+      } else if (highCount > 0) {
+        msg += ` (Alerts stopped in AI Studio; live alerts deliver from Vercel).`;
       }
       showToast(msg);
     } catch (err: any) {
@@ -1079,9 +1096,11 @@ export function App() {
         settings,
       });
 
-      if (result.delivered || result.simulated) {
+      if (result.delivered) {
         showToast(`Telegram alert dispatched for ${job.title}!`);
         handleUpdateStatus(job.id, 'notified');
+      } else if (result.simulated || (result as any).muted_in_ai_studio) {
+        showToast(`Alerts stopped in AI Studio app. Real notifications will be received from your Vercel version.`);
       } else {
         showToast(result.error || `Failed to dispatch alert to Telegram`, 'error');
       }
@@ -1095,6 +1114,7 @@ export function App() {
     if (jobsToNotify.length === 0) return;
     showToast(`Dispatching ${jobsToNotify.length} Telegram alert(s)...`);
     let successCount = 0;
+    let mutedCount = 0;
     let failedCount = 0;
 
     for (const job of jobsToNotify) {
@@ -1104,9 +1124,11 @@ export function App() {
           candidateName: profile.full_name,
           settings,
         });
-        if (result.delivered || result.simulated) {
+        if (result.delivered) {
           successCount++;
           handleUpdateStatus(job.id, 'notified');
+        } else if (result.simulated || (result as any).muted_in_ai_studio) {
+          mutedCount++;
         } else {
           failedCount++;
         }
@@ -1117,7 +1139,9 @@ export function App() {
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
 
-    if (failedCount === 0) {
+    if (mutedCount > 0 && successCount === 0) {
+      showToast(`Alerts stopped in AI Studio app. Real notifications will be received from your Vercel version.`);
+    } else if (failedCount === 0) {
       showToast(`Dispatched ${successCount} Telegram alert(s) successfully!`);
     } else {
       showToast(`Dispatched ${successCount} alert(s); ${failedCount} failed.`, 'error');
@@ -1600,9 +1624,30 @@ export function App() {
     }
   };
 
+  const handleSaveDraftAndContinue = async () => {
+    if (profileDraft) {
+      await handleUpdateProfile(profileDraft);
+    }
+    setIsProfileDirty(false);
+    setShowUnsavedProfileModal(false);
+    if (pendingTabSwitch) {
+      setActiveTab(pendingTabSwitch);
+      setPendingTabSwitch(null);
+    }
+  };
+
+  const handleDiscardDraftAndContinue = () => {
+    setIsProfileDirty(false);
+    setShowUnsavedProfileModal(false);
+    if (pendingTabSwitch) {
+      setActiveTab(pendingTabSwitch);
+      setPendingTabSwitch(null);
+    }
+  };
+
   const handleSelectJobForTailor = (job: JobListing) => {
     setSelectedJobId(job.id);
-    setActiveTab('tailor');
+    handleTabSwitchRequest('tailor');
     if (!job.tailored) {
       handleTailorJob(job.id);
     }
@@ -1626,7 +1671,7 @@ export function App() {
 
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabSwitchRequest}
         stats={computedStats}
         onRunPipeline={handleRunPipeline}
         isPipelineRunning={isPipelineRunning}
@@ -1637,6 +1682,7 @@ export function App() {
           setIsAuthModalOpen(true);
         }}
         onLogout={handleLogout}
+        onOpenAdminUsers={() => setIsAdminUsersOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -1676,7 +1722,7 @@ export function App() {
                   onDiscoverJobs={handleDiscoverJobs}
                   isDiscovering={isDiscovering}
                   onNotifyTelegram={handleNotifyTelegram}
-                  setActiveTab={setActiveTab}
+                  setActiveTab={handleTabSwitchRequest}
                 />
               </motion.div>
             )}
@@ -1746,6 +1792,10 @@ export function App() {
                   onParseResumeDocument={handleParseResumeDocument}
                   isParsingResume={isParsingResume}
                   currentUser={currentUser}
+                  onDraftChange={(dirty, draft) => {
+                    setIsProfileDirty(dirty);
+                    setProfileDraft(draft);
+                  }}
                 />
               </motion.div>
             )}
@@ -1788,7 +1838,7 @@ export function App() {
 
       {/* Mobile Bottom Navigation Bar (Phone Friendly, Zero-Jitter) - Authenticated Only */}
       {currentUser && (
-        <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+        <MobileBottomNav activeTab={activeTab} setActiveTab={handleTabSwitchRequest} />
       )}
 
       {/* Add Job Modal */}
@@ -1810,6 +1860,78 @@ export function App() {
         onLogout={handleLogout}
         initialTab={authModalInitialTab}
       />
+
+      {/* Admin User Management Directory Modal */}
+      <AdminUsersModal
+        isOpen={isAdminUsersOpen}
+        onClose={() => setIsAdminUsersOpen(false)}
+        currentUser={currentUser}
+        onToast={showToast}
+      />
+
+      {/* Unsaved Profile Draft Exit Confirmation Prompt */}
+      <AnimatePresence>
+        {showUnsavedProfileModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.18 }}
+              className="w-full max-w-md bg-[#0F1420] border border-amber-500/30 rounded-2xl p-6 shadow-2xl space-y-4 ring-1 ring-amber-500/20"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-white text-base">
+                    Unsaved Profile Draft
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    You have unsaved changes in your candidate profile.
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-xs text-zinc-300 leading-relaxed bg-white/[0.02] p-3.5 rounded-xl border border-white/[0.06] space-y-1.5">
+                <p>
+                  You are switching away from the Profile editor to{' '}
+                  <span className="text-white font-semibold capitalize">{pendingTabSwitch || 'another section'}</span>.
+                </p>
+                <p className="text-zinc-400">
+                  Would you like to save these edits to your active profile, discard them, or stay and keep editing?
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowUnsavedProfileModal(false)}
+                  className="px-3.5 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition cursor-pointer order-3 sm:order-1"
+                >
+                  Keep Editing
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDiscardDraftAndContinue}
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 transition cursor-pointer order-2"
+                >
+                  Discard Draft & Switch
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveDraftAndContinue}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-600/30 transition cursor-pointer flex items-center justify-center gap-1.5 order-1 sm:order-3"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save Draft & Continue</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Toast Feedback Notification */}
       <AnimatePresence>

@@ -2171,5 +2171,498 @@
     "discovered_at": "2026-09-25T14:21:18.737Z",
     "created_at": "2026-09-25T14:21:18.737Z",
     "updated_at": "2026-09-25T14:21:18.737Z"
+  },
+  "f3cda7441a81f419": {
+    "id": "f3cda7441a81f419",
+    "title": "Easy apply",
+    "company_name": "ProcessProConsulting",
+    "location": "Remote",
+    "salary_range_lpa": [
+      10,
+      17
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      2,
+      4
+    ],
+    "experience_is_inferred": true,
+    "description": "HubSpot Automation Engineer (Remote) - Process Pro Consulting For the best application experience please enable JavaScript in your browser. HubSpot Automation Engineer (Remote) 9901 Brodie Ln, Austin, TX 78748, USA",
+    "apply_link": "https://jobs.smartrecruiters.com/ProcessProConsulting/744000146826694-hubspot-automation-engineer-contract-to-hire-remote-hourly?oga=true&utm_source=Jobgether&utm_content=6a97b4830875ca77c4bb07cf-hubspot-automation-engineer---contract-to-hire-remote-hourly&utm_campaign=search&utm_medium=website",
+    "ats_source": "SmartRecruiters",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:44:34.657Z",
+    "posted_date": "2026-09-26T06:44:34.657Z",
+    "posted_days_ago": 1,
+    "discovered_at": "2026-09-27T06:44:34.657Z",
+    "created_at": "2026-09-27T06:44:34.657Z",
+    "updated_at": "2026-09-27T06:44:41.206Z"
+  },
+  "58dcdabd2b9001a6": {
+    "id": "58dcdabd2b9001a6",
+    "title": "Easy apply - Business Analyst",
+    "company_name": "LouisDreyfusCompany",
+    "location": "Gurugram",
+    "salary_range_lpa": [
+      12,
+      21
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      2,
+      4
+    ],
+    "experience_is_inferred": true,
+    "description": "Business Analyst. Gurugram, Haryana, India. Business Analyst. Easy Apply. Choose an option to autocomplete your application. You can still fill your profile ...\n\nRequisition posted on LouisDreyfusCompany career portal. Direct application link verified active.",
+    "apply_link": "https://jobs.smartrecruiters.com/LouisDreyfusCompany/744000112990745-business-analyst?oga=true",
+    "ats_source": "SmartRecruiters",
+    "is_direct_posting": true,
+    "verification_status": "active_portal",
+    "verification_notes": "Direct enterprise ATS posting verified (protected career gateway).",
+    "verified_at": "2026-09-27T06:44:32.655Z",
+    "posted_date": "2026-09-26T06:44:32.655Z",
+    "posted_days_ago": 1,
+    "discovered_at": "2026-09-27T06:44:32.655Z",
+    "created_at": "2026-09-27T06:44:32.655Z",
+    "updated_at": "2026-09-27T06:44:41.206Z"
+  },
+  "f1681e9d065d0180": {
+    "id": "f1681e9d065d0180",
+    "title": "Power Platform & AI Solutions Architect",
+    "company_name": "Elkay",
+    "location": "Not specified",
+    "salary_range_lpa": [
+      40,
+      65
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      8,
+      12
+    ],
+    "experience_is_inferred": false,
+    "description": "Own Power Platform administration, licensing, or citizen-developer support. Own Power BI reporting or Snowflake-based analytics; that stays with ...\n\nRequisition posted on Elkay career portal. Direct application link verified active.",
+    "apply_link": "https://elkay.wd1.myworkdayjobs.com/en-US/Elkay_External/job/Power-Platform---AI-Solutions-Architect_REQ-019888",
+    "ats_source": "Workday",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:44:29.729Z",
+    "posted_date": "2026-09-25T06:44:29.729Z",
+    "posted_days_ago": 2,
+    "discovered_at": "2026-09-27T06:44:29.729Z",
+    "created_at": "2026-09-27T06:44:29.729Z",
+    "updated_at": "2026-09-27T06:44:41.206Z"
+  },
+  "9e108297873aea0c": {
+    "id": "9e108297873aea0c",
+    "title": "Power Apps Tech Lead",
+    "company_name": "Avanade",
+    "location": "Delhi",
+    "salary_range_lpa": [
+      34,
+      54
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      7,
+      12
+    ],
+    "experience_is_inferred": false,
+    "description": "Power Apps Tech Lead— Canvas Apps, Power Automate & Dataverse Location Bengaluru / Delhi NCR, India (Hybrid) Experience 7–12 years in ...\n\nRequisition posted on Avanade career portal. Direct application link verified active.",
+    "apply_link": "https://accenture.wd103.myworkdayjobs.com/en-US/AvanadeCareers/job/Power-Apps-Tech-Lead_R00359091",
+    "ats_source": "Workday",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:44:31.817Z",
+    "posted_date": "2026-09-24T06:44:31.817Z",
+    "posted_days_ago": 3,
+    "discovered_at": "2026-09-27T06:44:31.817Z",
+    "created_at": "2026-09-27T06:44:31.817Z",
+    "updated_at": "2026-09-27T06:44:41.206Z"
+  },
+  "a12be22695162d33": {
+    "id": "a12be22695162d33",
+    "title": "Senior GTM Systems AI and Automation Engineer",
+    "company_name": "Camunda",
+    "location": "Remote",
+    "salary_range_lpa": [
+      12,
+      21
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      2,
+      4
+    ],
+    "experience_is_inferred": false,
+    "description": "About the Role: Camunda's Revenue Operations organization is looking for a Senior GTM Systems AI and Automation Engineer to design, build and operate the AI- ...\n\nRequisition posted on Camunda career portal. Direct application link verified active.",
+    "apply_link": "https://jobs.ashbyhq.com/camunda/30094c52-f327-40e7-83a2-ae6a142a4278",
+    "ats_source": "Ashby",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:44:48.464Z",
+    "posted_date": "2026-09-24T06:44:48.464Z",
+    "posted_days_ago": 3,
+    "discovered_at": "2026-09-27T06:44:48.464Z",
+    "created_at": "2026-09-27T06:44:48.464Z",
+    "updated_at": "2026-09-27T06:44:53.726Z"
+  },
+  "3705a62adc54176e": {
+    "id": "3705a62adc54176e",
+    "title": "Business Data Analyst",
+    "company_name": "M G India",
+    "location": "Mumbai",
+    "salary_range_lpa": [
+      10,
+      18
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      2,
+      4
+    ],
+    "experience_is_inferred": true,
+    "description": "About M&amp;G India We are M&amp;G India, the strategic innovation and digital hub for M&amp;G. Established in 2003, we have offices in Mumbai and Pune. Our teams work closely with colleagues across the Group worldwide to drive transformation, build digital capability, and support sustainable growth. By leveraging technology, AI, automation, and process excellence, we bring new ways of thinking to improve outcomes for both customers and colleagues. Grounded in a vibrant culture with strong foundations, we are central to how M&amp;G is transforming as a business. About M&amp;G Our purpose is to give everyone real confidence to put their money to work. With a heritage dating back more than 175 years, we have a long history of innovation in savings and investments, combining asset management and insurance expertise to offer a wide range of solutions. Our two distinct operating segments, Asset Management and Life, work together to provide access to balanced, long-term investment and savings solutions. Through telling it like it is, owning it now, and moving it forward together with care and integrity; we are creating an exceptional place to work for exceptional talent. Help design &amp; improve processes and value streams using recognized methodologies such as Lean Enterprise and /or Six Sigma Work closely with the project team /work as a change consultant Plan, organize, and lead tasks and projects to ensure the quality of client deliverables. Work closely with client team members to generate practical solutions and ensure clients assume the ownership required for successful implementation of solutions that are fit for business purposes Conduct business process mapping as per BPMN 2.0 standards Elicit requirements using interviews, document analysis, requirements workshops, surveys, site visits, business process descriptions, use cases, user journeys, scenarios, business analysis, task and workflow analysis Critically evaluate information gathered from multiple sources, reconcile conflicts, decompose high-level information into details, abstract up from low-level information to a general understanding, and distinguish user requests from the underlying true needs Proactively communicate and collaborate with external and internal customers to analyse information needs and functional requirements and deliver the following artefacts as needed: ‘To be’ Solution design, Business Requirements Document, Use Cases, User Journeys, Acceptance Criteria, GUI, Screen and Interface designs Experience in using company-wide requirements definition and management systems and methodologies required Successfully engage in multiple initiatives simultaneously Experience in working on foundation data, review Target Operating Model (TOM) Experience in process documentation and conduct training Work independently with users to define concepts under the direction of project managers Drive and challenge business units on their assumptions of how they will successfully execute their plans Strong analytical and product management skills, including a thorough understanding of how to interpret customer business needs and translate them into application and operational requirements Excellent verbal and written communication skills and the ability to interact professionally with a diverse group, executives, managers, and subject matter experts We have a diverse workforce and an inclusive culture at M&amp;G Global Services, regardless of gender, ethnicity, age, sexual orientation, nationality, disability or long term condition, we are looking to attract, promote and retain exceptional people. We also welcome those who take part in military service and those returning from career breaks.",
+    "apply_link": "https://in.linkedin.com/jobs/view/business-data-analyst-corporate-functions-technology-at-m-g-india-4450137794",
+    "ats_source": "LinkedIn",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:45:22.463Z",
+    "posted_date": "2026-09-27T06:45:22.463Z",
+    "posted_days_ago": 0,
+    "discovered_at": "2026-09-27T06:45:22.463Z",
+    "created_at": "2026-09-27T06:45:22.463Z",
+    "updated_at": "2026-09-27T06:45:27.767Z"
+  },
+  "1c1a924132571d7a": {
+    "id": "1c1a924132571d7a",
+    "title": "Bounteous - Engagement Lead",
+    "company_name": "Bounteous",
+    "location": "Remote",
+    "salary_range_lpa": [
+      23,
+      36
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      6,
+      9
+    ],
+    "experience_is_inferred": true,
+    "description": "Bounteous - Engagement Lead - Enterprise Data Warehouse Engagement Lead - Enterprise Data Warehouse United States Program Delivery – Program Delivery / Contract / Remote apply for this job Bounteous is a global AI Services firm where agentic engineering and human experience converge to deliver transformative business outcomes for the enterprise. We help organizations design, build, and scale AI-driven products, platforms, and processes. With more than 5,000 team members worldwide, Bounteous delivers AI that sticks, powering adoption and outcomes that move organizations from experimentation to true transformation. Bounteous is backed by New Mountain Capital, a New York-based growth-oriented investment firm that emphasizes business building. This is the person who owns the client relationship at the delivery level and pulls the engagement toward real business outcomes. They take what the client's leadership actually needs and shape it into a prioritized, well-defined scope the delivery team can execute against. They sit between the CIO's office and our Snowflake and Power BI work as a strategic partner — not a pass-through for tickets. Information Security Responsibilities Promote and enforce awareness of key information security practices, including acceptable use of information assets, malware protection, and password security protocols Identify, assess, and report security risks, focusing on how these risks impact the confidentiality, integrity, and availability of information assets Understand and evaluate how data is stored, processed, or transmitted, ensuring compliance with data privacy and protection standards (GDPR, CCPA, etc.) Ensure data protection measures are integrated throughout the information lifecycle to safeguard sensitive information Role &amp; Responsibilities: Define the use cases: Get in the room with client stakeholders, uncover the decisions each report needs to drive, and lock down the use case before anything hits the backlog Prioritize ruthlessly: Sequence the 13+ dashboards and the underlying data remediation by business value.&nbsp; Write requirements that hold up: Produce clear, testable business requirements. No dashboard ships without a named owner, a defined purpose, a descriptive title, and a consistent layout Own quality, end to end: Catch any broken reports immediately Stakeholder management: Engage the CIO and business stakeholders directly. Partner with delivery: Work hand in hand, day to day, with the Snowflake remediation and Power BI teams, holding the line on scope and standards Preferred Qualifications: Has led enterprise data warehouse engagements end to end, ideally on Snowflake with Power BI as the reporting layer A true requirements and use-case thinker — not just a project coordinator Thrives with demanding senior clients (CIO/CFO/COO level) and builds trust fast Not afraid to say no, and able to defend a priority call under pressure Sharp data quality instincts — catches UTM, integration, and pipeline issues before they become problems We invite you to stay connected with us by subscribing to our monthly job openings alert here . &nbsp; Bounteous is proud to be an equal opportunity employer. Bounteous does not discriminate on the basis of race, religion, color, sex, gender identity, sexual orientation, age, physical or mental disability, national origin, veteran status, or any other status protected under federal, state, or local law.&nbsp;Bounteous is willing to sponsor eligible candidates for employment visas.&nbsp; &nbsp; #BI-Remote #LI-Remote We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. apply for this job Bounteous Home Page Jobs powered by",
+    "apply_link": "https://jobs.lever.co/bounteous/7da08609-c358-400c-a2bf-d75573ed033f",
+    "ats_source": "Lever",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:45:11.498Z",
+    "posted_date": "2026-09-26T06:45:11.498Z",
+    "posted_days_ago": 1,
+    "discovered_at": "2026-09-27T06:45:11.498Z",
+    "created_at": "2026-09-27T06:45:11.498Z",
+    "updated_at": "2026-09-27T06:45:27.767Z"
+  },
+  "4a7ecec1fc636519": {
+    "id": "4a7ecec1fc636519",
+    "title": "Senior Associate, Data Analytics",
+    "company_name": "Portagepointpartners",
+    "location": "Gurgaon",
+    "salary_range_lpa": [
+      16,
+      25
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      3,
+      6
+    ],
+    "experience_is_inferred": true,
+    "description": "Portage Point Partners - Senior Associate, Data Analytics Senior Associate, Data Analytics Gurgaon India – Delivery Enablement (India) / Delivery Enablement / Hybrid apply for this job Portage Point Partners is a Chicago-headquartered advisory, interim management and investment banking firm focused on serving the middle-market. Backed by New Mountain Capital, the firm has grown at over 30% annually since its founding in 2016 and today operates from ten offices across the United States. The firm delivers integrated financial and operational solutions across Transaction Advisory Services, Transaction Execution Services, Office of the CFO, Valuations, Performance Improvement, Turnaround &amp; Restructuring and Investment Banking. Engagement teams are lean and execution-oriented, working directly with senior stakeholders to navigate complex transitions and transformations. Triple P India (TPI) is a strategic extension of the firm’s platform, established to build a high-quality team that operates as an integrated part of U.S.-based teams. Professionals in TPI are involved in live engagements from the outset, contributing to analysis, execution and client deliverables in coordination with colleagues across the firm. The platform is designed to provide meaningful responsibility, direct exposure to senior leadership and long-term growth in a high-performance environment. The Data Analytics team serves as a strategic capability across Portage Point, enabling business intelligence, operational reporting, workflow automation, enterprise applications and emerging AI initiatives. This team partners with leaders across the firm to deliver scalable technology solutions that improve decision-making, enhance operational efficiency and support continued growth. Data Analytics team members are responsible for supporting and advancing the firm's data, reporting, automation and application development platforms. The Senior Associate, Data Analytics represents a unique opportunity to assume a wide range of responsibilities and make a significant impact. This Senior Associate will join a high-growth team responsible for building and scaling the data foundation that powers reporting, analytics, automation and strategic decision-making across the firm. The Senior Associate, Data Analytics will report directly into the local Vice President, Data Analytics and lead work with firm leadership and business stakeholders to develop solutions that drive measurable operational impact. This Senior Associate will play a key role in designing, developing and maintaining Portage Point's modern analytics ecosystem leveraging Snowflake, dbt, Airflow, Power BI and Azure. Responsibilities Partner with senior team members, application developers, platform engineers and stakeholders across the firm to translate business requirements into scalable tech solutions Design, develop and maintain ELT pipelines and enterprise data solutions Build and optimize Snowflake data models, warehouse structures and analytics datasets Develop and maintain dbt transformation frameworks and testing processes Design, implement and support Airflow orchestration workflows Build semantic models and datasets supporting enterprise Power BI reporting Develop reusable data assets that support business intelligence, automation and AI initiatives Ensure data quality, reliability, governance and performance across the analytics platform Support executive reporting, KPI development and self-service analytics initiatives Share and manage best practices as well as lead internal trainings where required Support talent acquisition and firm development efforts Contribute to creating a high-performing and inclusive culture Qualifications Bachelor's degree in Computer Science, Engineering, Information Systems or Mathematics from a top undergraduate program required Four plus years of experience in data engineering, analytics engineering and / or business intelligence, preferably at a top-tier advisory firm serving U.S. clients Experience leveraging AI-assisted development tools and modern AI technologies to accelerate data engineering, analytics and automation initiatives Advanced SQL and Python development experience Proficient in GitHub-based software development workflows, including version control, feature branching, pull requests, code reviews, release management and collaborative software development best practices Hands-on expertise working with Snowflake and within Azure cloud environments Experience developing and maintaining dbt projects Experience building and supporting Airflow workflows Experience developing Power BI semantic models, datasets and reporting solutions Strong understanding of dimensional modeling, data warehousing and analytics best practices Experience creating and supporting AI and automation initiatives with familiarity using Power Apps and Power Automate Experience implementing enterprise data governance and data quality frameworks Superior written and verbal communication skills, including executive-ready presentation and reporting skills Proven ability to thrive in lean, fast-moving teams High attention to detail, responsiveness and ownership mindset Track record of success in high-pressure We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. apply for this job Portage Point Partners Home Page Jobs powered by",
+    "apply_link": "https://jobs.lever.co/portagepointpartners/5c4fe72f-aa17-44d5-b12b-433f1abdb0a7",
+    "ats_source": "Lever",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:45:11.612Z",
+    "posted_date": "2026-09-27T06:45:11.612Z",
+    "posted_days_ago": 0,
+    "discovered_at": "2026-09-27T06:45:11.612Z",
+    "created_at": "2026-09-27T06:45:11.612Z",
+    "updated_at": "2026-09-27T06:45:27.767Z"
+  },
+  "4858f750dcddd30f": {
+    "id": "4858f750dcddd30f",
+    "title": "Sonar - Major Territory Manager (Remote)",
+    "company_name": "Sonarsource",
+    "location": "Remote",
+    "salary_range_lpa": [
+      34,
+      54
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      8,
+      12
+    ],
+    "experience_is_inferred": false,
+    "description": "Sonar - Major Territory Manager (Remote) Major Territory Manager (Remote) San Francisco, CA GoToMarket – Sales AMER / Employee / Full-Time / Remote apply for this job Who is Sonar? Sonar is driving the future of agent-centric software development. As the leader in AI code verification and governance, we solve a critical problem: ensuring that software generated by AI-assisted developers or autonomous agents is reliable, secure, and maintainable. Integrating seamlessly with Claude Code, Codex, Cursor, GitHub Copilot, Gemini, and Devin, we help over 75% of the Fortune 100 build trusted, reliable, compliant software. Customers who use Sonar are 44% less likely to report an outage due to AI-generated code. We believe code verification is the critical missing link in the Agent-Centric Development Cycle (AC/DC). Industry giants like Nvidia, ServiceNow, Booking.com, Goldman Sachs, AstraZeneca, and Ford Motor Company count on us to provide independent, explainable, consistent review and governance of their AI-generated code via products like: SonarQube: The world’s leading AI code review and verification platform. SonarQube Foundation Agent: Currently topping the leaderboards for agentic software repair. SonarSweep &amp; Sonar Context Augmentation: Providing the enterprise-grade context and constraints agents need to be truly effective. Our team operates across global hubs in Austin, Bochum, Dubai, Geneva, London, Singapore, Tokyo, and Washington D.C. We move with a mindset we call CODE: Committed to our customers and community. Obsessed with quality. Deliberate in our decisions. Effective as one team. With over $400M in revenue and profitable, fast-paced growth, we are building the backbone of the AI software revolution. If you’re hungry to have an impact, want to build at a fast pace, and ready to work at the forefront of AI, we want to hear from you. About the role Use your problem-solving abilities and customer focus to evangelize the code quality management philosophy embraced by over 400,000 organizations. Utilize your proven sales skills to highlight product value, drive adoptions, and significantly expand our customer base. &nbsp; Engage with developers, decision-makers, and procurement in diverse industries and company sizes. Seize this opportunity to directly influence the direction and processes of our Sales Team and organization as we grow. This is your chance to drive sales success and impact our upward trajectory! What you will do Pipeline Agency &amp; Math: Taking full ownership of your revenue engine by managing 30–40+ active opportunities; you treat SDR support as a multiplier, not a crutch. Manufacturing Urgency: Proactively pivoting long-cycle enterprise \"evaluations\" into 30-day transactions by identifying high-stakes \"Why Now\" business drivers. SDR Partnership &amp; Strategy: Collaborating with your SDR to map Tier 1 accounts, ensuring a relentless \"hunter\" mindset is applied to every target. Friction Removal: Navigating complex security and legal hurdles for deals using standardized processes to prevent cycle bloat. AI-Leveraged Execution: Using AI to re-engineer manual research and personalization tasks, allowing you to handle enterprise-level complexity at velocity. Experience and qualifications Enterprise Pedigree: 8+ years selling technical solutions into large/global companies with a track record of navigating complex stakeholder maps. High-Volume Execution: Proven ability to thrive in a fast-paced inside sales environment. You're just as comfortable closing a $50k deal as you are navigating a $150k, $250k, or $500k opportunity — and you know how to manage both motions without losing momentum on either end. Operational Discipline: Expert-level \"pipeline math\" fluency; you know your conversion ratios and take pride in a high-activity calendar. Resilience &amp; \"Slickness\": A \"closer\" mindset that prioritizes momentum over nurturing, with the professional confidence to disqualify slow-moving leads. Digital Fluency: Advanced use of AI and modern sales tech to create leverage and speed in your daily workflow. We value diversity, equity, and inclusion At Sonar, we believe that our diversity is our strength. We are a global company that values and respects different backgrounds, perspectives, and cultures. We are committed to fostering a diverse and inclusive work environment where everyone feels valued and empowered to contribute their best. We are proud to be an equal opportunity employer and welcome all qualified applicants, regardless of race, color, religion, gender, gender identity or expression, sexual orientation, national origin, genetics, disability, age, or veteran status. If you need any accommodation, please reach out to us at [email&#160;protected] .&nbsp; All offers of employment at Sonar are contingent upon the results of a comprehensive background check and reference verification conducted before the start date.&nbsp; We do not currently support visa candidates in the US.&nbsp; Applications that are submitted through agencies or third party recruiters will not be considered. In-office culture We're intentional about this. We believe the best teams are built in the room together. Three anchor days — Mondays, Tuesdays, and Thursdays — create the collaboration rhythm that makes a hub office worth having.&nbsp; Candidates need to be genuinely based in the location the role is posted&nbsp; — if that's not where you are today, we're happy to support relocation for the right person. &nbsp; We value diversity, equity, and inclusion At Sonar, we believe that our diversity is our strength. We are a global company that values and respects different backgrounds, perspectives, and cultures. We are committed to fostering a diverse and inclusive work environment where everyone feels valued and empowered to contribute their best. We are proud to be an equal opportunity employer and welcome all qualified applicants, regardless of race, color, religion, gender, gender identity or expression, sexual orientation, national origin, genetics, disability, age, or veteran status. If you need any accommodation, please reach out to us at [email&#160;protected] .&nbsp; All offers of employment at Sonar are contingent upon the results of a comprehensive background check and reference verification conducted before the start date.&nbsp; Applications that are submitted through agencies or third party recruiters will not be considered.&nbsp; We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. apply for this job Sonar Home Page Jobs powered by",
+    "apply_link": "https://jobs.lever.co/sonarsource/d4785971-0ce6-4ec2-b0d9-14dc4f294c2f",
+    "ats_source": "Lever",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:45:11.447Z",
+    "posted_date": "2026-09-26T06:45:11.447Z",
+    "posted_days_ago": 1,
+    "discovered_at": "2026-09-27T06:45:11.447Z",
+    "created_at": "2026-09-27T06:45:11.447Z",
+    "updated_at": "2026-09-27T06:45:27.767Z"
+  },
+  "e658babfd9619177": {
+    "id": "e658babfd9619177",
+    "title": "MCA Connect - D365 F&O Senior WMS/SCM Consultant",
+    "company_name": "Mcaconnect",
+    "location": "Remote",
+    "salary_range_lpa": [
+      77,
+      136
+    ],
+    "salary_is_estimated": false,
+    "salary_source": "Stated in Job Description",
+    "experience_range_years": [
+      3,
+      6
+    ],
+    "experience_is_inferred": true,
+    "description": "MCA Connect - D365 F&amp;O Senior WMS/SCM Consultant D365 F&amp;O Senior WMS/SCM Consultant Remote Business Application Services - F&amp;SC / Full-time / Remote apply for this job Through passion and deep industry expertise, MCA Connect helps manufacturers succeed by unlocking innovation with actionable business insights. Our strategic solutions, innovation, and industry intelligence help manufacturers gain visibility, improve profitability, and achieve a competitive edge. &nbsp; Established in 2002, MCA Connect has grown into one of the largest US-based solution partners in Microsoft Business Applications and Azure Data &amp; AI / Digital &amp; App Innovation. Our Microsoft Specialties include Finance and Supply Chain, Analytics on Azure, Data Warehouse Migration, and Power Platform. We’re also a fifteen-time Microsoft Partner of the Year and three-time Inc. Best Workplaces award winner. Title Dynamics 365 Sr Consultant – Supply Chain &nbsp; Location Virtual, home-based office &nbsp; Description The Dynamics 365 Finance and Operations (ERP) Senior Consultant is responsible for consulting on Dynamics 365 ERP engagements including: implementation, upgrade, and/or extension of existing applications. The Senior Consultant is responsible for hands-on configuration of Dynamics 365 ERP Trade and Logistics modules as well as for assisting clients in the implementation and support of Dynamics 365 ERP solutions. They will be involved in improving operational metrics, business case development and performance measurement. They will provide functional knowledge and manage client relationships within context of individual role. Position requires up to 50% travel. Responsibilities Customer Satisfaction Facilitate the implementation and support of Dynamics 365 Supply Chain Management modules including but not limited to Procurement &amp; Sourcing, Sales &amp; Marketing, &amp; Inventory Management. Conduct in-depth discussion with clients to understand their warehouse management processes, identify pain points, and gather detailed business requirements. Design and document functional specifications for warehouse operations within Dynamics 365 Supply Chain Management, including picking, packing, shipping, receiving, put-away, and inventory counting. Configure and customize Dynamics 365 warehouse management module based on the defined requirements, including setting up warehouse locations, reservation hierarchy, wave, work, location directives, mobile device and labels. Plan and execute data migration strategies to transfer existing warehouse data into the Dynamics 365 system. Develop and execute functional test cases to ensure the warehouse solution meets business needs and performs as expected. Provide comprehensive training to business process owners on the warehouse management functionalities within Dynamics 365, including system navigation, configuration, process, and key features. Assist clients with their Dynamics 365 operation, including go-live activities, troubleshooting issues, and providing post-implementation support. Collaborate with customers to understand their business requirements and conduct gap analysis Produce Functional Design Documents when extensions are necessary Communicate effectively in all mediums and to all levels internally and externally Successful implementation of practical business solutions using industry best practices as the Supply Chain lead on a project Lead successful modeling and process area showcase sessions Ensure success of projects by coaching or mentoring junior consultants Qualifications Minimum of 5 years Dynamics 365 (AX) Supply Chain Management experience or equivalent industry work Minimum of 2 full years staffed on Dynamics 365 (AX) implementations&nbsp; Certification in Dynamics 365 Supply Chain Management (MB-330), or attainment of certification within first 90 days of employment. Working knowledge of industry specific best practices Strong customer relationship skills Excellent communication, planning and organization skills Ability to establish priorities and work independently Ability to travel up to 50% Bachelor’s Degree in Supply Chain Management or related field or equivalent combination of education and experience&nbsp; Fluent in English Valid Driver’s License Desired Qualifications Experience with Microsoft Dynamics AX2009 or AX2012 a plus Exposure to Advanced Warehousing, finance, or production D365 modules Comfortable presenting via Microsoft Teams/Zoom/WebEx Azure DevOps &amp; Microsoft Dynamics Lifecycle Services experience $90,000 - $160,000 a year PLUS &nbsp;Uncapped Supplemental Compensation (Bonus) Plan&nbsp;paid out quarterly Why work for MCA Connect? Our compensation plan offers one of the best bonus structures in the industry.&nbsp; Along with this we also offer a generous benefit package: · &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Work/Life Balance with Unlimited Paid Time Off (UPTO) · &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 401k Plan with Company Matching Contribution · &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Monthly Stipend for Home Office Expenses · &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Subsidized Medical, Dental and Vision Coverage · &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Health Savings and Flexible Spending Accounts · &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Company Paid Life and Disability Insurance · &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Training, Certification and Continuing Education Support MCA Connect offers limitless opportunities for personal and professional growth in a stimulating, challenging, and performance-oriented work culture where you can share your ideas and make impactful daily contributions. Our employees are highly motivated and talented individuals dedicated to developing, marketing, and selling products designed to deliver value for mid-market and enterprise-size manufacturing, distribution, and energy companies. We take the time to train our consultants so that they understand the industries we serve and can deliver best practices, proven methodologies, and ongoing industry expertise to our clients. MCA Connect is an Equal Opportunity Employer. MCA Connect promotes equal employment opportunity to all employees and applicants and does not discriminate on the basis of race, religion, color, creed, national origin, sex, age, sexual/gender orientation, status as a protected disabled or Vietnam Era Veteran, disability, or any other legally protected status.&nbsp;We firmly believe our differences make us stronger! We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. apply for this job MCA Connect Home Page Jobs powered by",
+    "apply_link": "https://jobs.lever.co/mcaconnect/c4a85f7e-f836-4950-9539-e3def7050f78",
+    "ats_source": "Lever",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:45:11.328Z",
+    "posted_date": "2026-09-26T06:45:11.328Z",
+    "posted_days_ago": 1,
+    "discovered_at": "2026-09-27T06:45:11.328Z",
+    "created_at": "2026-09-27T06:45:11.328Z",
+    "updated_at": "2026-09-27T06:45:27.767Z"
+  },
+  "f31498be6717ff11": {
+    "id": "f31498be6717ff11",
+    "title": "TTEC Digital - Solutions Architect",
+    "company_name": "Ttecdigital",
+    "location": "Remote",
+    "salary_range_lpa": [
+      136,
+      153
+    ],
+    "salary_is_estimated": false,
+    "salary_source": "Stated in Job Description",
+    "experience_range_years": [
+      3,
+      6
+    ],
+    "experience_is_inferred": false,
+    "description": "TTEC Digital - Solutions Architect - MS D365 Solutions Architect - MS D365 Austin, TX Microsoft – Delivery / Full-Time / Remote apply for this job At TTEC Digital, we coach clients to ensure their employees feel valued, and fully supported, because an amazing customer experience is an employee first process. Our vision is the same, a place where employees know they can thrive. As a Solutions Architect working remote in the US, you will work closely with a wide range of clients around the globe to deliver exceptional experiences by helping them identify their business pains, then turning around to develop and implement useful and relevant technology-based solutions to meet those needs. Our consultants take clients on a journey through strategy, implementation, customization, and support, ensuring exceptional customer experience at every step of the way.&nbsp; As a Solutions Architect, you will elevate TTEC Digital's relationships with our accounts by approaching them through a customer experience lens and architecting bleeding-edge technology solutions which address their business challenges. In addition, you will be a thought leader both internally and externally, always embodying our core values of innovation, passion, excellence, and integrity. What You'll Be Doing Client Engagement Assists in winning and/or extending business by working cross-functionally with sales and delivery to develop client proposals and presentations around process and solution options, clearly explaining technical concepts for shared understanding to facilitate decision-making Demonstrates a proven ability to establish himself/herself as a trusted advisor in an atmosphere of partnership with clients at the primary stakeholder level Demonstrates a consistent aptitude for proactively guiding and consulting technical and non-technical project-level client stakeholders on technical concepts or design implications Project Delivery Leads medium-scale technical requirements elicitation, design, and scoping discussions, internally and/or with existing and potential clients Decomposes medium-scale requirements/user stories into tasks, and accurately estimates the effort for themselves or others to complete those tasks Professionally delegates technical tasks to other team members for multi-workstream projects of medium scale and moderate complexity Demonstrates a consistent capability for successful project leadership, including both on- and off-shore resources Identifies problems independently and demonstrates proactive ownership of their solution, vets and evaluates others’ proposed solutions, and delegates ownership to others where appropriate Demonstrates a proven, repeatable track record of successful medium-scale project delivery Demonstrates an ability to monitor other consultants’ completion of tasks, to help other consultants eliminate or work around impediments, and to identify additional work for others What You Bring to the Role Ability to architect and set standards for low- to medium-complexity solutions using a variety of technologies, platforms, and integrations 3+ years of experience with Agile delivery, and is able to recommend whether an Agile, traditional/waterfall, or hybrid approach is most suitable for a project · 5+ years’ experience leading consulting projects, including : Implementing, configuring and customizing Microsoft D365 including but not limited to configuring forms, views, dashboards, workflows, business rules, solutions, etc.&nbsp; Implementing, configuring and customizing Power Platform including but not limited to Power Automate, Power BI, PowerApps&nbsp; Configuring and customizing Copilot Studio Implementing two or more of the following: Microsoft Dynamics D365 Sales, Contact Center, Customer Service, Customer Insights Migrating data and and/or implementing integrations to and from D365 Is able to identify whether a routine of high complexity should be implemented via a no-code solution or via a software development effort Has experience with two or more the following: C#, JavaScript, TypeScript, Microsoft ADO, Integrations with external systems, SQL queries, HTML/CSS, ETL solutions such as Scribe or SSIS with KingswaySoft, SDK, and third-party tools such as XRMToolbox. Has two or more relevant Microsoft certifications What You Can Expect $160,000 - $180,000 a year #LI-DD1 #LI-Remote Team Overview For ten years in a row our Microsoft practice has achieved Microsoft's Inner Circle Award designation and we have been recognized as 'Partner of the year for Microsoft Dynamics 365 Service', ‘Partner of the year for Microsoft Dynamics 365 Marketing’ and as a Partner of the year finalist for ‘Intelligent Sales &amp; Marketing’. In addition to our ongoing Gold Partner status, our competencies range from software development and deployment of Dynamics 365, to Power Platform, Azure and Microsoft 365. In mid-2022, the team was also named as one of only a handful of launch partners for the Microsoft D365 Contact Center. Our integrated team approach of experienced CX engineers, developers, data scientists, and solution architects, design, deploy and support complex and fully integrated digital solutions that are focused on creating an exceptional customer experience. &nbsp; About Us Avtex is now TTEC Digital. The acquisition aligns to TTEC’s continued focus on fueling experience transformations. Our deep expertise in the most innovative and disruptive brands in the digital industry enables our clients to provide amazing customer experiences. &nbsp; TTEC Digital, and our 1,700+ employees, pioneer engagement and growth solutions that fuel the exceptional customer experience (CX). TTEC Engage is a 60,000+ employee service company, with customers in more than 80 countries. Together, we utilize a holistic approach, applying solutions from two centers of excellence, Engage and Digital. &nbsp; TTEC is a proud equal opportunity employer where all qualified applicants will receive consideration for employment without regard to age, race, color, religion, sex, sexual orientation, gender identity, national origin, disability. TTEC has fully embraced and is committed to expanding our diverse and inclusive workforce. We strive to reflect the communities we serve while delivering amazing service and technology centered around humanity. &nbsp; Rarely do applicants meet all desired job qualifications, so if you feel you would succeed in the role above, please take a moment and share your qualifications. &nbsp; #LI-REMOTEUS We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. apply for this job TTEC Digital Home Page Jobs powered by",
+    "apply_link": "https://jobs.lever.co/ttecdigital/510831a2-4c39-474e-bfb0-3b11379bcaae",
+    "ats_source": "Lever",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:45:11.669Z",
+    "posted_date": "2026-09-26T06:45:11.669Z",
+    "posted_days_ago": 1,
+    "discovered_at": "2026-09-27T06:45:11.669Z",
+    "created_at": "2026-09-27T06:45:11.669Z",
+    "updated_at": "2026-09-27T06:45:27.767Z"
+  },
+  "90dda285264d5ea8": {
+    "id": "90dda285264d5ea8",
+    "title": "Sr. Tech Lead",
+    "company_name": "Genpact",
+    "location": "Remote",
+    "salary_range_lpa": [
+      20,
+      32
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      6,
+      9
+    ],
+    "experience_is_inferred": true,
+    "description": "Sr. Tech Lead - Application Development Microsoft N 4D · Azure Developer Associate (AZ-204) · Power Platform Developer (PL-400) · Dynamics 365 ...\n\nRequisition posted on Genpact career portal. Direct application link verified active.",
+    "apply_link": "https://genpact.wd108.myworkdayjobs.com/en-US/external_careers/job/1401-G-India-14-45-Uppal-STPI-Hyderabad/Sr-Tech-Lead---Application-Development-Microsoft-N-4D_JR10027317",
+    "ats_source": "Workday",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct Workday posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:45:37.079Z",
+    "posted_date": "2026-09-24T06:45:37.079Z",
+    "posted_days_ago": 3,
+    "discovered_at": "2026-09-27T06:45:37.079Z",
+    "created_at": "2026-09-27T06:45:37.079Z",
+    "updated_at": "2026-09-27T06:45:40.861Z"
+  },
+  "1e43cf0a22f1a771": {
+    "id": "1e43cf0a22f1a771",
+    "title": "Contact Government Services, LLC",
+    "company_name": "Cgsfederal",
+    "location": "Remote",
+    "salary_range_lpa": [
+      10,
+      17
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      2,
+      4
+    ],
+    "experience_is_inferred": true,
+    "description": "Contact Government Services, LLC - Business Analyst Business Analyst Miami, FL / Remote / Hybrid / Tampa, FL Information Technology / Full Time Hybrid / Hybrid Submit your application Which location are you applying for? ✱ Select... Miami, FL Remote Hybrid Tampa, FL Resume/CV ✱ ATTACH RESUME/CV Couldn't auto-read resume. Analyzing resume... Success! File exceeds the maximum upload size of 100MB . Please try a smaller size. Full name ✱ Pronouns He/him She/her They/them Xe/xem Ze/hir Ey/em Hir/hir Fae/faer Hu/hu Use name only Custom Let the employer know what pronouns you use so that they can address you correctly. Email ✱ Phone ✱ Current location No location found. Try entering a different location Loading Current company Links LinkedIn URL GitHub URL Default Questions AM Version Please provide your physical address. ✱ Are you willing to relocate? ✱ Yes. No. What's your citizenship / employment eligibility? ✱ I am a U.S Citizen / Permanent Resident. Non-Citizen allowed to work for any employer. Non-Citizen allowed to work for current employer. Non-Citizen seeking work Authorization. Please Enter Your Ideal Annual Compensation In $00.00 Formatting. ✱ Do You Currently Hold A Federal Security Clearance? If So, What Level Of Federal Security Clearance Do You Currently Posses? Business Analyst Do you have experience using JIRA as an Agile Project Management tool? ✱ Yes No Submit application Contact Government Services, LLC Home Page We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. Jobs powered by",
+    "apply_link": "https://jobs.lever.co/cgsfederal/99d254fb-8e4c-4ed3-9f35-40e7237f5040/apply",
+    "ats_source": "Lever",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:45:31.310Z",
+    "posted_date": "2026-09-26T06:45:31.310Z",
+    "posted_days_ago": 1,
+    "discovered_at": "2026-09-27T06:45:31.310Z",
+    "created_at": "2026-09-27T06:45:31.310Z",
+    "updated_at": "2026-09-27T06:45:40.861Z"
+  },
+  "f9f5b2d4e29a8127": {
+    "id": "f9f5b2d4e29a8127",
+    "title": "Listo - Senior Business Analyst – ROI & Customer Impact",
+    "company_name": "Listo",
+    "location": "Remote",
+    "salary_range_lpa": [
+      16,
+      24
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      3,
+      6
+    ],
+    "experience_is_inferred": true,
+    "description": "Listo - Senior Business Analyst – ROI &amp; Customer Impact Senior Business Analyst – ROI &amp; Customer Impact Argentina Business Analyst / Remote Submit your application Resume/CV ✱ ATTACH RESUME/CV Couldn't auto-read resume. Analyzing resume... Success! File exceeds the maximum upload size of 100MB . Please try a smaller size. Full name ✱ Email ✱ Phone Current location ✱ No location found. Try entering a different location Loading Current company Links LinkedIn URL Twitter URL GitHub URL Portfolio URL Listo English level Do you have a C1 or C2 level of English proficiency? Select... Yes No Submit application Listo Home Page We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. Jobs powered by",
+    "apply_link": "https://jobs.lever.co/listo/3c078c27-84a5-4f8d-ae63-e15e379bb461/apply",
+    "ats_source": "Lever",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:45:32.276Z",
+    "posted_date": "2026-09-26T06:45:32.276Z",
+    "posted_days_ago": 1,
+    "discovered_at": "2026-09-27T06:45:32.276Z",
+    "created_at": "2026-09-27T06:45:32.276Z",
+    "updated_at": "2026-09-27T06:45:40.861Z"
+  },
+  "808a41fe715f1399": {
+    "id": "808a41fe715f1399",
+    "title": "Business Analyst – Cash Management & Intraday Liquidity",
+    "company_name": "Capco",
+    "location": "Not specified",
+    "salary_range_lpa": [
+      9,
+      16
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      2,
+      4
+    ],
+    "experience_is_inferred": true,
+    "description": "Job Application for Business Analyst – Cash Management &amp; Intraday Liquidity at Capco Back to jobs Business Analyst – Cash Management &amp; Intraday Liquidity India Apply Job Title: Business Analyst – Cash Management &amp; Intraday Liquidity &nbsp; About Us “Capco, a Wipro company, is a global technology and management consulting firm. Awarded with Consultancy of the year in the &nbsp; British Bank Award and has been ranked Top 100 Best Companies for Women in India 2022 by Avtar &amp; Seramount . With our presence across 32 cities across globe, we support 100+ clients across&nbsp;banking, financial and Energy sectors. We are recognized for our deep transformation execution and delivery.&nbsp; WHY JOIN CAPCO?&nbsp; You will work on engaging projects with the largest international and local banks, insurance companies, payment service providers and other key players in the industry. The projects that will transform the financial services industry. MAKE AN IMPACT Innovative thinking, delivery excellence and thought leadership to help our clients transform their business. Together with our clients and industry partners, we deliver disruptive work that is changing energy and financial services. #BEYOURSELFATWORK Capco has a tolerant, open culture that values diversity, inclusivity, and creativity. CAREER ADVANCEMENT With no forced hierarchy at Capco, everyone has the opportunity to grow as we grow, taking their career into their own hands. DIVERSITY &amp; INCLUSION We believe that diversity of people and perspective gives us a competitive advantage. Job Description: Role:&nbsp; Business Analyst – Cash Management &amp; Intraday Liquidity Location: ADA Treasury Team,&nbsp; Reporting to: &nbsp;ADA Treasury Product Owner / Treasury Lead Role Overview: We are seeking an experienced Business Analyst to join the ADA Treasury team, specialising in cash management and intraday liquidity. The successful candidate will play a pivotal role in analysing, designing, and implementing solutions that enhance our treasury operations, with a particular emphasis on optimising cash flows and managing intraday liquidity risk. This is a highly collaborative role, requiring close partnership with technology, operations, excellent communication skills and business stakeholders to deliver robust and scalable solutions. &nbsp; Key Responsibilities: Elicit, analyse, and document business requirements related to cash management and intraday liquidity processes. Map and optimise end-to-end cash flow processes, identifying opportunities for automation and efficiency gains. Collaborate with technology teams to translate business requirements into functional and technical specifications. Support the design, testing, and implementation of treasury systems and tools, ensuring alignment with regulatory and internal policy requirements. Conduct gap analysis and impact assessments for proposed changes, with a focus on risk mitigation and operational resilience. Facilitate workshops and meetings with stakeholders across Treasury, Finance, Operations, and Technology. Develop and maintain process documentation, user guides, and training materials. Monitor industry trends and regulatory developments in cash management and liquidity, providing insights and recommendations to the team. Support the delivery of project milestones, ensuring timely and high-quality outcomes. &nbsp; Essential Skills &amp; Experience: Proven experience as a Business Analyst within a banking or financial services environment, ideally within Treasury or Cash Management functions. Strong understanding of cash management products, swift messaging, services, and processes, including payments, collections, and reconciliation. In-depth knowledge of intraday liquidity management, including regulatory requirements (e.g., BCBS 248) and best practices. Demonstrated ability to analyse complex data sets and processes, with a keen eye for detail and a focus on actionable insights. Proficiency in business analysis tools and methodologies (e.g., process mapping, requirements gathering, user stories, use cases). Experience working in Agile and/or Waterfall project environments. Excellent stakeholder management and communication skills, with the ability to engage both technical and non-technical audiences. Strong problem-solving skills, with a proactive and collaborative approach to delivery. Advanced Excel and data analysis skills; familiarity with SQL, data visualisation tools, or treasury platforms is advantageous. &nbsp; Desirable: Experience with treasury management systems (e.g., CMS, Front of MSS platforms) or payment platforms. Professional qualifications (e.g., IIBA, BCS, ACT, CFA) are a plus. Experience data ingestions and big data reconciliation Apply for this job * indicates a required field First Name * Last Name * Email * Phone Country * Phone * Location (City) * Locate me Resume/CV * Attach Attach Dropbox Google Drive Enter manually Enter manually Accepted file types: pdf, doc, docx, txt, rtf What is your total years of experience * Select... How many years of experience you have in Banking/Financial Services Domain? * Select... What is your CCTC in LPA ? * What is your ECTC in LPA ? * What is your official Notice Period? * Select... Do you have any offer in hand ? * Select... Do you have experience working with Domestic / International stakeholders? Please specify the geographies and designation of stakeholders? * Submit application Powered by Greenhouse",
+    "apply_link": "https://boards.greenhouse.io/capco/jobs/7601800",
+    "ats_source": "Greenhouse",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:45:29.691Z",
+    "posted_date": "2026-09-26T06:45:29.691Z",
+    "posted_days_ago": 1,
+    "discovered_at": "2026-09-27T06:45:29.691Z",
+    "created_at": "2026-09-27T06:45:29.691Z",
+    "updated_at": "2026-09-27T06:45:40.861Z"
+  },
+  "0efa2ce1fc7010b8": {
+    "id": "0efa2ce1fc7010b8",
+    "title": "Business Analyst",
+    "company_name": "Pingwind",
+    "location": "Remote",
+    "salary_range_lpa": [
+      16,
+      24
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      3,
+      6
+    ],
+    "experience_is_inferred": false,
+    "description": "PingWind - Business Analyst Business Analyst Remote Upcoming Work – FSA / Full-Time / Remote Submit your application Resume/CV ATTACH RESUME/CV Couldn't auto-read resume. Analyzing resume... Success! File exceeds the maximum upload size of 100MB . Please try a smaller size. Full name ✱ Email ✱ Phone Current location No location found. Try entering a different location Loading Current company Links LinkedIn URL Twitter URL GitHub URL Portfolio URL Other website salary What is your desired salary range? ✱ Basic question Applicants selected for this position may be subject to a U.S. Government security investigation and will be required to meet eligibility requirements for access to classified information; therefore, U.S. Citizenship is required. Are you able to meet this requirement? y/n ✱ U.S. Equal Employment Opportunity information (Completion is voluntary and will not subject you to adverse treatment) PingWind provides equal employment opportunities to applicants and employees without regard to race, color, religion, sex, sexual orientation, gender identity, national origin, protected veteran status, or disability. PingWind is a federal contractor or subcontractor subject to certain governmental recordkeeping and reporting requirements for the administration of civil right laws and regulations. Employment decisions are made on the basis of job-related criteria without regard to race, ethnicity, color, religion, sex, sexual orientation, gender identity, marital status, age, genetic information, national origin, disability, military, or veteran status, or any other classification protected by applicable law. We invite all applicants to voluntarily self-identify their race, ethnicity, and/or gender. Submission of the information on this form is strictly voluntary and refusal to provide it will not subject you to any adverse treatment. Information obtained will be retained in a confidential file and separate from personnel records. This information may only be used in accordance with the provision of applicable federal laws, executive orders, and regulations. If you want more information about any of the sections, please check with a company representative. Gender Select ... Male Female Decline to self-identify Race Select ... Hispanic or Latino White (Not Hispanic or Latino) Black or African American (Not Hispanic or Latino) Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino) Asian (Not Hispanic or Latino) American Indian or Alaska Native (Not Hispanic or Latino) Two or More Races (Not Hispanic or Latino) Decline to self-identify Hispanic or Latino A person of Cuban, Mexican, Puerto Rican, South or Central American, or other Spanish culture or origin regardless of race. White (Not Hispanic or Latino) A person having origins in any of the original peoples of Europe, the Middle East, or North Africa. Black or African American (Not Hispanic or Latino) A person having origins in any of the black racial groups of Africa. Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino) A person having origins in any of the peoples of Hawaii, Guam, Samoa, or other Pacific Islands. Asian (Not Hispanic or Latino) A person having origins in any of the original peoples of the Far East, Southeast Asia, or the Indian Subcontinent, including, for example, Cambodia, China, India, Japan, Korea, Malaysia, Pakistan, the Philippine Islands, Thailand, and Vietnam. American Indian or Alaska Native (Not Hispanic or Latino) A person having origins in any of the original peoples of North and South America (including Central America), and who maintain tribal affiliation or community attachment. Two or More Races (Not Hispanic or Latino) All persons who identify with more than one of the above five races. Self-identification of veteran status (Completion is voluntary and will not subject you to adverse treatment) PingWind is a Government contractor subject to the Section 4212 of the Vietnam Era Veterans’ Readjustment Assistance Act of 1974, as amended by the Jobs for Veterans Act of 2002, which requires Government contractors to take affirmative action to employ and advance in employment: (1) Disabled veterans – A veteran who served on active duty in the U.S. military and is entitled to disability compensation (or who but for the receipt of military retired pay would be entitled to disability compensation) under laws administered by the Secretary of Veterans Affairs, or was discharged or released from active duty because of a service-connected disability; (2) Recently separated veteran – A veteran separated during the three-year period beginning on the date of the veteran's discharge or release from active duty in the U.S military, ground, naval, or air service; (3) Active duty wartime or campaign badge veteran – A veteran who served on active duty in the U.S. military during a war, or in a campaign or expedition for which a campaign badge was authorized under the laws administered by the Department of Defense; (4) Armed forces service medal veteran – A veteran who, while serving on active duty in the U.S. military ground, naval, or air service, participated in a United States military operation for which an Armed Forces service medal was awarded pursuant to Executive Order 12985 (61 Fed. Reg. 1209). If you believe that you belong to any of the categories of protected veterans, please indicate by making the appropriate selection. Veteran status Select ... I identify as one or more of the classifications of protected veteran listed above I am not a protected veteran I decline to self-identify for protected veteran status Voluntary self-identification of disability Form CC-305 / OMB Control Number 1250-0005 / Expires 04/30/2026 Why are you being asked to complete this form? We are a federal contractor or subcontractor. The law requires us to provide equal employment opportunity to qualified people with disabilities. We have a goal of having at least 7% of our workers as people with disabilities. The law says we must measure our progress towards this goal. To do this, we must ask applicants and employees if they have a disability or have ever had one. People can become disabled, so we need to ask this question at least every five years. Completing this form is voluntary, and we hope that you will choose to do so. Your answer is confidential. No one who makes hiring decisions will see it. Your decision to complete the form and your answer will not harm you in any way. If you want to learn more about the law or this form, visit the U.S. Department of Labor’s Office of Federal Contract Compliance Programs (OFCCP) website at www.dol.gov/ofccp . How do you know if you have a disability? A disability is a condition that substantially limits one or more of your “major life activities.” If you have or have ever had such a condition, you are a person with a disability. Disabilities include, but are not limited to: Alcohol or other substance use disorder (not currently using drugs illegally) Autoimmune disorder, for example, lupus, fibromyalgia, rheumatoid arthritis, HIV/AIDS Blind or low vision Cancer (past or present) Cardiovascular or heart disease Celiac disease Cerebral palsy Deaf or serious difficulty hearing Diabetes Disfigurement, for example, disfigurement caused by burns, wounds, accidents, or congenital disorders Epilepsy or other seizure disorder Gastrointestinal disorders, for example, Crohn's Disease, irritable bowel syndrome Intellectual or developmental disability Mental health conditions, for example, depression, bipolar disorder, anxiety disorder, schizophrenia, PTSD Missing limbs or partially missing limbs Mobility impairment, benefiting from the use of a wheelchair, scooter, walker, leg brace(s) and/or other supports Nervous system condition, for example, migraine headaches, Parkinson’s disease, multiple sclerosis (MS) Neurodivergence, for example, attention-deficit/hyperactivity disorder (ADHD), autism spectrum disorder, dyslexia, dyspraxia, other learning disabilities Partial or complete paralysis (any cause) Pulmonary or respiratory conditions, for example, tuberculosis, asthma, emphysema Short stature (dwarfism) Traumatic brain injury Disability status Select ... Yes, I have a disability, or have had one in the past No, I do not have a disability and have not had one in the past I do not want to answer PUBLIC BURDEN STATEMENT: According to the Paperwork Reduction Act of 1995 no persons are required to respond to a collection of information unless such collection displays a valid OMB control number. This survey should take about 5 minutes to complete. Name Date Note: Name and date are only required if you filled out Disability status. Submit application We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. Jobs powered by",
+    "apply_link": "https://jobs.lever.co/pingwind/b769f3db-592f-4cf3-a4bf-65f92c702daf/apply",
+    "ats_source": "Lever",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:45:29.207Z",
+    "posted_date": "2026-09-26T06:45:29.207Z",
+    "posted_days_ago": 1,
+    "discovered_at": "2026-09-27T06:45:29.207Z",
+    "created_at": "2026-09-27T06:45:29.207Z",
+    "updated_at": "2026-09-27T06:45:40.861Z"
+  },
+  "8112894f06a514e3": {
+    "id": "8112894f06a514e3",
+    "title": "Senior Business Analyst – ROI & Customer Impact",
+    "company_name": "Listo",
+    "location": "Remote",
+    "salary_range_lpa": [
+      16,
+      24
+    ],
+    "salary_is_estimated": true,
+    "salary_source": "AmbitionBox & Glassdoor Benchmark (India Market)",
+    "experience_range_years": [
+      4,
+      7
+    ],
+    "experience_is_inferred": false,
+    "description": "Listo - Senior Business Analyst – ROI &amp; Customer Impact Senior Business Analyst – ROI &amp; Customer Impact Argentina Business Analyst / Remote apply for this job Listo is a real-time operations platform for large venues, stadiums, arenas, and hospitality environments. We help frontline teams and operators coordinate faster, respond to issues in real time, and improve the guest experience during high-volume events. WHAT YOU'LL DO ROI models. Build ROI models and business cases for customer rollouts. Data analysis. Analyze large operational datasets to identify trends, patterns, bottlenecks, and opportunities. Impact reports. Create customer-facing impact reports that explain the value Listo is delivering. Before vs. after. Compare pre-rollout and post-rollout performance wherever data is available. Metrics design. Define the right metrics: customer success, operational efficiency, staff performance, response times, task completion, and adoption. Cross-functional. Partner with Product and Engineering to improve tracking, dashboards, and reporting. Internal tools. Build internal tools, templates, and frameworks for repeatable ROI analysis. Customer calls. Speak directly with US-based customers to collect assumptions, validate data, and present findings. S ales enablement. Support Sales and Customer Success with quantified value stories and customer-specific business cases. WHAT WE'RE LOOKING FOR 4+ years as a Business Analyst, Data Analyst, or similar Strong experience analyzing business or operational data Advanced Excel / Google Sheets + solid SQL skills Proven experience building ROI models, business cases or impact reports Advanced English — written and spoken (client calls with U.S. teams) Ability to work independently on ambiguous problems High attention to detail and strong communication skills NICE TO HAVE Experience in B2B SaaS or with enterprise customers BI tools: Tableau, Power BI, Looker, Metabase, or similar Background in hospitality, stadiums, workforce management, field operations, logistics, or facilities Experience creating executive-level reports or customer-facing presentations Prior work with Customer Success or Sales teams We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us. apply for this job Listo Home Page Jobs powered by",
+    "apply_link": "https://jobs.lever.co/listo/3c078c27-84a5-4f8d-ae63-e15e379bb461",
+    "ats_source": "Lever",
+    "is_direct_posting": true,
+    "verification_status": "verified_active",
+    "verification_notes": "Verified live: Direct career portal posting actively accepting applications.",
+    "verified_at": "2026-09-27T06:45:30.503Z",
+    "posted_date": "2026-09-26T06:45:30.503Z",
+    "posted_days_ago": 1,
+    "discovered_at": "2026-09-27T06:45:30.503Z",
+    "created_at": "2026-09-27T06:45:30.503Z",
+    "updated_at": "2026-09-27T06:45:40.861Z"
   }
 }

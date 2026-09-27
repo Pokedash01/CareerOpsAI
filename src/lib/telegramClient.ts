@@ -88,6 +88,32 @@ export interface TelegramDispatchResult {
 }
 
 /**
+ * Detects if client is running in an environment where outbound Telegram notifications are allowed.
+ * Outbound notifications are completely stopped in the AI Studio environment (*.run.app, googleusercontent, localhost).
+ * Real notifications are enabled EXCLUSIVELY on Vercel deployments (*.vercel.app).
+ */
+export function isNotificationDeliveryAllowedClient(): boolean {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname.toLowerCase();
+
+  // Explicit Vercel environment flag
+  if (
+    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_VERCEL === 'true') ||
+    (typeof process !== 'undefined' && process.env?.VERCEL)
+  ) {
+    return true;
+  }
+
+  // Vercel deployment hostname detection (*.vercel.app)
+  if (host.endsWith('.vercel.app') || host.includes('vercel.app')) {
+    return true;
+  }
+
+  // All other environments (AI Studio, preview iframes, Google Cloud Run, localhost, etc.) are muted
+  return false;
+}
+
+/**
  * Sends a message directly to the Telegram Bot API via CORS from browser or server.
  */
 export async function sendTelegramDirect(
@@ -97,6 +123,16 @@ export async function sendTelegramDirect(
 ): Promise<TelegramDispatchResult> {
   const effectiveToken = (token || '').trim() || DEFAULT_TELEGRAM_BOT_TOKEN;
   const effectiveChat = (chatId || '').trim() || DEFAULT_TELEGRAM_CHAT_ID;
+
+  if (!isNotificationDeliveryAllowedClient()) {
+    console.log('[Telegram Direct] Alert suppressed in AI Studio app. Real notifications will be delivered from your Vercel deployment.');
+    return {
+      delivered: false,
+      simulated: true,
+      chat_id: effectiveChat,
+      note: 'Notifications stopped in AI Studio app. Real alerts are delivered exclusively from your Vercel deployment.',
+    };
+  }
 
   if (!effectiveToken) {
     return {
@@ -170,10 +206,19 @@ export async function dispatchJobNotification(params: {
   const chatId = (customChatId || settings?.telegram_chat_id || '').trim() || DEFAULT_TELEGRAM_CHAT_ID;
   const currentOrigin = typeof window !== 'undefined' ? window.location.origin : undefined;
 
+  // In AI Studio applet, stop all outbound notification dispatch
+  if (!isNotificationDeliveryAllowedClient()) {
+    console.log(`[Telegram Dispatch] Muted in AI Studio app for "${job.title}". Notifications will be delivered from your Vercel deployment.`);
+    return {
+      delivered: false,
+      simulated: true,
+      chat_id: chatId,
+      note: 'Notifications muted in AI Studio app. Real alerts are dispatched exclusively by your Vercel deployment.',
+    };
+  }
+
   const candidateEndpoints = [
     '/api/telegram/notify',
-    'https://ais-dev-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app/api/telegram/notify',
-    'https://ais-pre-w2ikgh4niy7jalbtjcsxj4-473195261694.asia-southeast1.run.app/api/telegram/notify',
   ];
 
   // Filter endpoints so we don't redundantly call the same URL
@@ -224,10 +269,18 @@ export async function dispatchJobNotification(params: {
       const data = await res.json().catch(() => null);
 
       if (res.ok) {
-        if (data?.delivered || data?.success) {
+        if (data?.muted_in_ai_studio || data?.simulated) {
+          return {
+            delivered: false,
+            simulated: true,
+            chat_id: chatId,
+            note: data.note || 'Alerts stopped in AI Studio app. Real notifications will be delivered from your Vercel deployment.',
+          };
+        }
+        if (data?.delivered) {
           return {
             delivered: true,
-            simulated: !!data.simulated,
+            simulated: false,
             chat_id: chatId,
             telegram_response: data.telegram_response || data.result,
           };

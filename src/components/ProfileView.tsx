@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'motion/react';
 import {
   User,
@@ -41,6 +41,7 @@ interface ProfileViewProps {
   onParseResumeDocument?: (fileData: { base64: string; fileName: string; mimeType: string }) => Promise<void>;
   isParsingResume: boolean;
   currentUser?: { id: string; email: string; name: string } | null;
+  onDraftChange?: (isDirty: boolean, draft: UserProfile) => void;
 }
 
 export const ProfileView: React.FC<ProfileViewProps> = ({
@@ -51,6 +52,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onParseResumeDocument,
   isParsingResume,
   currentUser,
+  onDraftChange,
 }) => {
   const [formData, setFormData] = useState<UserProfile>(profile);
   const [newSkill, setNewSkill] = useState('');
@@ -88,10 +90,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   // Track local edits to prevent background poll from reverting local changes
   const lastLocalEditRef = useRef<number>(0);
 
+  // Compute if local draft has unsaved changes compared to committed profile
+  const isDirty = React.useMemo(() => {
+    return JSON.stringify(formData) !== JSON.stringify(profile);
+  }, [formData, profile]);
+
+  useEffect(() => {
+    onDraftChange?.(isDirty, formData);
+  }, [isDirty, formData, onDraftChange]);
+
   // Sync state when profile changes externally (e.g. account switch, initial mount, or resume parse)
   React.useEffect(() => {
     const isAccountChange = profile.contact?.email !== formData.contact?.email || profile.full_name !== formData.full_name;
-    if (isAccountChange || lastLocalEditRef.current === 0) {
+    if (isAccountChange || (!isDirty && lastLocalEditRef.current === 0)) {
       setFormData(profile);
     }
   }, [profile]);
@@ -104,6 +115,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     setTimeout(() => setSaveSuccess(false), 2500);
   };
 
+  const handleDiscardDraft = () => {
+    setFormData(profile);
+    lastLocalEditRef.current = 0;
+  };
+
   const handleAddSkill = () => {
     const trimmed = newSkill.trim();
     if (!trimmed) return;
@@ -111,7 +127,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     if (!formData.skills.includes(trimmed)) {
       const updated = { ...formData, skills: [...formData.skills, trimmed] };
       setFormData(updated);
-      onUpdateProfile(updated);
     }
     setNewSkill('');
   };
@@ -121,25 +136,24 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     const updatedSkills = formData.skills.filter((s) => s !== skill);
     const updated = { ...formData, skills: updatedSkills };
     setFormData(updated);
-    onUpdateProfile(updated);
   };
 
   const handleAddRole = () => {
     const trimmed = newRole.trim();
     if (!trimmed) return;
+    lastLocalEditRef.current = Date.now();
     if (!formData.target_roles.includes(trimmed)) {
       const updated = { ...formData, target_roles: [...formData.target_roles, trimmed] };
       setFormData(updated);
-      onUpdateProfile(updated);
     }
     setNewRole('');
   };
 
   const handleAddPresetRole = (role: string) => {
+    lastLocalEditRef.current = Date.now();
     if (!formData.target_roles.includes(role)) {
       const updated = { ...formData, target_roles: [...formData.target_roles, role] };
       setFormData(updated);
-      onUpdateProfile(updated);
     }
   };
 
@@ -148,7 +162,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     const updatedRoles = formData.target_roles.filter((r) => r !== role);
     const updated = { ...formData, target_roles: updatedRoles };
     setFormData(updated);
-    onUpdateProfile(updated);
   };
 
   // Experience handlers
@@ -238,10 +251,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const handleAddLocation = () => {
     const trimmed = newLocation.trim();
     if (!trimmed) return;
+    lastLocalEditRef.current = Date.now();
     if (!formData.preferred_locations.includes(trimmed)) {
       const updated = { ...formData, preferred_locations: [...formData.preferred_locations, trimmed] };
       setFormData(updated);
-      onUpdateProfile(updated);
     }
     setNewLocation('');
   };
@@ -251,7 +264,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     const nextLocs = formData.preferred_locations.filter((l) => l !== loc);
     const updated = { ...formData, preferred_locations: nextLocs };
     setFormData(updated);
-    onUpdateProfile(updated);
   };
 
   const handleAddCert = () => {
@@ -261,7 +273,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     if (!formData.certifications.includes(trimmed)) {
       const updated = { ...formData, certifications: [...formData.certifications, trimmed] };
       setFormData(updated);
-      onUpdateProfile(updated);
     }
     setNewCert('');
   };
@@ -271,7 +282,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     const nextCerts = formData.certifications.filter((c) => c !== cert);
     const updated = { ...formData, certifications: nextCerts };
     setFormData(updated);
-    onUpdateProfile(updated);
   };
 
   const handleFileSelect = (file: File) => {
@@ -363,9 +373,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <h2 className="font-display font-bold text-white text-lg sm:text-xl tracking-tight">
             Candidate Profile
           </h2>
-          <p className="text-xs text-zinc-400 mt-1">
-            Manage your experience, target criteria, skills, and resume details.
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-xs text-zinc-400">
+              Manage your experience, target criteria, skills, and resume details.
+            </p>
+            {isDirty && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[11px] font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                <span>Unsaved Draft</span>
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto shrink-0">
@@ -377,6 +395,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             <FileUp className="w-4 h-4" />
             <span>Upload Resume (PDF/Word)</span>
           </button>
+
+          {isDirty && (
+            <button
+              type="button"
+              onClick={handleDiscardDraft}
+              className="h-10 sm:h-9 inline-flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold px-3.5 rounded-xl transition cursor-pointer border border-rose-500/25 whitespace-nowrap w-full sm:w-auto"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
+              <span>Discard Draft</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -390,10 +419,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <button
             type="button"
             onClick={handleSave}
-            className="h-10 sm:h-9 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 rounded-xl transition shadow-md shadow-emerald-600/20 cursor-pointer whitespace-nowrap border border-emerald-400/20 w-full sm:w-auto"
+            className={`h-10 sm:h-9 inline-flex items-center justify-center gap-2 text-white text-xs font-semibold px-4 rounded-xl transition shadow-md cursor-pointer whitespace-nowrap w-full sm:w-auto ${
+              isDirty
+                ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30 border border-emerald-400 ring-2 ring-emerald-500/40 animate-pulse'
+                : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20 border border-emerald-400/20'
+            }`}
           >
             {saveSuccess ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-            <span>{saveSuccess ? 'Saved!' : 'Save Profile'}</span>
+            <span>{saveSuccess ? 'Saved!' : isDirty ? 'Save Profile (Draft)' : 'Save Profile'}</span>
           </button>
         </div>
       </div>
@@ -729,7 +762,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       },
                     };
                     setFormData(updated);
-                    onUpdateProfile(updated);
                   }}
                   className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-neutral-200 font-semibold focus:outline-none focus:border-blue-500/50"
                 />

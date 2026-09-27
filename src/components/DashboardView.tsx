@@ -24,7 +24,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { getSynchronizedRemaining } from '../lib/syncClock.js';
 import { UserProfile, JobListing, PipelineStats, WorkflowState } from '../types.js';
 
 interface DashboardViewProps {
@@ -64,27 +63,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const isNewCandidate = hasZeroJobs || (!workflow?.last_run && (workflow?.total_runs || 0) === 0);
   const highFitJobs = jobs.filter((j) => (j.fit?.match_score || 0) >= 75);
   const pendingEvaluation = jobs.filter((j) => !j.fit);
-
-  const [remainingTime, setRemainingTime] = useState<string>('03h 48m 22s');
-
-  useEffect(() => {
-    const updateCountdown = () => {
-      if (hasZeroJobs && !workflow?.is_running && !isWorkflowRunning) {
-        setRemainingTime('Awaiting 1st Execution');
-        return;
-      }
-      const remaining = getSynchronizedRemaining(
-        workflow?.next_run,
-        workflow?.interval_hours || 4,
-        Boolean(isWorkflowRunning || workflow?.is_running)
-      );
-      setRemainingTime(remaining);
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, [workflow?.next_run, workflow?.interval_hours, isWorkflowRunning, workflow?.is_running, hasZeroJobs]);
 
   const metrics = [
     {
@@ -154,41 +132,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>Explore Jobs</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </motion.button>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Autonomous Workflow Status Strip */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.05 }}
-        className="glass-panel rounded-xl p-3 sm:p-3.5 shadow-sm"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/[0.07] text-zinc-300">
-              <span className="text-zinc-500 text-[11px]">Schedule:</span>
-              <span className="font-semibold text-white">Every 4 Hours</span>
-            </span>
-
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/[0.07] text-zinc-300">
-              <span className="text-zinc-500 text-[11px]">Last Run:</span>
-              <span className="font-medium text-zinc-200">
-                {isNewCandidate
-                  ? 'Not yet executed'
-                  : workflow?.last_run
-                  ? new Date(workflow.last_run).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                  : 'Recent'}
-              </span>
-            </span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full sm:w-auto">
-            <span className="text-xs text-zinc-400 font-mono flex items-center justify-between sm:justify-start gap-1.5">
-              <span className="text-zinc-500">Next run:</span>
-              <span className="text-cyan-400 font-semibold">{remainingTime}</span>
-            </span>
           </div>
         </div>
       </motion.div>

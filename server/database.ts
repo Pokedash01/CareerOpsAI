@@ -509,6 +509,28 @@ export function saveRelationalDatabase(): void {
 }
 
 /**
+ * Deletes all database records associated with a user
+ */
+export function removeUserFromDatabase(userId: string): void {
+  delete dbUsers[userId];
+  delete dbUserProfiles[userId];
+  delete dbUserSettings[userId];
+  delete dbUserWorkflows[userId];
+  delete dbUserRegistries[userId];
+  for (const [key, rel] of Object.entries(dbUserJobs)) {
+    if (rel.user_id === userId) {
+      delete dbUserJobs[key];
+    }
+  }
+  for (const [key, sess] of Object.entries(dbSessions)) {
+    if (sess.user_id === userId) {
+      delete dbSessions[key];
+    }
+  }
+  saveRelationalDatabase();
+}
+
+/**
  * Returns comprehensive statistics and relational health summary
  */
 export function getRelationalStats() {

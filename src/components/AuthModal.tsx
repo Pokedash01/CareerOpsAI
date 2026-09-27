@@ -364,7 +364,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       if (data.success) {
         setPingStatus({
           success: true,
-          message: '✅ Verified! Test alert dispatched to your Telegram app.',
+          message: data.muted_in_ai_studio
+            ? '✅ Telegram Chat ID verified! (Alerts stopped in AI Studio; notifications will deliver from your Vercel deployment).'
+            : '✅ Verified! Test alert dispatched to your Telegram app.',
         });
       } else {
         setPingStatus({

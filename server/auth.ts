@@ -11,6 +11,7 @@ import {
   decomposePartitionToDb,
   saveRelationalDatabase,
   getHydratedJobsForUser,
+  removeUserFromDatabase,
 } from './database.js';
 
 export interface UserAccountRecord {
@@ -419,6 +420,60 @@ export function getSavedAccountsList() {
     last_active_at: u.last_login_at || new Date().toISOString(),
     last_login_at: u.last_login_at,
   }));
+}
+
+/**
+ * Returns detailed, readable user accounts for administration
+ */
+export function getAllUsersWithStats() {
+  return Object.values(users).map((u) => {
+    const partition = userPartitions[u.id];
+    const profile = partition?.currentProfile || dbUserProfiles[u.id];
+    const jobList = partition?.jobListings || (u.id ? getHydratedJobsForUser(u.id) : []);
+    const jobCount = jobList ? jobList.length : 0;
+    const isPrimary = u.id === PRIMARY_USER_ID || u.email.toLowerCase() === 'kb270102@gmail.com';
+    return {
+      id: u.id,
+      email: u.email,
+      full_name: u.full_name || profile?.full_name || u.email.split('@')[0],
+      avatar_url: u.avatar_url,
+      created_at: u.created_at || new Date().toISOString(),
+      last_login_at: u.last_login_at || u.created_at || new Date().toISOString(),
+      is_primary_admin: isPrimary,
+      target_roles: profile?.target_roles || [],
+      preferred_locations: profile?.preferred_locations || [],
+      job_count: jobCount,
+      has_resume: Boolean(profile?.parsed_from_document || (profile as any)?.raw_resume_text || (profile?.experience?.length || 0) > 0),
+    };
+  });
+}
+
+/**
+ * Deletes a user account and purges their partition, sessions, and database records
+ */
+export function deleteUserAccount(userId: string): { success: boolean; error?: string } {
+  if (userId === PRIMARY_USER_ID) {
+    return { success: false, error: 'Cannot delete the primary administrator account (Kartik Bhatt).' };
+  }
+  const u = users[userId];
+  if (!u) {
+    return { success: false, error: 'User account not found.' };
+  }
+  const emailLower = u.email.toLowerCase();
+  delete users[userId];
+  delete userEmailIndex[emailLower];
+  delete userPartitions[userId];
+
+  // Purge any active sessions
+  for (const [token, s] of Object.entries(sessions)) {
+    if (s.user_id === userId) {
+      delete sessions[token];
+    }
+  }
+
+  // Purge database files
+  removeUserFromDatabase(userId);
+  return { success: true };
 }
 
 /**

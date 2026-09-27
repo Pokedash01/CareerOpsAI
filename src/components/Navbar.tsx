@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Laptop,
   Zap,
+  Users,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PipelineStats, UserAccount } from '../types.js';
@@ -30,6 +31,7 @@ interface NavbarProps {
   currentUser?: UserAccount | null;
   onOpenAuth: (initialTab?: 'login' | 'register') => void;
   onLogout: () => void;
+  onOpenAdminUsers?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -42,11 +44,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   onOpenAuth,
   onLogout,
+  onOpenAdminUsers,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const isAdmin = currentUser && (currentUser.id === 'usr_kb270102' || currentUser.email === 'kb270102@gmail.com');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -233,6 +238,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </motion.button>
 
                   {/* User Account / Device Session Control */}
+                  {isAdmin && onOpenAdminUsers && (
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={onOpenAdminUsers}
+                      className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/25 text-purple-300 text-xs font-semibold transition cursor-pointer"
+                      title="Manage database users"
+                    >
+                      <Users className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Users</span>
+                    </motion.button>
+                  )}
+
                   <div className="relative" ref={userMenuRef}>
                     {(() => {
                       const displayName = (currentUser.name || currentUser.full_name || currentUser.email?.split('@')[0] || 'User').trim();
@@ -283,6 +301,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                                 </div>
 
                                 <div className="py-1">
+                                  {onOpenAdminUsers && (
+                                    <button
+                                      onClick={() => {
+                                        setShowUserDropdown(false);
+                                        onOpenAdminUsers();
+                                      }}
+                                      className="w-full text-left px-3 py-2 text-xs hover:bg-white/[0.06] rounded-xl flex items-center gap-2 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                                    >
+                                      <Users className="w-3.5 h-3.5 text-cyan-400" />
+                                      <span>User Management Directory</span>
+                                    </button>
+                                  )}
+
                                   <button
                                     onClick={() => {
                                       setShowUserDropdown(false);

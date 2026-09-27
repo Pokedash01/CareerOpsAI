@@ -20,6 +20,7 @@ import {
   Info,
   Database,
   Trash2,
+  BellOff,
 } from 'lucide-react';
 import { AppSettings, JobListing, UserProfile, WorkflowState } from '../types.js';
 import { getSynchronizedRemaining } from '../lib/syncClock.js';
@@ -273,115 +274,19 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 
       {/* Balanced 2-Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        {/* Left Column: Automation Engine & Thresholds & History */}
+        {/* Left Column: Thresholds & Alerts Engine */}
         <div className="space-y-6 min-w-0">
-          {/* Autonomous Workflow Scheduler Card */}
-          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-sm space-y-4 overflow-hidden">
+          {/* Threshold Card */}
+          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-sm space-y-4 overflow-hidden border border-white/[0.08]">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-white text-sm uppercase tracking-wider flex items-center gap-2">
-                <Clock className="w-4 h-4 text-emerald-400" />
-                <span>Search Schedule</span>
+                <Sliders className="w-4 h-4 text-blue-400" />
+                <span>Matching & Visibility Threshold</span>
               </h3>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[11px] font-medium border border-emerald-500/25 shadow-sm shadow-emerald-500/10">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                </span>
-                <span>Active Every 4h</span>
+              <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2.5 py-0.5 rounded-lg border border-cyan-500/20">
+                {minScore}% Cutoff
               </span>
             </div>
-
-            <div className="space-y-3 pt-1 text-xs">
-              <div className="p-3.5 bg-white/[0.02] rounded-xl border border-white/[0.07] flex items-center justify-between">
-                <div>
-                  <span className="font-semibold text-zinc-200 block text-xs">Next Scheduled Scan</span>
-                  <span className="text-zinc-500 text-[11px]">Countdown timer</span>
-                </div>
-                <span className="font-mono text-sm font-bold text-cyan-400">{remainingTime}</span>
-              </div>
-
-              <div className="p-3 bg-white/[0.02] rounded-xl border border-white/[0.07] flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                  <div>
-                    <span className="font-semibold text-zinc-200 block text-xs">Search Cadence</span>
-                    <span className="text-zinc-500 text-[11px]">Automated recurring schedule</span>
-                  </div>
-                </div>
-                <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-                  Every 4 Hours
-                </span>
-              </div>
-
-              <div className="space-y-2.5 pt-2 border-t border-white/[0.07]">
-                <label className="flex items-center gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={workflowEnabled}
-                    onChange={(e) => handleToggleWorkflow(e.target.checked)}
-                    className="w-4 h-4 rounded text-blue-600 bg-white/[0.03] border-white/[0.1] accent-blue-600 cursor-pointer"
-                  />
-                  <span className="font-semibold text-zinc-200">Enable Automatic Job Search</span>
-                </label>
-
-                <label className="flex items-center gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={autoNotify}
-                    onChange={(e) => handleToggleAutoNotify(e.target.checked)}
-                    className="w-4 h-4 rounded text-blue-600 bg-white/[0.03] border-white/[0.1] accent-blue-600 cursor-pointer"
-                  />
-                  <span className="font-semibold text-zinc-200">
-                    Send Telegram Alerts for High-Fit Roles (≥ {minScore}%)
-                  </span>
-                </label>
-
-                <div className="p-3 bg-blue-500/[0.06] rounded-xl border border-blue-500/20 flex items-start gap-2.5 text-[11px] text-blue-300">
-                  <RefreshCw className="w-3.5 h-3.5 shrink-0 animate-spin text-blue-400 mt-0.5" />
-                  <span className="leading-relaxed">
-                    <strong className="text-blue-200">Automatic Updates:</strong> Newly discovered jobs and match scores are automatically updated in your feed.
-                  </span>
-                </div>
-              </div>
-
-              {onTriggerWorkflow && (
-                <button
-                  type="button"
-                  onClick={onTriggerWorkflow}
-                  disabled={isWorkflowRunning}
-                  className="w-full mt-2 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold text-xs py-2.5 rounded-xl shadow-md shadow-blue-600/20 transition cursor-pointer disabled:opacity-50 active:scale-[0.99] border border-blue-400/25"
-                >
-                  {isWorkflowRunning ? (
-                    <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Searching for Jobs...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-3.5 h-3.5 text-amber-300" />
-                      <span>Run Job Search Now</span>
-                    </>
-                  )}
-                </button>
-              )}
-
-              {/* Status footer */}
-              <div className="pt-3 border-t border-white/[0.07] flex items-center justify-between text-xs text-zinc-400">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  <span>Automated Background Search Active</span>
-                </span>
-                <span className="text-[11px] text-zinc-500 font-medium">Cloud Sync Enabled</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Threshold Card */}
-          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-sm space-y-4 overflow-hidden">
-            <h3 className="font-semibold text-white text-sm uppercase tracking-wider flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-blue-400" />
-              <span>Matching & Viability Thresholds</span>
-            </h3>
 
             <div className="space-y-4 text-xs">
               <div>
@@ -398,94 +303,64 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   onChange={(e) => setMinScore(parseInt(e.target.value))}
                   className="w-full accent-blue-500 cursor-pointer"
                 />
-                <p className="text-zinc-400 text-[11px] mt-1.5">
-                  Only job listings with an AI fit score at or above {minScore}% will trigger Telegram alerts.
+                <p className="text-zinc-400 text-[11px] mt-1.5 leading-relaxed">
+                  Only job listings evaluated with an AI qualification fit score at or above <strong className="text-zinc-200">{minScore}%</strong> will trigger real-time Telegram alerts to your connected device.
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-white/[0.07]">
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="font-semibold text-zinc-300">Seen Job Memory TTL (Days)</span>
-                  <span className="text-sm font-mono font-bold text-zinc-200">{ttlDays} Days</span>
+              <div className="pt-3 border-t border-white/[0.07] space-y-2.5">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={autoNotify}
+                    onChange={(e) => handleToggleAutoNotify(e.target.checked)}
+                    className="w-4 h-4 rounded text-blue-600 bg-white/[0.03] border-white/[0.1] accent-blue-600 cursor-pointer"
+                  />
+                  <span className="font-semibold text-zinc-200">
+                    Send Instant Telegram Alerts for High-Fit Roles (≥ {minScore}%)
+                  </span>
+                </label>
+
+                <div className="p-3 bg-blue-500/[0.06] rounded-xl border border-blue-500/20 flex items-start gap-2.5 text-[11px] text-blue-300">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-blue-400 mt-0.5" />
+                  <span className="leading-relaxed">
+                    <strong className="text-blue-200">Continuous Monitoring:</strong> Jobs older than 14 days are automatically pruned, and active requisition links are continuously verified for live hiring status.
+                  </span>
                 </div>
-                <input
-                  type="number"
-                  min="1"
-                  max="90"
-                  value={ttlDays}
-                  onChange={(e) => setTtlDays(parseInt(e.target.value) || 14)}
-                  className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl text-zinc-200 text-xs font-mono focus:outline-none focus:border-blue-500/50"
-                />
-                <p className="text-zinc-400 text-[11px] mt-1.5">
-                  Prevents duplicate alerts for previously evaluated job listings within the retention window.
-                </p>
+
+                <div className="p-3 bg-amber-500/[0.07] rounded-xl border border-amber-500/25 flex items-start gap-2.5 text-[11px] text-amber-300">
+                  <BellOff className="w-3.5 h-3.5 shrink-0 text-amber-400 mt-0.5" />
+                  <span className="leading-relaxed">
+                    <strong className="text-amber-200">AI Studio Alerts Stopped:</strong> Outbound Telegram notifications from the AI Studio environment are muted. Alerts are delivered exclusively by your Vercel deployment repository.
+                  </span>
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* Deduplication & Rejected Roles Memory Card */}
-          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-sm space-y-4 overflow-hidden">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-white text-sm uppercase tracking-wider flex items-center gap-2">
-                <Database className="w-4 h-4 text-purple-400" />
-                <span>Search Memory & Duplicate Filter</span>
-              </h3>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-300 text-[11px] font-medium border border-purple-500/25">
-                Active
-              </span>
-            </div>
-
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Jobs you have reviewed, dismissed, or applied to are remembered so you never see the same position multiple times.
-            </p>
-
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
-                <span className="text-[11px] text-zinc-400 block mb-0.5 font-medium">Jobs In Memory</span>
-                <span className="text-lg font-mono font-bold text-white">
-                  {registryStats ? registryStats.total_tracked : jobs.length}
-                </span>
-                <span className="text-[10px] text-zinc-500 block mt-0.5">Tracked positions</span>
-              </div>
-              <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
-                <span className="text-[11px] text-zinc-400 block mb-0.5 font-medium">Dismissed Jobs Filtered</span>
-                <span className="text-lg font-mono font-bold text-rose-400">
-                  {registryStats ? registryStats.rejected_count : jobs.filter((j) => j.status === 'rejected').length}
-                </span>
-                <span className="text-[10px] text-zinc-500 block mt-0.5">Will not reappear in feed</span>
-              </div>
-            </div>
-
-            {truncateMessage && (
-              <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs">
-                {truncateMessage}
-              </div>
-            )}
-
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/[0.07]">
-              <button
-                type="button"
-                disabled={isTruncating}
-                onClick={handleRunTruncation}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50"
-              >
-                {isTruncating ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5 text-zinc-400" />}
-                <span>Clean Old History (&gt;{ttlDays}d)</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isTruncating}
-                onClick={handleResetSearchHistory}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/25 rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50"
-              >
-                <span>Clear Dismissed History</span>
-              </button>
+              {onTriggerWorkflow && (
+                <button
+                  type="button"
+                  onClick={onTriggerWorkflow}
+                  disabled={isWorkflowRunning}
+                  className="w-full mt-2 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold text-xs py-2.5 rounded-xl shadow-md shadow-blue-600/20 transition cursor-pointer disabled:opacity-50 active:scale-[0.99] border border-blue-400/25"
+                >
+                  {isWorkflowRunning ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Searching for Fresh Openings...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Run Job Search Now</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
 
           {/* Workflow Execution History Card */}
-          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-sm space-y-3 overflow-hidden">
+          <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-sm space-y-3 overflow-hidden border border-white/[0.08]">
             <div className="flex items-center justify-between border-b border-white/[0.07] pb-3">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-blue-400" />
