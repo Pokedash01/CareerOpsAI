@@ -92,6 +92,20 @@ const LOCATION_MAPPINGS: Array<{
 export function getCanonicalLocationsForJob(rawLocation: string | undefined): string[] {
   if (!rawLocation) return [];
   const normalized = rawLocation.trim().toLowerCase();
+
+  // Ignore placeholder or non-geographic values
+  if (
+    normalized === 'not specified' ||
+    normalized === 'unspecified' ||
+    normalized === 'unknown' ||
+    normalized === 'n/a' ||
+    normalized === 'na' ||
+    normalized === 'none' ||
+    normalized === 'open'
+  ) {
+    return [];
+  }
+
   const matched = new Set<string>();
 
   for (const item of LOCATION_MAPPINGS) {
@@ -106,7 +120,7 @@ export function getCanonicalLocationsForJob(rawLocation: string | undefined): st
   // If no canonical mapping matches, fallback to cleaned city name (e.g. "Chandigarh")
   if (matched.size === 0) {
     const cleaned = cleanRawLocation(rawLocation);
-    if (cleaned) {
+    if (cleaned && cleaned.toLowerCase() !== 'not specified') {
       matched.add(cleaned.toLowerCase());
     }
   }
@@ -122,6 +136,12 @@ function cleanRawLocation(raw: string): string {
     .replace(/\b(india|usa|united states|uk)\b/gi, '')
     .replace(/[/\\,|]+/g, ' ')
     .trim();
+
+  // If it resolves to empty or placeholder, discard
+  if (/^(not specified|unspecified|unknown|n\/a|na|none)$/i.test(cleaned)) {
+    return '';
+  }
+
   // Capitalize words
   if (cleaned.length > 2) {
     return cleaned
@@ -135,11 +155,12 @@ function cleanRawLocation(raw: string): string {
 
 /**
  * Returns available unique canonical filter options present across all loaded jobs
- * and the user's preferred locations.
+ * and optionally the user's preferred locations.
  */
 export function getAvailableCanonicalLocations(
   rawJobLocations: string[],
-  preferredLocations: string[] = []
+  preferredLocations: string[] = [],
+  onlyWithJobs: boolean = true
 ): Array<{ id: string; label: string; count: number }> {
   const counts: Record<string, number> = {};
   const labelMap: Record<string, string> = {};
@@ -150,6 +171,7 @@ export function getAvailableCanonicalLocations(
   }
 
   for (const rawLoc of rawJobLocations) {
+    if (!rawLoc) continue;
     const canonIds = getCanonicalLocationsForJob(rawLoc);
     for (const id of canonIds) {
       counts[id] = (counts[id] || 0) + 1;
@@ -159,21 +181,32 @@ export function getAvailableCanonicalLocations(
     }
   }
 
-  // Also ensure preferred locations are represented even if current batch has 0
-  for (const pref of preferredLocations) {
-    const canonIds = getCanonicalLocationsForJob(pref);
-    for (const id of canonIds) {
-      if (counts[id] === undefined) {
-        counts[id] = 0;
-      }
-      if (!labelMap[id]) {
-        labelMap[id] = cleanRawLocation(pref) || id;
+  // Only inject preferred locations if explicitly requested and not restricting to active jobs
+  if (!onlyWithJobs) {
+    for (const pref of preferredLocations) {
+      if (!pref) continue;
+      const canonIds = getCanonicalLocationsForJob(pref);
+      for (const id of canonIds) {
+        if (counts[id] === undefined) {
+          counts[id] = 0;
+        }
+        if (!labelMap[id]) {
+          labelMap[id] = cleanRawLocation(pref) || id;
+        }
       }
     }
   }
 
-  // Sort: Remote first, then popular cities by count, then alphabetical
+  // Filter out any 0-count items if onlyWithJobs is true, and purge placeholder labels
   return Object.keys(counts)
+    .filter((id) => {
+      if (onlyWithJobs && (!counts[id] || counts[id] <= 0)) return false;
+      const label = (labelMap[id] || id).toLowerCase();
+      if (label === 'not specified' || label === 'unspecified' || label === 'unknown' || label === 'n/a') {
+        return false;
+      }
+      return true;
+    })
     .map((id) => ({
       id,
       label: labelMap[id] || id,

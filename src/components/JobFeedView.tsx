@@ -87,17 +87,50 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  // Compute canonical geographic locations (cleanly deduplicated: Remote, Gurugram / Gurgaon, Bengaluru, etc.)
+  // Jobs belonging strictly to the current status tab (discovered, applied, interviewing, rejected, all)
+  const jobsInActiveTab = React.useMemo(() => {
+    return jobs.filter((job) => {
+      if (statusFilter === 'discovered') {
+        return (
+          (job.status === 'discovered' ||
+            job.status === 'new' ||
+            job.status === 'viable' ||
+            job.status === 'notified' ||
+            !job.status) &&
+          job.status !== 'expired' &&
+          job.verification_status !== 'expired_or_invalid' &&
+          !job.company_name.toLowerCase().includes('state street')
+        );
+      }
+      if (statusFilter === 'applied') return job.status === 'applied';
+      if (statusFilter === 'interviewing') return job.status === 'interviewing';
+      if (statusFilter === 'rejected') return job.status === 'rejected';
+      return (
+        job.status !== 'expired' &&
+        job.verification_status !== 'expired_or_invalid' &&
+        !job.company_name.toLowerCase().includes('state street')
+      );
+    });
+  }, [jobs, statusFilter]);
+
+  // Compute canonical geographic locations strictly for the active tab (only with actual count > 0)
   const availableLocations = React.useMemo(() => {
-    const jobLocs = jobs.map((j) => j.location).filter(Boolean);
-    return getAvailableCanonicalLocations(jobLocs, profile?.preferred_locations || []);
-  }, [jobs, profile?.preferred_locations]);
+    const jobLocs = jobsInActiveTab.map((j) => j.location).filter(Boolean);
+    return getAvailableCanonicalLocations(jobLocs, profile?.preferred_locations || [], true);
+  }, [jobsInActiveTab, profile?.preferred_locations]);
+
+  // If active location filter is no longer present in current tab's locations, reset to 'all'
+  useEffect(() => {
+    if (locationFilter !== 'all' && !availableLocations.some((l) => l.id === locationFilter)) {
+      setLocationFilter('all');
+    }
+  }, [availableLocations, locationFilter]);
 
   const expiredCount = jobs.filter(
     (j) => j.status === 'expired' || j.verification_status === 'expired_or_invalid' || j.company_name.toLowerCase().includes('state street')
   ).length;
 
-  const filteredJobs = jobs.filter((job) => {
+  const filteredJobs = jobsInActiveTab.filter((job) => {
     const q = searchQuery.toLowerCase();
     const matchQuery =
       !q ||
@@ -113,28 +146,6 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
       if (!jobMatchesLocationFilter(job.location, locationFilter)) {
         return false;
       }
-    }
-
-    if (statusFilter === 'discovered') {
-      return (
-        (job.status === 'discovered' ||
-          job.status === 'new' ||
-          job.status === 'viable' ||
-          job.status === 'notified' ||
-          !job.status) &&
-        job.status !== 'expired' &&
-        job.verification_status !== 'expired_or_invalid' &&
-        !job.company_name.toLowerCase().includes('state street')
-      );
-    }
-    if (statusFilter === 'applied') {
-      return job.status === 'applied';
-    }
-    if (statusFilter === 'interviewing') {
-      return job.status === 'interviewing';
-    }
-    if (statusFilter === 'rejected') {
-      return job.status === 'rejected';
     }
 
     return true;
@@ -442,10 +453,10 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
         </div>
 
         {/* Bottom Row: Geographic Location Pills + Working Sort Control */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-3 border-t border-white/[0.06] text-xs">
-          {/* Geographic Location Pills */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1 mr-1">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-3 border-t border-white/[0.06] text-xs">
+          {/* Geographic Location Pills - Locked to single row with smooth horizontal scroll */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-nowrap min-w-0 flex-1 py-0.5">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1 mr-1 shrink-0">
               <MapPin className="w-3.5 h-3.5 text-cyan-400" />
               <span>Location:</span>
             </span>
@@ -453,54 +464,53 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
             <button
               type="button"
               onClick={() => setLocationFilter('all')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
                 locationFilter === 'all'
                   ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10'
                   : 'bg-white/[0.02] text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] border border-white/[0.06]'
               }`}
             >
-              All
+              <span>All</span>
+              <span className="ml-1 opacity-75 font-mono text-[10px]">({jobsInActiveTab.length})</span>
             </button>
 
-            {availableLocations.slice(0, 5).map((loc) => {
+            {availableLocations.slice(0, 4).map((loc) => {
               const isSelected = locationFilter === loc.id;
               return (
                 <button
                   key={loc.id}
                   type="button"
                   onClick={() => setLocationFilter(loc.id)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1.5 shrink-0 ${
                     isSelected
                       ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10'
                       : 'bg-white/[0.02] text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] border border-white/[0.06]'
                   }`}
                 >
                   <span>{loc.label}</span>
-                  {loc.count > 0 && (
-                    <span className="text-[10px] opacity-75 font-mono">({loc.count})</span>
-                  )}
+                  <span className="text-[10px] opacity-75 font-mono">({loc.count})</span>
                 </button>
               );
             })}
 
-            {/* Additional Locations Select if more than 5 */}
-            {availableLocations.length > 5 && (
-              <div className="relative inline-block">
+            {/* Additional Locations Select if more than 4 */}
+            {availableLocations.length > 4 && (
+              <div className="relative inline-block shrink-0">
                 <select
-                  value={availableLocations.slice(5).some((l) => l.id === locationFilter) ? locationFilter : ''}
+                  value={availableLocations.slice(4).some((l) => l.id === locationFilter) ? locationFilter : ''}
                   onChange={(e) => {
                     if (e.target.value) setLocationFilter(e.target.value);
                   }}
-                  className={`px-2 py-1 rounded-lg text-xs font-medium transition cursor-pointer bg-white/[0.02] border focus:outline-none ${
-                    availableLocations.slice(5).some((l) => l.id === locationFilter)
+                  className={`px-2 py-1 rounded-lg text-xs font-medium transition cursor-pointer bg-white/[0.02] border focus:outline-none shrink-0 ${
+                    availableLocations.slice(4).some((l) => l.id === locationFilter)
                       ? 'border-cyan-500/40 text-cyan-300 bg-cyan-500/20'
                       : 'border-white/[0.06] text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
                   <option value="" className="bg-[#121620] text-zinc-400">More Locations...</option>
-                  {availableLocations.slice(5).map((loc) => (
+                  {availableLocations.slice(4).map((loc) => (
                     <option key={loc.id} value={loc.id} className="bg-[#121620] text-white">
-                      {loc.label} {loc.count > 0 ? `(${loc.count})` : ''}
+                      {loc.label} ({loc.count})
                     </option>
                   ))}
                 </select>
@@ -509,7 +519,7 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
           </div>
 
           {/* Right Controls: Sort Dropdown & Showing Count & Reset */}
-          <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+          <div className="flex items-center gap-2.5 shrink-0 self-end lg:self-center">
             {/* Sort Control */}
             <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] rounded-xl px-2.5 py-1.5 text-zinc-300 transition">
               <ArrowUpDown className="w-3.5 h-3.5 text-blue-400 shrink-0" />
@@ -710,7 +720,7 @@ export const JobFeedView: React.FC<JobFeedViewProps> = ({
               <button
                 onClick={() => {
                   setSearchQuery('');
-                  setStatusFilter('all');
+                  setLocationFilter('all');
                 }}
                 className="inline-flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-blue-300 border border-blue-500/30 transition shadow-sm cursor-pointer"
               >

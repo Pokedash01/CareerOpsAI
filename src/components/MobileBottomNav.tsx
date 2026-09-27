@@ -1,8 +1,8 @@
 import React from 'react';
-import { LayoutDashboard, Briefcase, FileText, UserCheck, Send } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, UserCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 
-export type AppTab = 'dashboard' | 'jobs' | 'tailor' | 'profile' | 'automation';
+export type AppTab = 'dashboard' | 'jobs' | 'tailor' | 'profile';
 
 interface MobileBottomNavProps {
   activeTab: AppTab;
@@ -20,7 +20,6 @@ const NAV_TABS: NavTabItem[] = [
   { id: 'jobs', label: 'Jobs', icon: Briefcase },
   { id: 'tailor', label: 'Docs', icon: FileText },
   { id: 'profile', label: 'Profile', icon: UserCheck },
-  { id: 'automation', label: 'Alerts', icon: Send },
 ];
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = React.memo(({
@@ -38,7 +37,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = React.memo(({
         backfaceVisibility: 'hidden',
       }}
     >
-      <div className="grid grid-cols-5 gap-0.5 max-w-md mx-auto">
+      <div className="grid grid-cols-4 gap-1 max-w-md mx-auto">
         {NAV_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;

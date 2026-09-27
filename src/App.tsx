@@ -9,6 +9,7 @@ import { AddJobModal } from './components/AddJobModal.js';
 import { MobileBottomNav } from './components/MobileBottomNav.js';
 import { AuthModal } from './components/AuthModal.js';
 import { AdminUsersModal } from './components/AdminUsersModal.js';
+import { NotificationSettingsModal } from './components/NotificationSettingsModal.js';
 import { HomeLandingView } from './components/HomeLandingView.js';
 import { UserProfile, JobListing, PipelineStats, AppSettings, WorkflowState, JobStatus, UserAccount, SavedDeviceAccount } from './types.js';
 import { CheckCircle2, AlertCircle, Loader2, Save, RotateCcw, AlertTriangle, ArrowRight } from 'lucide-react';
@@ -169,20 +170,27 @@ function persistUserJobs(userId: string | undefined, jobsList: JobListing[]) {
 }
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'jobs' | 'tailor' | 'profile' | 'automation'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'jobs' | 'tailor' | 'profile'>('dashboard');
   const [isAdminUsersOpen, setIsAdminUsersOpen] = useState(false);
+  const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
   const [isProfileDirty, setIsProfileDirty] = useState(false);
   const [profileDraft, setProfileDraft] = useState<UserProfile | null>(null);
-  const [pendingTabSwitch, setPendingTabSwitch] = useState<'dashboard' | 'jobs' | 'tailor' | 'profile' | 'automation' | null>(null);
+  const [pendingTabSwitch, setPendingTabSwitch] = useState<'dashboard' | 'jobs' | 'tailor' | 'profile' | null>(null);
   const [showUnsavedProfileModal, setShowUnsavedProfileModal] = useState(false);
 
-  const handleTabSwitchRequest = (nextTab: 'dashboard' | 'jobs' | 'tailor' | 'profile' | 'automation') => {
-    if (activeTab === 'profile' && isProfileDirty && nextTab !== 'profile') {
-      setPendingTabSwitch(nextTab);
+  const handleTabSwitchRequest = (nextTab: any) => {
+    if (nextTab === 'automation' || nextTab === 'alerts' || nextTab === 'settings') {
+      setIsNotificationSettingsOpen(true);
+      return;
+    }
+    const safeTab: 'dashboard' | 'jobs' | 'tailor' | 'profile' =
+      (nextTab === 'jobs' || nextTab === 'tailor' || nextTab === 'profile') ? nextTab : 'dashboard';
+    if (activeTab === 'profile' && isProfileDirty && safeTab !== 'profile') {
+      setPendingTabSwitch(safeTab);
       setShowUnsavedProfileModal(true);
       return;
     }
-    setActiveTab(nextTab);
+    setActiveTab(safeTab);
   };
 
   const [profile, setProfile] = useState<UserProfile>(() => {
@@ -719,6 +727,12 @@ export function App() {
 
         if (tabParam === 'tailor' || tabParam === 'studio' || tabParam === 'document_studio') {
           setActiveTab('tailor');
+        } else if (tabParam === 'jobs') {
+          setActiveTab('jobs');
+        } else if (tabParam === 'profile') {
+          setActiveTab('profile');
+        } else if (tabParam === 'automation' || tabParam === 'settings' || tabParam === 'alerts') {
+          setIsNotificationSettingsOpen(true);
         }
         if (jobIdParam) {
           setSelectedJobId(jobIdParam);
@@ -1683,6 +1697,7 @@ export function App() {
         }}
         onLogout={handleLogout}
         onOpenAdminUsers={() => setIsAdminUsersOpen(true)}
+        onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -1799,39 +1814,6 @@ export function App() {
                 />
               </motion.div>
             )}
-
-            {activeTab === 'automation' && (
-              <motion.div
-                key="automation"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <AutomationView
-                  settings={settings}
-                  jobs={jobs}
-                  profile={profile}
-                  workflow={workflow}
-                  onTriggerWorkflow={handleTriggerWorkflow}
-                  onUpdateWorkflowConfig={handleUpdateWorkflowConfig}
-                  isWorkflowRunning={isWorkflowRunning}
-                  onUpdateSettings={handleUpdateSettings}
-                  onTestNotify={async (jobId, customChatId) => {
-                    const targetJob = jobs.find((j) => j.id === jobId);
-                    if (!targetJob) return { delivered: false, error: 'Job not found' };
-                    const res = await dispatchJobNotification({
-                      job: targetJob,
-                      candidateName: profile.full_name,
-                      settings,
-                      customChatId,
-                    });
-                    await refreshState();
-                    return res;
-                  }}
-                />
-              </motion.div>
-            )}
           </AnimatePresence>
         )}
       </main>
@@ -1867,6 +1849,16 @@ export function App() {
         onClose={() => setIsAdminUsersOpen(false)}
         currentUser={currentUser}
         onToast={showToast}
+      />
+
+      {/* Alert & Notification Settings Modal */}
+      <NotificationSettingsModal
+        isOpen={isNotificationSettingsOpen}
+        onClose={() => setIsNotificationSettingsOpen(false)}
+        settings={settings}
+        onUpdateSettings={handleUpdateSettings}
+        currentUser={currentUser}
+        isAdmin={Boolean(currentUser && (currentUser.id === 'usr_kb270102' || currentUser.email === 'kb270102@gmail.com'))}
       />
 
       {/* Unsaved Profile Draft Exit Confirmation Prompt */}

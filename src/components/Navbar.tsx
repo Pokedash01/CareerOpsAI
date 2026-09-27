@@ -16,6 +16,7 @@ import {
   Laptop,
   Zap,
   Users,
+  Bell,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PipelineStats, UserAccount } from '../types.js';
@@ -23,7 +24,7 @@ import { ChangePasswordModal } from './ChangePasswordModal.js';
 
 interface NavbarProps {
   activeTab: 'dashboard' | 'jobs' | 'tailor' | 'profile' | 'automation';
-  setActiveTab: (tab: 'dashboard' | 'jobs' | 'tailor' | 'profile' | 'automation') => void;
+  setActiveTab: (tab: any) => void;
   stats?: PipelineStats;
   onRunPipeline: () => void;
   isPipelineRunning: boolean;
@@ -32,6 +33,7 @@ interface NavbarProps {
   onOpenAuth: (initialTab?: 'login' | 'register') => void;
   onLogout: () => void;
   onOpenAdminUsers?: () => void;
+  onOpenNotificationSettings?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -45,6 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAuth,
   onLogout,
   onOpenAdminUsers,
+  onOpenNotificationSettings,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -83,7 +86,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'jobs', label: 'Jobs', icon: Briefcase },
     { id: 'tailor', label: 'Documents', icon: FileText },
     { id: 'profile', label: 'Profile', icon: UserCheck },
-    { id: 'automation', label: 'Telegram & Alerts', icon: Send },
   ];
 
   return (
@@ -154,17 +156,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       )}
                       <span className="relative z-10 flex items-center gap-1.5">
                         <Icon className="w-3.5 h-3.5" />
-                        <span
-                          className={
-                            tab.id === 'automation'
-                              ? 'hidden lg:inline'
-                              : tab.id === 'profile'
-                              ? 'hidden sm:inline'
-                              : ''
-                          }
-                        >
-                          {tab.label}
-                        </span>
+                        <span>{tab.label}</span>
                       </span>
                     </motion.button>
                   );
@@ -314,6 +306,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                                     </button>
                                   )}
 
+                                  {onOpenNotificationSettings && (
+                                    <button
+                                      onClick={() => {
+                                        setShowUserDropdown(false);
+                                        onOpenNotificationSettings();
+                                      }}
+                                      className="w-full text-left px-3 py-2 text-xs hover:bg-white/[0.06] rounded-xl flex items-center gap-2 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                                    >
+                                      <Bell className="w-3.5 h-3.5 text-blue-400" />
+                                      <span>Alert & Notification Settings</span>
+                                    </button>
+                                  )}
+
                                   <button
                                     onClick={() => {
                                       setShowUserDropdown(false);
@@ -321,7 +326,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                                     }}
                                     className="w-full text-left px-3 py-2 text-xs hover:bg-white/[0.06] rounded-xl flex items-center gap-2 text-zinc-300 hover:text-white transition-colors cursor-pointer"
                                   >
-                                    <Key className="w-3.5 h-3.5 text-blue-400" />
+                                    <Key className="w-3.5 h-3.5 text-indigo-400" />
                                     <span>Change Password</span>
                                   </button>
                                 </div>
