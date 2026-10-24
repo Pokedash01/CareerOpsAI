@@ -533,7 +533,7 @@ async function searchGoogle(query, apiKey, page = 0) {
   }
 }
 async function discoverJobsForProfile(profile, queryTerm, existingListings = [], seenStore = {}, serpApiKey, searchedRegistry = {}) {
-  const apiKey = serpApiKey || process.env.SERPAPI_KEY || "GNLQpQWpHAMcEL9MguEkrxq1";
+  const apiKey = serpApiKey || process.env.SERPAPI_KEY || "";
   if (!apiKey) {
     console.warn("[JobSearch] SERPAPI_KEY is not configured.");
     return [];

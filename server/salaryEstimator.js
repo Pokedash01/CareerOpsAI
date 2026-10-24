@@ -55,7 +55,7 @@ async function searchSalaryLiveFromGlassdoorAndAmbitionBox(title, company, locat
   const { normalizedCity } = normalizeRegion(location);
   const cleanTitle = title.replace(/[([].*?[)\]]/g, "").trim();
   const cleanCompany = company.trim();
-  const resolvedKey = apiKey || process.env.SERPAPI_KEY || "GNLQpQWpHAMcEL9MguEkrxq1";
+  const resolvedKey = apiKey || process.env.SERPAPI_KEY || "";
   const userSearchString = `salary for ${cleanTitle} in ${cleanCompany} for ${normalizedCity}`;
   const query = `${userSearchString} site:ambitionbox.com OR site:glassdoor.co.in OR site:glassdoor.com`;
   try {

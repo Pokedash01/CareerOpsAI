@@ -130,8 +130,7 @@
 │       └── workflow-cron.yml      # 24/7 Autonomous Alert Cron Trigger
 ├── api/
 │   └── index.ts                   # Vercel Serverless entrypoint
-├── data/
-│   └── careerops_store.json       # Persistent job & workflow state store
+├── data/       # Empty directory — legacy JSON store has been migrated to PostgreSQL via Prisma
 ├── public/
 │   └── favicon.svg                # Application branding icon
 ├── server/

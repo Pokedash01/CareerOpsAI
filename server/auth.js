@@ -161,7 +161,7 @@ function createDefaultPartitionForUser(user, preferences) {
     salary_expectation: chosenSalary
   };
   const defaultChatId = user?.telegram_chat_id || (user?.id === PRIMARY_USER_ID ? process.env.TELEGRAM_CHAT_ID || "1368681854" : "");
-  const defaultBotToken = process.env.TELEGRAM_BOT_TOKEN || "8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas";
+  const defaultBotToken = process.env.TELEGRAM_BOT_TOKEN;
   const hasTelegram = Boolean(defaultChatId);
   const partitionSettings = {
     min_match_score: 75,

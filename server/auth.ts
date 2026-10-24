@@ -258,8 +258,8 @@ export function createDefaultPartitionForUser(
     salary_expectation: chosenSalary,
   };
 
-  const defaultChatId = user?.telegram_chat_id || (user?.id === PRIMARY_USER_ID ? (process.env.TELEGRAM_CHAT_ID || '1368681854') : '');
-  const defaultBotToken = process.env.TELEGRAM_BOT_TOKEN || '8624209195:AAGnBEyZpf2mNq0JJyguRRhfmN0dKlmMaas';
+  const defaultChatId = user?.telegram_chat_id || (user?.id === PRIMARY_USER_ID ? process.env.TELEGRAM_CHAT_ID : '');
+  const defaultBotToken = process.env.TELEGRAM_BOT_TOKEN;
   const hasTelegram = Boolean(defaultChatId);
 
   const partitionSettings: AppSettings & { serpapi_key?: string } = {
