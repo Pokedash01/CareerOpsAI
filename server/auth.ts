@@ -472,18 +472,28 @@ export function getSavedAccountsList() {
 
 /**
  * Returns detailed, readable user accounts for administration
+ * Merges in-memory `users` with relational `dbUsers`
  */
 export function getAllUsersWithStats() {
-  return Object.values(users).map((u) => {
+  // Merge both user sources
+  const allUsers = new Map<string, UserAccountRecord>();
+  for (const u of Object.values(users)) {
+    if (u?.id) allUsers.set(u.id, u);
+  }
+  for (const u of Object.values(dbUsers)) {
+    if (u?.id && !allUsers.has(u.id)) allUsers.set(u.id, u);
+  }
+
+  return Array.from(allUsers.values()).map((u) => {
     const partition = userPartitions[u.id];
     const profile = partition?.currentProfile || dbUserProfiles[u.id];
     const jobList = partition?.jobListings || (u.id ? getHydratedJobsForUser(u.id) : []);
     const jobCount = jobList ? jobList.length : 0;
-    const isPrimary = u.id === PRIMARY_USER_ID || u.email.toLowerCase() === 'kb270102@gmail.com';
+    const isPrimary = u.id === PRIMARY_USER_ID || u.email?.toLowerCase() === 'kb270102@gmail.com';
     return {
       id: u.id,
       email: u.email,
-      full_name: u.full_name || profile?.full_name || u.email.split('@')[0],
+      full_name: u.full_name || profile?.full_name || u.email?.split('@')[0],
       avatar_url: u.avatar_url,
       created_at: u.created_at || new Date().toISOString(),
       last_login_at: u.last_login_at || u.created_at || new Date().toISOString(),

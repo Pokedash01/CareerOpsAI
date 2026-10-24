@@ -94,6 +94,7 @@ import {
   getHydratedJobsForUser,
   decomposePartitionToDb,
 } from './server/database.js';
+import { getAllUsersWithStats } from './server/auth.js';
 
 const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'data');
 const STORE_FILE = path.join(DATA_DIR, 'careerops_store.json');
@@ -1298,41 +1299,8 @@ app.use((req, res, next) => {
   // --- Admin User Management Endpoints ---
   app.get('/api/admin/users', (req, res) => {
     try {
-      const mergedMap = new Map<string, any>();
-      for (const u of Object.values(dbUsers)) {
-        if (u?.id) mergedMap.set(u.id, u);
-      }
-      for (const u of Object.values(users)) {
-        if (u?.id && !mergedMap.has(u.id)) mergedMap.set(u.id, u);
-      }
-
-      const userList = Array.from(mergedMap.values()).map((u) => {
-        const partition = userPartitions[u.id];
-        const profile = partition?.currentProfile || dbUserProfiles[u.id];
-        const userJobRels = Object.values(dbUserJobs).filter((r) => r.user_id === u.id && !r.deleted);
-        const partitionJobs = partition?.jobListings?.filter((j) => !partition?.deletedJobIds?.includes(j.id)) || [];
-        const totalJobs = Math.max(userJobRels.length, partitionJobs.length);
-        const statusMap: Record<string, number> = {};
-        for (const r of userJobRels) {
-          statusMap[r.status] = (statusMap[r.status] || 0) + 1;
-        }
-        for (const j of partitionJobs) {
-          statusMap[j.status] = (statusMap[j.status] || 0) + 1;
-        }
-        return {
-          id: u.id,
-          email: u.email,
-          full_name: u.full_name || profile?.full_name || u.email?.split('@')[0],
-          created_at: u.created_at || new Date().toISOString(),
-          last_login_at: u.last_login_at || u.created_at || new Date().toISOString(),
-          job_count: totalJobs,
-          status_breakdown: statusMap,
-          target_roles: profile?.target_roles || [],
-          preferred_locations: profile?.preferred_locations || [],
-          is_primary: u.id === PRIMARY_USER_ID || u.email?.toLowerCase() === 'kb270102@gmail.com',
-        };
-      });
-      res.json({ success: true, users: userList });
+      const users = getAllUsersWithStats();
+      res.json({ success: true, users });
     } catch (err: any) {
       console.error('[Admin] Error fetching users:', err);
       res.status(500).json({ error: err.message });
