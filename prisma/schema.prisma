@@ -27,6 +27,11 @@ model User {
   updatedAt     DateTime  @updatedAt
   lastLoginAt   DateTime?
 
+  // ───── NEW ─────
+  isActive      Boolean   @default(true)   // false = temporarily disabled
+  deletedAt     DateTime?                 // null = not hard‑deleted
+  // ───── END NEW ─────
+
   // Relations
   sessions      Session[]
   profile       Profile?

@@ -1,0 +1,20 @@
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  type      ActivityType
+  createdAt DateTime @default(now())
+  payload   Json?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, createdAt])
+}
+
+enum ActivityType {
+  LOGIN
+  LOGOUT
+  JOB_VIEW
+  JOB_APPLY
+  SESSION_CREATED
+  SESSION_EXPIRED
+}
