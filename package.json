@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@prisma/client": "^5.12.1",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "cookie-parser": "^1.4.7",
@@ -35,6 +36,7 @@
     "@types/pdf-parse": "^1.1.5",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
+    "prisma": "^5.12.1",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",

@@ -1,0 +1,336 @@
+// Prisma Schema for CareerOps AI
+// Run: npx prisma generate && npx prisma db push
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // For connection pooling in serverless (Vercel/Neon/Supabase):
+  // url = env("DATABASE_URL") + "?pgbouncer=true&connection_limit=1"
+}
+
+// ============================================================
+// AUTH & USERS
+// ============================================================
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  fullName      String
+  passwordHash  String
+  salt          String
+  avatarUrl     String?
+  telegramChatId String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+
+  // Relations
+  sessions      Session[]
+  profile       Profile?
+  settings      Settings?
+  workflow      Workflow?
+  registry      Registry?
+  jobRelations  UserJobRelation[]
+  passwordResets PasswordReset[]
+
+  @@index([email])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  userAgent String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  userId    String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([email])
+  @@index([expiresAt])
+}
+
+// ============================================================
+// PROFILE & SETTINGS
+// ============================================================
+model Profile {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  fullName            String
+  email               String
+  phone               String
+  location            String
+  links               String
+  totalYearsExp       Float
+  seniorityTier       String
+  summary             String?
+  targetRoles         String[]
+  antiTargets         String[]
+  preferredLocations  String[]
+  salaryMinLpa        Float?
+  salaryMaxLpa        Float?
+  parsedFromDoc       Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  education  Education[]
+  experience WorkExperience[]
+  skills     Skill[]
+  certifications Certification[]
+  projects   PortfolioProject[]
+  scrapedSources ScrapedLinkSource[]
+}
+
+model Education {
+  id        String   @id @default(cuid())
+  profileId String
+  institution String
+  degree    String
+  details   String
+  dates     String
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model WorkExperience {
+  id          String   @id @default(cuid())
+  profileId   String
+  company     String
+  role        String
+  location    String
+  dates       String
+  summary     String
+  bullets     String[]
+  createdAt   DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model Skill {
+  id        String   @id @default(cuid())
+  profileId String
+  name      String
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, name])
+}
+
+model Certification {
+  id        String   @id @default(cuid())
+  profileId String
+  name      String
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model PortfolioProject {
+  id           String   @id @default(cuid())
+  profileId    String
+  title        String
+  description  String
+  sourceUrl    String?
+  technologies String[]
+  highlights   String[]
+  createdAt    DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model ScrapedLinkSource {
+  id              String   @id @default(cuid())
+  profileId       String
+  url             String
+  type            String   // github, linkedin, portfolio, blog, other
+  title           String?
+  scrapedSummary  String?
+  extractedHighlights String[]
+  status          String   // scraped, failed, skipped
+  error           String?
+  createdAt       DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model Settings {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  minMatchScore          Int      @default(75)
+  telegramConfigured     Boolean  @default(false)
+  telegramChatId         String?
+  telegramBotToken       String?
+  telegramBotName        String?
+  telegramCustomHeader   String?
+  telegramIncludeSalary  Boolean  @default(true)
+  telegramIncludeSkillGap Boolean  @default(true)
+  telegramIncludeApplyLink Boolean  @default(true)
+  seenTtlDays            Int      @default(14)
+  workflowEnabled        Boolean  @default(true)
+  workflowIntervalHours  Int      @default(4)
+  autoNotifyTelegram     Boolean  @default(false)
+  serpapiKey             String?
+  updatedAt              DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// WORKFLOW
+// ============================================================
+model Workflow {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  enabled          Boolean  @default(true)
+  intervalHours    Int      @default(4)
+  lastRun          DateTime?
+  nextRun          DateTime
+  isRunning        Boolean  @default(false)
+  totalRuns        Int      @default(0)
+  autoNotifyTelegram Boolean  @default(false)
+  lastUpdated      DateTime @updatedAt
+
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runs  WorkflowRun[]
+
+  @@index([nextRun])
+}
+
+model WorkflowRun {
+  id              String   @id @default(cuid())
+  workflowId      String
+  startedAt       DateTime
+  completedAt     DateTime?
+  trigger         String   // scheduled_4h, manual
+  newJobsFound    Int      @default(0)
+  evaluatedCount  Int      @default(0)
+  highFitCount    Int      @default(0)
+  notifiedCount   Int      @default(0)
+  status          String   // completed, failed, running
+  summary         String?
+  createdAt       DateTime @default(now())
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId, startedAt])
+}
+
+// ============================================================
+// JOBS (Global Catalog)
+// ============================================================
+model Job {
+  id                    String   @id // sha256 hash
+  title                 String
+  companyName           String
+  location              String
+  salaryMinLpa          Float?
+  salaryMaxLpa          Float?
+  salaryIsEstimated     Boolean  @default(false)
+  salarySource          String?
+  salarySearchQuery     String?
+  salaryAmbitionBoxUrl  String?
+  salaryGlassdoorUrl    String?
+  experienceMinYears    Float?
+  experienceMaxYears    Float?
+  experienceIsInferred  Boolean  @default(false)
+  experienceInferredReason String?
+  description           String
+  applyLink             String
+  atsSource             String
+  isDirectPosting       Boolean  @default(false)
+  verificationStatus    String?  // verified_active, active_portal, unverified, expired_or_invalid
+  verificationNotes     String?
+  verifiedAt            DateTime?
+  postedDate            DateTime?
+  postedDaysAgo         Int?
+  discoveredAt          DateTime @default(now())
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  userRelations UserJobRelation[]
+
+  @@index([companyName])
+  @@index([atsSource])
+  @@index([discoveredAt])
+  @@index([verificationStatus])
+}
+
+model UserJobRelation {
+  id               String   @id @default(cuid())
+  userId           String
+  jobId            String
+  status           String   @default("discovered") // discovered, applied, interviewing, rejected, expired, new, viable, notified, archived
+  fit              Json?    // MatchResult
+  tailored         Json?    // TailoredContent
+  tailoredResume   String?
+  coverLetter      String?
+  notes            String?
+  notifiedTelegram Boolean  @default(false)
+  seen             Boolean  @default(true)
+  deleted          Boolean  @default(false)
+  appliedAt        DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([userId, status])
+  @@index([userId, deleted])
+  @@index([jobId])
+}
+
+// ============================================================
+// REGISTRY (Per-user job tracking)
+// ============================================================
+model Registry {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  seenJobs        Json     @default("{}")       // { jobId: timestamp }
+  searchedRegistry Json    @default("{}")       // SearchedJobRecord[]
+  deletedJobIds   String[] @default([])
+  notifiedJobIds  String[] @default([])
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SearchedJobRecord {
+  id             String   @id @default(cuid())
+  userId         String
+  signature      String   // company_title
+  normalizedUrl  String?
+  companyName    String
+  title          String
+  status         String   // discovered, applied, rejected, deleted, expired, interviewing
+  discoveredAt   DateTime
+  rejectedAt     DateTime?
+  lastSeenAt     DateTime
+
+  @@unique([userId, signature])
+  @@index([userId, lastSeenAt])
+  @@index([userId, status])
+}
