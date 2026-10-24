@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { resolveAuthUser, PRIMARY_USER_ID } from '../server/auth.js';
+import { resolveAuthUser, PRIMARY_USER_ID, getAllUsersWithStats } from '../server/auth.js';
 import { prisma } from '../server/dbClient.js';
 import { ActivityType } from '@prisma/client';
 
@@ -20,8 +20,6 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
 // -----------------------------------------------------------------
 // GET /api/admin/users – list all users (including soft‑deleted status)
 // -----------------------------------------------------------------
-import { getAllUsersWithStats } from '../auth.js';
-
 export async function adminListUsers(req: Request, res: Response) {
   try {
     // Combine Prisma‑persisted accounts with in‑memory / relational users.
