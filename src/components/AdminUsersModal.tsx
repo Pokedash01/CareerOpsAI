@@ -60,11 +60,14 @@ export const AdminUsersModal: React.FC<AdminUsersModalProps> = ({
         throw new Error('Failed to load users');
       }
       const data = await res.json();
+      // DEBUG
+      console.log('[AdminUsersModal] fetched payload users count:', data?.users?.length);
       if (data?.users) {
         setUsersList(data.users);
       }
     } catch (err: any) {
       onToast(err.message || 'Error fetching user directory', 'error');
+      console.error('[AdminUsersModal] fetchUsers error:', err);
     } finally {
       setLoading(false);
     }
@@ -72,6 +75,7 @@ export const AdminUsersModal: React.FC<AdminUsersModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      setSearch(''); // reset any stale search term
       fetchUsers();
     }
   }, [isOpen]);
@@ -111,12 +115,14 @@ export const AdminUsersModal: React.FC<AdminUsersModalProps> = ({
   };
 
   const filtered = usersList.filter((u) => {
+    // DEBUG
+    console.log('[AdminUsersModal] render – search:', JSON.stringify(search), 'usersList.length:', usersList.length);
     const q = search.toLowerCase();
     return (
       !q ||
-      u.full_name.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      u.id.toLowerCase().includes(q)
+      (u.full_name && u.full_name.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (u.id && u.id.toLowerCase().includes(q))
     );
   });
 
