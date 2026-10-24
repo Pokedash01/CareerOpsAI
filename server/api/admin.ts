@@ -20,20 +20,13 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
 // -----------------------------------------------------------------
 // GET /api/admin/users – list all users (including soft‑deleted status)
 // -----------------------------------------------------------------
+import { getAllUsersWithStats } from '../auth.js';
+
 export async function adminListUsers(req: Request, res: Response) {
   try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        createdAt: true,
-        lastLoginAt: true,
-        isActive: true,
-        deletedAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    // Combine Prisma‑persisted accounts with in‑memory / relational users.
+    // getAllUsersWithStats merges dbUsers, users and their partitions, matching the UI’s expectations.
+    const users = getAllUsersWithStats();
     return res.json({ users });
   } catch (e: any) {
     console.error('[adminListUsers]', e);
