@@ -60,8 +60,6 @@ export const AdminUsersModal: React.FC<AdminUsersModalProps> = ({
         throw new Error('Failed to load users');
       }
       const data = await res.json();
-      // DEBUG
-      console.log('[AdminUsersModal] fetched payload users count:', data?.users?.length);
       if (data?.users) {
         setUsersList(data.users);
       }
@@ -115,8 +113,6 @@ export const AdminUsersModal: React.FC<AdminUsersModalProps> = ({
   };
 
   const filtered = usersList.filter((u) => {
-    // DEBUG
-    console.log('[AdminUsersModal] render – search:', JSON.stringify(search), 'usersList.length:', usersList.length);
     const q = search.toLowerCase();
     return (
       !q ||
@@ -215,7 +211,7 @@ export const AdminUsersModal: React.FC<AdminUsersModalProps> = ({
               </div>
             ) : (
               filtered.map((user) => {
-                const isPrimary = user.is_primary || user.id === 'usr_kb270102';
+                const isPrimary = user.is_primary_admin ?? user.is_primary;
                 const isCurrent = currentUser?.id === user.id;
 
                 return (
