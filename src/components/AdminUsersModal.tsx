@@ -13,6 +13,11 @@ import {
   AlertTriangle,
   UserCheck,
   Mail,
+  UserPlus,
+  Plus,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle,
 } from 'lucide-react';
 
 export interface AdminUserRecord {
@@ -46,6 +51,79 @@ export const AdminUsersModal: React.FC<AdminUsersModalProps> = ({
   const [search, setSearch] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<AdminUserRecord | null>(null);
+
+  // New Candidate Form State
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [addForm, setAddForm] = useState({
+    full_name: '',
+    email: '',
+    password: '',
+    target_roles: '',
+    preferred_locations: '',
+    telegram_chat_id: '',
+  });
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddError(null);
+
+    if (!addForm.email.trim() || !addForm.email.includes('@')) {
+      setAddError('Please enter a valid email address.');
+      return;
+    }
+    if (!addForm.full_name.trim()) {
+      setAddError('Please enter candidate full name.');
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      const token = localStorage.getItem('careerops_auth_token') || '';
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          full_name: addForm.full_name.trim(),
+          email: addForm.email.trim(),
+          password: addForm.password.trim() || 'Password123!',
+          target_roles: addForm.target_roles
+            ? addForm.target_roles.split(',').map((s) => s.trim()).filter(Boolean)
+            : ['Software Engineer', 'Full Stack Developer'],
+          preferred_locations: addForm.preferred_locations
+            ? addForm.preferred_locations.split(',').map((s) => s.trim()).filter(Boolean)
+            : ['Remote', 'Bengaluru'],
+          telegram_chat_id: addForm.telegram_chat_id.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data?.error || 'Failed to create candidate');
+      }
+
+      onToast(`Candidate ${data.user?.full_name || addForm.full_name} created and saved to database!`);
+      setAddForm({
+        full_name: '',
+        email: '',
+        password: '',
+        target_roles: '',
+        preferred_locations: '',
+        telegram_chat_id: '',
+      });
+      setShowAddUser(false);
+      await fetchUsers();
+    } catch (err: any) {
+      setAddError(err.message || 'Error creating candidate');
+      onToast(err.message || 'Error creating candidate', 'error');
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -158,6 +236,18 @@ export const AdminUsersModal: React.FC<AdminUsersModalProps> = ({
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                onClick={() => setShowAddUser((prev) => !prev)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer border ${
+                  showAddUser
+                    ? 'bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-500/20'
+                    : 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border-blue-500/30'
+                }`}
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>{showAddUser ? 'Close Form' : 'Add Candidate'}</span>
+              </button>
+              <button
+                type="button"
                 onClick={fetchUsers}
                 disabled={loading}
                 className="p-2 bg-white/[0.04] hover:bg-white/[0.08] rounded-xl text-zinc-300 transition cursor-pointer border border-white/[0.08] disabled:opacity-50"
@@ -174,6 +264,139 @@ export const AdminUsersModal: React.FC<AdminUsersModalProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Collapsible Add Candidate Form */}
+          <AnimatePresence>
+            {showAddUser && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="border-b border-blue-500/20 bg-blue-950/20 p-5 overflow-hidden"
+              >
+                <form onSubmit={handleCreateUser} className="space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400">
+                        <UserPlus className="w-4 h-4" />
+                      </div>
+                      <h4 className="text-sm font-semibold text-white">Register & Provision New Candidate</h4>
+                    </div>
+                    <span className="text-[11px] text-zinc-400">
+                      Saves directly to database tables (<span className="font-mono text-zinc-300">users.json</span>, <span className="font-mono text-zinc-300">user_jobs.json</span>)
+                    </span>
+                  </div>
+
+                  {addError && (
+                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+                      <span>{addError}</span>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-300 mb-1">
+                        Full Name <span className="text-rose-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Vikram Verma"
+                        value={addForm.full_name}
+                        onChange={(e) => setAddForm({ ...addForm, full_name: e.target.value })}
+                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.1] rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-300 mb-1">
+                        Candidate Email <span className="text-rose-400">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="vikram@example.com"
+                        value={addForm.email}
+                        onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
+                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.1] rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-300 mb-1">
+                        Initial Password
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Password123! (default)"
+                        value={addForm.password}
+                        onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
+                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.1] rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-300 mb-1">
+                        Target Roles (comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. AI Engineer, Full Stack Dev"
+                        value={addForm.target_roles}
+                        onChange={(e) => setAddForm({ ...addForm, target_roles: e.target.value })}
+                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.1] rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-300 mb-1">
+                        Preferred Locations (comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Remote, Bengaluru, Delhi NCR"
+                        value={addForm.preferred_locations}
+                        onChange={(e) => setAddForm({ ...addForm, preferred_locations: e.target.value })}
+                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.1] rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-300 mb-1">
+                        Telegram Chat ID (optional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 1368681854"
+                        value={addForm.telegram_chat_id}
+                        onChange={(e) => setAddForm({ ...addForm, telegram_chat_id: e.target.value })}
+                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.1] rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddUser(false)}
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition cursor-pointer border border-white/[0.08]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isAdding}
+                      className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-500/25 transition cursor-pointer disabled:opacity-50"
+                    >
+                      {isAdding ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                      <span>{isAdding ? 'Saving to Database...' : 'Save & Provision Candidate'}</span>
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Search Bar */}
           <div className="p-4 border-b border-white/[0.06] bg-black/20 flex items-center gap-3">

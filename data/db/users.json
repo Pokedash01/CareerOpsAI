@@ -18,5 +18,41 @@
     "created_at": "2026-01-01T00:00:00.000Z",
     "last_login_at": "2026-10-24T14:36:55.690Z",
     "telegram_chat_id": "1368681854"
+  },
+  "usr_1c17ab7bbea3a5b5": {
+    "id": "usr_1c17ab7bbea3a5b5",
+    "email": "alex.dev@example.com",
+    "full_name": "Alex Developer",
+    "password_hash": "e714648a5741f567d597b00e581ddcbef4e97d03e2a29dffa1518f1e2c7469e2b1bbb1b062e5d0375f5c11470861dca63f740cbbaa277c29b92bfe1ac6ce454b",
+    "salt": "d3e8ae666a06616022236bf2796f286b",
+    "created_at": "2026-01-01T00:00:00.000Z",
+    "last_login_at": "2026-10-25T08:02:30.644Z"
+  },
+  "usr_priya_sharma": {
+    "id": "usr_priya_sharma",
+    "email": "priya.sharma@example.com",
+    "full_name": "Priya Sharma",
+    "password_hash": "3cd96e82082dd6888b81a265e23da474a7c199bb66613a0ed3f7e45524028b5665b67a3b93e079210214569b89c761d9c519dd20ca426d897fab50f09cfc483e",
+    "salt": "8afcdd7b2913b338565d79bc69b878da",
+    "created_at": "2026-01-01T00:00:00.000Z",
+    "last_login_at": "2026-10-25T08:02:30.714Z"
+  },
+  "usr_rohan_mehta": {
+    "id": "usr_rohan_mehta",
+    "email": "rohan.mehta@example.com",
+    "full_name": "Rohan Mehta",
+    "password_hash": "1d6eb8ea5fd8796d11ab32b5272d63a1ba037e76989ae96479d685ecb9508f65e84a885f071d2e3c7f2a4863f4579f4f1373e40d1da2ae6e14d9f68c53900f0c",
+    "salt": "a0d1a9720dc4bec4154814a5da4df0e9",
+    "created_at": "2026-01-01T00:00:00.000Z",
+    "last_login_at": "2026-10-25T08:02:30.761Z"
+  },
+  "usr_ananya_gupta": {
+    "id": "usr_ananya_gupta",
+    "email": "ananya.gupta@example.com",
+    "full_name": "Ananya Gupta",
+    "password_hash": "3a9b3d0af3099cf84c23d34be26cac7bd8c009804d9376fec4fe7bf07158f1f841b3d86e182b68b1c9fa9dabaf64f447b00ea0e3bf46f8ea650aae611b373fe0",
+    "salt": "0e8a3c3851cf47c27823fe38c2f23c84",
+    "created_at": "2026-01-01T00:00:00.000Z",
+    "last_login_at": "2026-10-25T08:02:30.814Z"
   }
 }

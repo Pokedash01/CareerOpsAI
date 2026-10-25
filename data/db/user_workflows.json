@@ -2,12 +2,36 @@
   "usr_kb270102": {
     "enabled": true,
     "interval_hours": 4,
-    "last_run": "2026-09-18T08:14:00.795Z",
-    "next_run": "2026-09-18T12:14:00.795Z",
+    "last_run": "2026-10-25T08:03:16.029Z",
+    "next_run": "2026-10-25T12:00:00.000Z",
     "is_running": false,
-    "total_runs": 10,
+    "total_runs": 12,
     "auto_notify_telegram": true,
     "runs": [
+      {
+        "id": "run-1792915370838",
+        "started_at": "2026-10-25T08:02:50.838Z",
+        "completed_at": "2026-10-25T08:03:16.029Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 6,
+        "evaluated_count": 8,
+        "high_fit_count": 50,
+        "notified_count": 8,
+        "status": "completed",
+        "summary": "Autonomous 4-hour cycle: Verified active postings (4 dead links pruned), found 6 fresh roles. Evaluated 8 listings (50 high-fit ≥75%), 8 alerts pushed to Telegram."
+      },
+      {
+        "id": "run-1792914530985",
+        "started_at": "2026-10-25T07:48:50.985Z",
+        "completed_at": "2026-10-25T07:49:13.139Z",
+        "trigger": "scheduled_4h",
+        "new_jobs_found": 13,
+        "evaluated_count": 8,
+        "high_fit_count": 39,
+        "notified_count": 34,
+        "status": "completed",
+        "summary": "Autonomous 4-hour cycle: Verified active postings (4 dead links pruned), found 13 fresh roles. Evaluated 8 listings (39 high-fit ≥75%), 34 alerts pushed to Telegram."
+      },
       {
         "id": "run-1789719188424",
         "started_at": "2026-09-18T08:13:08.424Z",
@@ -128,6 +152,57 @@
         "status": "completed",
         "summary": "Automated 4-hour cycle: Scanned Workday, Greenhouse & Ashby portals. Evaluated 6 roles, 4 high-fit (≥75%), 2 dispatched to Telegram."
       }
-    ]
+    ],
+    "last_updated": "2026-10-25T08:04:10.646Z"
+  },
+  "usr_demo": {
+    "enabled": true,
+    "interval_hours": 4,
+    "last_run": null,
+    "next_run": "2026-10-25T11:48:30.966Z",
+    "is_running": false,
+    "total_runs": 0,
+    "auto_notify_telegram": true,
+    "runs": []
+  },
+  "usr_1c17ab7bbea3a5b5": {
+    "enabled": true,
+    "interval_hours": 4,
+    "last_run": null,
+    "next_run": "2026-10-25T12:02:30.644Z",
+    "is_running": false,
+    "total_runs": 0,
+    "auto_notify_telegram": false,
+    "runs": []
+  },
+  "usr_priya_sharma": {
+    "enabled": true,
+    "interval_hours": 4,
+    "last_run": null,
+    "next_run": "2026-10-25T12:02:30.714Z",
+    "is_running": false,
+    "total_runs": 0,
+    "auto_notify_telegram": false,
+    "runs": []
+  },
+  "usr_rohan_mehta": {
+    "enabled": true,
+    "interval_hours": 4,
+    "last_run": null,
+    "next_run": "2026-10-25T12:02:30.761Z",
+    "is_running": false,
+    "total_runs": 0,
+    "auto_notify_telegram": false,
+    "runs": []
+  },
+  "usr_ananya_gupta": {
+    "enabled": true,
+    "interval_hours": 4,
+    "last_run": null,
+    "next_run": "2026-10-25T12:02:30.814Z",
+    "is_running": false,
+    "total_runs": 0,
+    "auto_notify_telegram": false,
+    "runs": []
   }
 }

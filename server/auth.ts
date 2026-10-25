@@ -5,7 +5,11 @@ import { INITIAL_PROFILE, INITIAL_JOBS, INITIAL_SETTINGS } from './seedData.js';
 import { computeSafeJobId, normalizeJobUrl } from './jobSearch.js';
 import {
   dbUsers,
+  dbSessions,
   dbUserProfiles,
+  dbUserSettings,
+  dbUserWorkflows,
+  dbUserRegistries,
   dbUserJobs,
   recomposePartitionFromDb,
   decomposePartitionToDb,
@@ -307,46 +311,184 @@ export function createDefaultPartitionForUser(
   };
 }
 
-/**
- * Initializes built-in default accounts:
- * 1. Primary user: Kartik Bhatt (kb270102@gmail.com)
- * 2. Demo candidate user: Demo User (demo@careerops.ai)
- */
-export function seedDefaultUsers() {
-  if (!users[PRIMARY_USER_ID]) {
-    const { hash, salt } = hashPassword('careerops123');
-    const primaryAccount: UserAccountRecord = {
-      id: PRIMARY_USER_ID,
-      email: 'kb270102@gmail.com',
-      full_name: 'Kartik Bhatt',
-      password_hash: hash,
-      salt,
-      created_at: '2026-01-01T00:00:00.000Z',
-      last_login_at: new Date().toISOString(),
-      telegram_chat_id: process.env.TELEGRAM_CHAT_ID || '1368681854',
-    };
-    users[PRIMARY_USER_ID] = primaryAccount;
-    userEmailIndex['kb270102@gmail.com'] = PRIMARY_USER_ID;
-  }
+export const DEFAULT_CANDIDATES_SEED: Array<{
+  id: string;
+  email: string;
+  full_name: string;
+  password: string;
+  telegram_chat_id?: string;
+  target_roles: string[];
+  preferred_locations: string[];
+  skills?: string[];
+  job_slice?: [number, number];
+}> = [
+  {
+    id: PRIMARY_USER_ID,
+    email: 'kb270102@gmail.com',
+    full_name: 'Kartik Bhatt',
+    password: 'careerops123',
+    telegram_chat_id: process.env.TELEGRAM_CHAT_ID || '1368681854',
+    target_roles: [
+      'AI Transformation Analyst',
+      'Power Platform Developer',
+      'Automation Consultant',
+      'Business Intelligence & GenAI Specialist',
+      'Solutions Analyst',
+    ],
+    preferred_locations: ['Gurgaon', 'Gurugram', 'Noida', 'Delhi', 'Remote', 'Bangalore', 'Bengaluru'],
+    skills: ['AI Automation', 'Power Platform', 'Azure AI', 'Python', 'Power BI', 'LangChain'],
+  },
+  {
+    id: DEMO_USER_ID,
+    email: 'demo@careerops.ai',
+    full_name: 'Demo Candidate',
+    password: 'demo123',
+    telegram_chat_id: '1368681854',
+    target_roles: ['Data Analyst', 'Software Engineer', 'AI/BI Developer', 'Solutions Analyst'],
+    preferred_locations: ['Remote', 'Gurugram', 'Bengaluru', 'Delhi NCR', 'Hybrid'],
+    skills: ['Data Analysis', 'SQL', 'Python', 'Power BI', 'JavaScript'],
+  },
+  {
+    id: 'usr_1c17ab7bbea3a5b5',
+    email: 'alex.dev@example.com',
+    full_name: 'Alex Developer',
+    password: 'Password123!',
+    target_roles: ['Senior Full Stack Developer', 'React/Node Architect', 'TypeScript Specialist'],
+    preferred_locations: ['Remote', 'Bengaluru', 'Mumbai', 'Hybrid'],
+    skills: ['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'TailwindCSS'],
+    job_slice: [0, 29],
+  },
+  {
+    id: 'usr_priya_sharma',
+    email: 'priya.sharma@example.com',
+    full_name: 'Priya Sharma',
+    password: 'Password123!',
+    target_roles: ['AI Engineer', 'Machine Learning Specialist', 'GenAI Developer', 'NLP Engineer'],
+    preferred_locations: ['Bangalore', 'Hyderabad', 'Remote'],
+    skills: ['Python', 'PyTorch', 'LangChain', 'FastAPI', 'Gemini API', 'Docker'],
+    job_slice: [5, 35],
+  },
+  {
+    id: 'usr_rohan_mehta',
+    email: 'rohan.mehta@example.com',
+    full_name: 'Rohan Mehta',
+    password: 'Password123!',
+    target_roles: ['Cloud Solutions Architect', 'DevOps Engineer', 'Site Reliability Engineer'],
+    preferred_locations: ['Pune', 'Delhi NCR', 'Remote'],
+    skills: ['AWS', 'Kubernetes', 'Docker', 'Terraform', 'CI/CD', 'Linux'],
+    job_slice: [10, 42],
+  },
+  {
+    id: 'usr_ananya_gupta',
+    email: 'ananya.gupta@example.com',
+    full_name: 'Ananya Gupta',
+    password: 'Password123!',
+    target_roles: ['BI Specialist', 'Data Engineer', 'Analytics Consultant', 'Tableau Developer'],
+    preferred_locations: ['Gurgaon', 'Noida', 'Remote'],
+    skills: ['SQL', 'Power BI', 'Tableau', 'dbt', 'Snowflake', 'Python'],
+    job_slice: [15, 45],
+  },
+];
 
-  if (!users[DEMO_USER_ID]) {
-    const { hash, salt } = hashPassword('demo123');
-    const demoAccount: UserAccountRecord = {
-      id: DEMO_USER_ID,
-      email: 'demo@careerops.ai',
-      full_name: 'Demo Candidate',
-      password_hash: hash,
-      salt,
-      created_at: '2026-01-01T00:00:00.000Z',
-      last_login_at: new Date().toISOString(),
-      telegram_chat_id: '1368681854',
-    };
-    users[DEMO_USER_ID] = demoAccount;
-    userEmailIndex['demo@careerops.ai'] = DEMO_USER_ID;
+let hasSeeded = false;
+let isSeeding = false;
+
+/**
+ * Initializes default candidate accounts and ensures at least 6 accounts exist in DB
+ */
+export function seedDefaultUsers(force = false) {
+  if (isSeeding) return;
+  if (hasSeeded && !force) return;
+  if (typeof dbUsers === 'undefined') return;
+
+  isSeeding = true;
+  let seededAny = false;
+
+  try {
+    for (const cand of DEFAULT_CANDIDATES_SEED) {
+      const cleanEmail = cand.email.toLowerCase().trim();
+      const existingId = userEmailIndex[cleanEmail] || (users[cand.id] ? cand.id : (dbUsers[cand.id] ? cand.id : null));
+
+      if (!existingId || (!users[existingId] && !dbUsers[existingId])) {
+        const { hash, salt } = hashPassword(cand.password);
+        const account: UserAccountRecord = {
+          id: cand.id,
+          email: cleanEmail,
+          full_name: cand.full_name,
+          password_hash: hash,
+          salt,
+          created_at: '2026-01-01T00:00:00.000Z',
+          last_login_at: new Date().toISOString(),
+          telegram_chat_id: cand.telegram_chat_id,
+        };
+
+        users[cand.id] = account;
+        dbUsers[cand.id] = account;
+        userEmailIndex[cleanEmail] = cand.id;
+        seededAny = true;
+
+        // Seed candidate partition and profile if missing
+        if (!userPartitions[cand.id] && !dbUserProfiles[cand.id]) {
+          const partition = createDefaultPartitionForUser(account, {
+            target_roles: cand.target_roles,
+            preferred_locations: cand.preferred_locations,
+            skills: cand.skills,
+          });
+
+          if (cand.job_slice && Array.isArray(INITIAL_JOBS)) {
+            partition.jobListings = INITIAL_JOBS.slice(cand.job_slice[0], cand.job_slice[1]);
+          }
+
+          userPartitions[cand.id] = partition;
+          decomposePartitionToDb(cand.id, partition);
+        }
+      } else {
+        // Ensure existing is in both maps
+        const activeUser = users[existingId] || dbUsers[existingId];
+        if (activeUser) {
+          users[existingId] = activeUser;
+          dbUsers[existingId] = activeUser;
+          userEmailIndex[cleanEmail] = existingId;
+        }
+      }
+    }
+
+    if (seededAny) {
+      try {
+        saveRelationalDatabase();
+      } catch {}
+    }
+    hasSeeded = true;
+  } catch (err: any) {
+    console.warn('[Auth] seedDefaultUsers note:', err?.message || err);
+  } finally {
+    isSeeding = false;
   }
 }
 
-seedDefaultUsers();
+/**
+ * Bidirectionally synchronizes in-memory `users` and relational `dbUsers`
+ */
+export function syncUsersFromDb(): void {
+  try {
+    if (typeof dbUsers === 'undefined') return;
+    seedDefaultUsers();
+
+    for (const [id, u] of Object.entries(dbUsers)) {
+      if (u && u.email) {
+        users[id] = u;
+        userEmailIndex[u.email.toLowerCase().trim()] = id;
+      }
+    }
+    for (const [id, u] of Object.entries(users)) {
+      if (u && !dbUsers[id]) {
+        dbUsers[id] = u;
+      }
+    }
+  } catch (err: any) {
+    console.warn('[Auth] syncUsersFromDb note:', err?.message || err);
+  }
+}
 
 /**
  * Resolves the authenticated user from cookies, Bearer header, or auth query parameter
@@ -364,19 +506,24 @@ export function resolveAuthUser(req: express.Request): UserAccountRecord | null 
   if (!token && typeof req.query.auth_token === 'string') {
     token = req.query.auth_token;
   }
+  if (!token && typeof req.query.auth === 'string') {
+    token = req.query.auth;
+  }
 
   if (!token) return null;
 
-  const session = sessions[token];
+  const session = sessions[token] || dbSessions[token];
   if (!session) return null;
 
   if (new Date(session.expires_at).getTime() < Date.now()) {
     delete sessions[token];
+    delete dbSessions[token];
     return null;
   }
 
-  return users[session.user_id] || null;
+  return users[session.user_id] || dbUsers[session.user_id] || null;
 }
+
 
 /**
  * Retrieves or lazily creates a data partition for a given user ID
@@ -459,6 +606,7 @@ export function clearSessionCookie(res: express.Response): void {
  * Returns saved account previews for the device/browser
  */
 export function getSavedAccountsList() {
+  syncUsersFromDb();
   return Object.values(users).map((u) => ({
     id: u.id,
     email: u.email,
@@ -475,6 +623,8 @@ export function getSavedAccountsList() {
  * Merges in-memory `users` with relational `dbUsers`
  */
 export function getAllUsersWithStats() {
+  syncUsersFromDb();
+
   // Merge both user sources
   const allUsers = new Map<string, UserAccountRecord>();
   for (const u of Object.values(users)) {
@@ -490,6 +640,15 @@ export function getAllUsersWithStats() {
     const jobList = partition?.jobListings || (u.id ? getHydratedJobsForUser(u.id) : []);
     const jobCount = jobList ? jobList.length : 0;
     const isPrimary = u.id === PRIMARY_USER_ID || u.email?.toLowerCase() === 'kb270102@gmail.com';
+
+    const status_breakdown: Record<string, number> = {};
+    if (jobList && jobList.length > 0) {
+      for (const j of jobList) {
+        const s = j.status || 'discovered';
+        status_breakdown[s] = (status_breakdown[s] || 0) + 1;
+      }
+    }
+
     return {
       id: u.id,
       email: u.email,
@@ -497,10 +656,12 @@ export function getAllUsersWithStats() {
       avatar_url: u.avatar_url,
       created_at: u.created_at || new Date().toISOString(),
       last_login_at: u.last_login_at || u.created_at || new Date().toISOString(),
+      is_primary: isPrimary,
       is_primary_admin: isPrimary,
       target_roles: profile?.target_roles || [],
       preferred_locations: profile?.preferred_locations || [],
       job_count: jobCount,
+      status_breakdown,
       has_resume: Boolean(profile?.parsed_from_document || (profile as any)?.raw_resume_text || (profile?.experience?.length || 0) > 0),
     };
   });
@@ -513,12 +674,14 @@ export function deleteUserAccount(userId: string): { success: boolean; error?: s
   if (userId === PRIMARY_USER_ID) {
     return { success: false, error: 'Cannot delete the primary administrator account (Kartik Bhatt).' };
   }
-  const u = users[userId];
+  syncUsersFromDb();
+  const u = users[userId] || dbUsers[userId];
   if (!u) {
     return { success: false, error: 'User account not found.' };
   }
   const emailLower = u.email.toLowerCase();
   delete users[userId];
+  delete dbUsers[userId];
   delete userEmailIndex[emailLower];
   delete userPartitions[userId];
 
@@ -528,9 +691,15 @@ export function deleteUserAccount(userId: string): { success: boolean; error?: s
       delete sessions[token];
     }
   }
+  for (const [token, s] of Object.entries(dbSessions)) {
+    if (s.user_id === userId) {
+      delete dbSessions[token];
+    }
+  }
 
   // Purge database files
   removeUserFromDatabase(userId);
+  saveRelationalDatabase();
   return { success: true };
 }
 

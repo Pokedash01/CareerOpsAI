@@ -89,12 +89,14 @@ import {
   dbUserProfiles,
   dbUserSettings,
   dbUserWorkflows,
+  dbUserRegistries,
   upsertCandidateJob,
   updateCandidateJobRelation,
   getHydratedJobsForUser,
   decomposePartitionToDb,
+  removeUserFromDatabase,
 } from './server/database.js';
-import { getAllUsersWithStats } from './server/auth.js';
+import { getAllUsersWithStats, syncUsersFromDb, deleteUserAccount } from './server/auth.js';
 
 const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'data');
 const STORE_FILE = path.join(DATA_DIR, 'careerops_store.json');
@@ -590,6 +592,7 @@ function loadStoreFromDisk() {
       applyLoadedData(diskData);
       console.log(`[Store] Restored ${jobListings.length} jobs and workflow state from local storage.`);
     }
+    syncUsersFromDb();
 
     // Hydrate asynchronously from peer endpoints if available
     for (const peer of PEER_ENDPOINTS) {
@@ -966,6 +969,8 @@ app.use((req, res, next) => {
 
     const token = createSessionForUser(userId, req.headers['user-agent']);
     attachSessionCookie(res, req, token);
+    decomposePartitionToDb(userId, partition);
+    saveRelationalDatabase();
     saveStoreToDisk(false);
 
     res.status(201).json({
@@ -1299,6 +1304,7 @@ app.use((req, res, next) => {
   // --- Admin User Management Endpoints ---
   app.get('/api/admin/users', (req, res) => {
     try {
+      syncUsersFromDb();
       const users = getAllUsersWithStats();
       res.json({ success: true, users });
     } catch (err: any) {
@@ -1307,8 +1313,108 @@ app.use((req, res, next) => {
     }
   });
 
+  // Provision a new candidate account from the Admin Center
+  app.post('/api/admin/users', (req, res) => {
+    try {
+      syncUsersFromDb();
+      const {
+        email,
+        password,
+        full_name,
+        target_roles,
+        preferred_locations,
+        salary_expectation,
+        total_years_experience,
+        seniority_tier,
+        skills,
+        telegram_chat_id,
+      } = req.body;
+
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return res.status(400).json({ error: 'Please provide a valid email address.' });
+      }
+
+      const cleanEmail = email.toLowerCase().trim();
+      if (userEmailIndex[cleanEmail] || users[cleanEmail] || dbUsers[cleanEmail]) {
+        return res.status(409).json({ error: 'An account with this email address already exists.' });
+      }
+
+      const pass = password && typeof password === 'string' && password.trim().length >= 6
+        ? password.trim()
+        : 'Password123!';
+
+      const userId = `usr_${crypto.randomBytes(8).toString('hex')}`;
+      const { hash, salt } = hashPassword(pass);
+      const now = new Date().toISOString();
+      const cleanTelegramId = telegram_chat_id && typeof telegram_chat_id === 'string' ? telegram_chat_id.trim() : '';
+
+      const newAccount: UserAccountRecord = {
+        id: userId,
+        email: cleanEmail,
+        full_name: (full_name && typeof full_name === 'string' ? full_name.trim() : '') || cleanEmail.split('@')[0],
+        password_hash: hash,
+        salt,
+        created_at: now,
+        last_login_at: now,
+        telegram_chat_id: cleanTelegramId || undefined,
+      };
+
+      users[userId] = newAccount;
+      dbUsers[userId] = newAccount;
+      userEmailIndex[cleanEmail] = userId;
+
+      const initialPrefs = {
+        target_roles: Array.isArray(target_roles) && target_roles.length > 0 ? target_roles.filter(Boolean) : undefined,
+        preferred_locations: Array.isArray(preferred_locations) && preferred_locations.length > 0 ? preferred_locations.filter(Boolean) : undefined,
+        salary_expectation: salary_expectation && typeof salary_expectation === 'object' ? {
+          min_lpa: Number(salary_expectation.min_lpa) || 12,
+          max_lpa: Number(salary_expectation.max_lpa) || 25,
+        } : undefined,
+        total_years_experience: total_years_experience !== undefined ? Number(total_years_experience) : undefined,
+        seniority_tier: seniority_tier && typeof seniority_tier === 'string' ? seniority_tier : undefined,
+        skills: Array.isArray(skills) && skills.length > 0 ? skills.filter(Boolean) : undefined,
+      };
+
+      const partition = getUserPartition(userId, initialPrefs);
+      if (cleanTelegramId) {
+        partition.appSettings.telegram_chat_id = cleanTelegramId;
+        partition.appSettings.telegram_configured = true;
+      }
+
+      // Assign an initial batch of 15 sample jobs from INITIAL_JOBS for instant exploration
+      if (Array.isArray(INITIAL_JOBS) && INITIAL_JOBS.length > 0) {
+        partition.jobListings = INITIAL_JOBS.slice(0, 15);
+      }
+
+      decomposePartitionToDb(userId, partition);
+      saveRelationalDatabase();
+      saveStoreToDisk(false);
+
+      console.log(`[Admin] Successfully created user ${newAccount.full_name} (${cleanEmail}) [${userId}]`);
+      res.status(201).json({
+        success: true,
+        user: {
+          id: newAccount.id,
+          email: newAccount.email,
+          full_name: newAccount.full_name,
+          created_at: newAccount.created_at,
+          last_login_at: newAccount.last_login_at,
+          job_count: partition.jobListings.length,
+          is_primary: false,
+          is_primary_admin: false,
+          target_roles: partition.currentProfile.target_roles || [],
+          preferred_locations: partition.currentProfile.preferred_locations || [],
+        },
+      });
+    } catch (err: any) {
+      console.error('[Admin] Error creating user:', err);
+      res.status(500).json({ error: err.message || 'Failed to create user account' });
+    }
+  });
+
   app.delete('/api/admin/users/:userId', (req, res) => {
     try {
+      syncUsersFromDb();
       const targetId = req.params.userId;
       if (!targetId) {
         return res.status(400).json({ error: 'Target userId required.' });
@@ -1331,6 +1437,7 @@ app.use((req, res, next) => {
       delete dbUserProfiles[targetId];
       delete dbUserSettings[targetId];
       delete dbUserWorkflows[targetId];
+      delete dbUserRegistries[targetId];
 
       // 2. Cascade delete all user job relations
       for (const relKey of Object.keys(dbUserJobs)) {
@@ -1345,7 +1452,14 @@ app.use((req, res, next) => {
           delete sessions[token];
         }
       }
+      for (const [token, sess] of Object.entries(dbSessions)) {
+        if (sess.user_id === targetId) {
+          delete dbSessions[token];
+        }
+      }
 
+      // 4. Cascade purge relational DB files
+      removeUserFromDatabase(targetId);
       saveRelationalDatabase();
       saveStoreToDisk(false);
 

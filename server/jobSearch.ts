@@ -789,7 +789,13 @@ export async function discoverJobsForProfile(
   serpApiKey?: string,
   searchedRegistry: Record<string, any> = {}
 ): Promise<JobListing[]> {
-  const apiKey = serpApiKey || process.env.SERPAPI_KEY || 'GNLQpQWpHAMcEL9MguEkrxq1';
+  // Check if live searches have been globally disabled via environment variable
+  if (process.env.DISABLE_JOB_SEARCH === 'true' || process.env.DISABLE_JOB_DISCOVERY === 'true') {
+    console.log('[JobSearch] Automated job searches are disabled via DISABLE_JOB_SEARCH=true');
+    return [];
+  }
+
+  const apiKey = serpApiKey || process.env.SERPAPI_KEY;
 
   if (!apiKey) {
     console.warn('[JobSearch] SERPAPI_KEY is not configured.');
